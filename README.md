@@ -33,30 +33,105 @@
 - `docs/todo-warehouse-auth-refactor.md`: `warehouse` 鉴权收口 TODO
 - `docs/prd-bot-knowledge.md`: bot/chat 产品重构 PRD
 - `docs/technical-design-m1-m2.md`: M1 / M2 技术方案
+- `docs/agent-run-context-assets.md`: Agent Run、Context Asset 与 Chat/Warehouse 集成设计
 
-## 运行
+## 本地启动
+
+当前前端控制台由 FastAPI 直接服务：HTML 模板在 `backend/knowledge/templates`，静态资源在
+`backend/knowledge/static`。本地开发不需要单独启动 Node / Vite 前端。
+
+推荐使用 Python 3.12（至少需要 Python 3.10，以支持当前代码中的类型注解）。
+
+### 1. 准备后端环境
 
 ```bash
 cd backend
-python -m venv .venv
-source .venv/bin/activate
+python3.12 -m venv .venv312
+source .venv312/bin/activate
 pip install -r requirements.txt
-uvicorn knowledge.main:app --reload
 ```
 
-默认打开：
+如果本机没有 `python3.12`，可以先确认可用版本：
 
-- API: `http://127.0.0.1:8000`
+```bash
+python3 --version
+```
+
+### 2. 使用本地默认配置启动 API + 控制台
+
+第一次看产品现状时，建议先不要复制 `backend/.env.example`。没有 `.env` 时，项目会使用本地开发默认值：
+
+- SQLite：`backend/knowledge.db`
+- mock warehouse：仓库根目录下的 `.mock_warehouse`
+- DB 向量存储
+- mock embedding / model provider
+
+启动 API 与控制台：
+
+```bash
+cd backend
+source .venv312/bin/activate
+uvicorn knowledge.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+启动后打开：
+
 - 控制台: `http://127.0.0.1:8000/`
 - OpenAPI: `http://127.0.0.1:8000/docs`
+- Health: `http://127.0.0.1:8000/health`
 
-## Worker
+快速验证：
+
+```bash
+curl http://127.0.0.1:8000/health
+```
+
+期望返回：
+
+```json
+{"status":"ok"}
+```
+
+### 3. 启动 worker
+
+导入、重建、删除等异步任务需要 worker 消费。另开一个终端：
 
 ```bash
 cd backend
-source .venv/bin/activate
+source .venv312/bin/activate
 python -m knowledge.workers.runner
 ```
+
+API 与 worker 必须使用同一份配置和同一个 `DATABASE_URL`。本地默认 SQLite 模式下，只建议启动 1 个
+worker。
+
+### 4. 可选：启用真实依赖
+
+只有在需要连接真实 `warehouse`、PostgreSQL、Weaviate 或模型网关时，才复制并修改 `.env.example`：
+
+```bash
+cd backend
+cp .env.example .env
+```
+
+常见切换项：
+
+- `DATABASE_URL=postgresql://...`
+- `WAREHOUSE_GATEWAY_MODE=bound_token`
+- `VECTOR_STORE_MODE=weaviate`
+- `MODEL_PROVIDER_MODE=openai_compatible`
+
+生产或联调环境的具体凭证、WebDAV 地址、模型网关 Key 不要提交到 Git。
+
+### 5. 常见问题
+
+- 如果启动时报 `unsupported operand type(s)` 或类型注解相关错误，通常是 Python 版本过低；请使用
+  Python 3.10+，推荐 Python 3.12。
+- 如果 8000 端口被占用，可以改用 `--port 8001`，对应访问 `http://127.0.0.1:8001/`。
+- 如果复制了 `.env.example` 但本机没有 PostgreSQL，启动会尝试连接 PostgreSQL；只看本地现状时可以先删除
+  `backend/.env`，回到 SQLite/mock 默认配置。
+
+## Worker 调度说明
 
 当前 worker 采用按任务 claim/heartbeat 的调度方式：
 

@@ -10,6 +10,9 @@
 
 ### 先看这些
 
+- `docs/agent-run-context-assets.md`
+  - Agent Run、Context Manifest、Artifact Provenance 与 Warehouse/Chat 的职责边界和验证方案。
+
 - `docs/control-plane-api.md`
   - 控制台与测试最常用的控制面接口汇总。
 - `docs/warehouse-auth-refactor.md`

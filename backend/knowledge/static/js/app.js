@@ -19,6 +19,7 @@ const state = {
   selectedTaskItems: [],
   currentKBStats: null,
   currentKBWorkbench: null,
+  currentRelease: null,
   warehouseReady: false,
   warehouseAppId: DEFAULT_WAREHOUSE_APP_ID,
   warehouseAppRoot: DEFAULT_WAREHOUSE_APP_ROOT,
@@ -812,12 +813,14 @@ function clearSession() {
   state.selectedTaskItems = [];
   state.currentKBStats = null;
   state.currentKBWorkbench = null;
+  state.currentRelease = null;
   localStorage.removeItem("knowledge_token");
   localStorage.removeItem("knowledge_wallet");
   closeDrawer();
   closeDocumentDrawer();
   closePathPicker();
   renderLoggedOutState();
+  renderDemoGuide();
 }
 
 function updateSelectedKBUI() {
@@ -1033,6 +1036,12 @@ function renderKBWorkbench() {
 function openDrawer(title, data) {
   el("drawer-title").textContent = title;
   el("drawer-content").textContent = typeof data === "string" ? data : JSON.stringify(data, null, 2);
+  el("detail-drawer").classList.add("open");
+}
+
+function openHtmlDrawer(title, html) {
+  el("drawer-title").textContent = title;
+  el("drawer-content").innerHTML = html;
   el("detail-drawer").classList.add("open");
 }
 
@@ -1612,6 +1621,48 @@ async function loginWithWallet() {
   }
 }
 
+async function ensureDemoKnowledgeBase() {
+  await refreshKBs();
+  let demoKB = state.kbs.find((kb) => kb.name === "Demo Knowledge Workspace");
+  if (!demoKB) {
+    demoKB = await api("/kbs", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: "Demo Knowledge Workspace",
+        description: "用于快速体验 knowledge 的示例知识库。下一步可上传 Markdown、PDF 或文本文件并创建导入任务。",
+        retrieval_config: {
+          chunk_size: 800,
+          chunk_overlap: 120,
+          retrieval_top_k: 6,
+          memory_top_k: 4,
+          embedding_model: "text-embedding-3-small",
+        },
+      }),
+    });
+    await refreshKBs();
+  }
+  state.selectedKB = state.kbs.find((kb) => kb.id === demoKB.id) || demoKB;
+  await refreshSelectedData();
+  renderAll();
+  return state.selectedKB;
+}
+
+async function loginWithDemo() {
+  const token = await api("/auth/demo", { method: "POST" });
+  state.token = token.access_token;
+  localStorage.setItem("knowledge_token", token.access_token);
+  setLoggedIn(token.wallet_address);
+  const kb = await ensureDemoKnowledgeBase();
+  const searchInput = el("search-lab-query");
+  if (searchInput && !searchInput.value) {
+    searchInput.value = "Agent knowledge versioning";
+  }
+  await refreshCurrentRelease();
+  setView("kbs");
+  setOutput({ demo: true, wallet_address: token.wallet_address, kb });
+}
+
 async function logout() {
   clearSession();
   state.kbs = [];
@@ -1953,6 +2004,70 @@ function renderSystemReadiness() {
       `,
     )
     .join("");
+}
+
+function renderDemoGuide() {
+  const box = el("demo-guide");
+  if (!box) return;
+  const isDemoWallet = state.wallet === "0x000000000000000000000000000000000000de00";
+  const isDemoKB = state.selectedKB?.name === "Demo Knowledge Workspace";
+  if (!isDemoWallet && !isDemoKB) {
+    box.classList.add("hidden");
+    box.innerHTML = "";
+    return;
+  }
+  const releaseVersion = state.currentRelease?.release?.version || state.currentRelease?.version || "";
+  const formalHits = state.searchLabCompare?.formal_only?.hits?.length || 0;
+  const evidenceHits = state.searchLabCompare?.evidence_only?.hits?.length || 0;
+  const steps = [
+    { label: "Demo 身份", ok: Boolean(state.token), detail: state.wallet ? shortenMiddle(state.wallet, 10, 6) : "未登录" },
+    { label: "示例知识库", ok: Boolean(state.selectedKB), detail: state.selectedKB ? `#${state.selectedKB.id} ${state.selectedKB.name}` : "待创建" },
+    { label: "文档切片", ok: state.documents.length > 0, detail: `${state.documents.length} 个文档 · ${state.documents.reduce((sum, doc) => sum + Number(doc.chunk_count || 0), 0)} 个 chunk` },
+    { label: "发布版本", ok: Boolean(releaseVersion), detail: releaseVersion || "待发布" },
+    { label: "检索验证", ok: formalHits + evidenceHits > 0, detail: formalHits + evidenceHits > 0 ? `formal ${formalHits} · evidence ${evidenceHits}` : "待运行 Search Lab" },
+  ];
+  box.classList.remove("hidden");
+  box.innerHTML = `
+    <div class="demo-guide-head">
+      <div>
+        <div class="eyebrow">Demo 状态</div>
+        <h2>演示链路已准备好，下一步验证检索</h2>
+        <p>这条链路覆盖示例文档、切片、Evidence、正式知识项、发布版本和 Search Lab 对比。</p>
+      </div>
+      <div class="toolbar demo-guide-actions">
+        <button data-action="run-demo-search"><i class="bi bi-search"></i>运行 Demo 检索</button>
+        <button class="secondary" data-action="jump-view" data-view="documents">查看文档切片</button>
+        <button class="secondary" data-action="jump-view" data-view="search-lab">打开 Search Lab</button>
+      </div>
+    </div>
+    <div class="demo-guide-steps">
+      ${steps
+        .map(
+          (step) => `
+            <div class="demo-guide-step ${step.ok ? "done" : "pending"}">
+              <span class="pill ${step.ok ? "success" : "warning"}">${step.ok ? "就绪" : "待处理"}</span>
+              <strong>${escapeHtml(step.label)}</strong>
+              <small>${escapeHtml(step.detail)}</small>
+            </div>
+          `,
+        )
+        .join("")}
+    </div>
+  `;
+}
+
+async function refreshCurrentRelease() {
+  if (!state.selectedKB) {
+    state.currentRelease = null;
+    renderDemoGuide();
+    return;
+  }
+  try {
+    state.currentRelease = await api(`/kbs/${state.selectedKB.id}/releases/current`);
+  } catch {
+    state.currentRelease = null;
+  }
+  renderDemoGuide();
 }
 
 async function refreshOps() {
@@ -2776,6 +2891,7 @@ async function runSearchLabCompare() {
   setOutput(result);
   await Promise.all([refreshRetrievalLogs(), refreshSourceGovernance()]);
   renderSearchLabCompare();
+  renderDemoGuide();
 }
 
 function renderSearchLabMode(modeTitle, payload) {
@@ -2797,6 +2913,7 @@ function renderSearchLabMode(modeTitle, payload) {
                     <div class="helper">kind=${escapeHtml(hit.result_kind)} · score=${escapeHtml(String(hit.score ?? "-"))}</div>
                     ${hit.source_refs?.length ? `<div class="helper">sources=${escapeHtml(hit.source_refs.join(", "))}</div>` : ""}
                     ${hit.audit_info && Object.keys(hit.audit_info).length ? `<div class="helper">${escapeHtml(JSON.stringify(hit.audit_info))}</div>` : ""}
+                    ${hit.knowledge_item_id ? `<div class="list-actions"><button class="secondary" data-action="show-knowledge-item" data-item-id="${escapeHtml(String(hit.knowledge_item_id))}">查看知识项</button></div>` : ""}
                   </div>
                 `,
               )
@@ -2805,6 +2922,122 @@ function renderSearchLabMode(modeTitle, payload) {
       }
     </div>
   `;
+}
+
+function findSearchHitForItem(itemId) {
+  const modes = [state.searchLabCompare?.formal_only, state.searchLabCompare?.formal_first];
+  for (const mode of modes) {
+    const hit = (mode?.hits || []).find((item) => Number(item.knowledge_item_id) === Number(itemId));
+    if (hit) return hit;
+  }
+  return null;
+}
+
+function renderKnowledgeItemDetail(detail, evidenceUnits = [], searchHit = null) {
+  const item = detail?.item || {};
+  const revision = detail?.current_revision || {};
+  const evidenceById = new Map(evidenceUnits.map((evidence) => [Number(evidence.id), evidence]));
+  const evidenceLinks = revision.evidence_links || [];
+  const hitEvidence = searchHit?.evidence_summaries || [];
+  return `
+    <div class="knowledge-detail">
+      <div class="knowledge-detail-hero">
+        <div>
+          <div class="eyebrow">Knowledge Item #${escapeHtml(String(item.id || "-"))}</div>
+          <h3>${escapeHtml(revision.title || "未命名知识项")}</h3>
+          <p>${escapeHtml(revision.statement || "")}</p>
+        </div>
+        <div class="knowledge-detail-badges">
+          <span class="pill success">${escapeHtml(item.lifecycle_status || "-")}</span>
+          <span class="pill">${escapeHtml(item.item_type || "-")}</span>
+          <span class="pill">rev ${escapeHtml(String(revision.revision_no || "-"))}</span>
+        </div>
+      </div>
+
+      <div class="detail-grid">
+        <div class="detail-card">
+          <div class="detail-label">发布/检索状态</div>
+          <div class="detail-value">${searchHit ? `score ${escapeHtml(String(searchHit.score ?? "-"))}` : "来自工作区当前版本"}</div>
+          <div class="helper">health=${escapeHtml(searchHit?.content_health_status || "-")}</div>
+        </div>
+        <div class="detail-card">
+          <div class="detail-label">审计信息</div>
+          <div class="detail-value">${escapeHtml(revision.review_status || "-")} · ${escapeHtml(revision.visibility_status || "-")}</div>
+          <div class="helper">created_by=${escapeHtml(revision.created_by || "-")}</div>
+        </div>
+      </div>
+
+      <div class="detail-card">
+        <div class="detail-label">结构化 Payload</div>
+        <div class="code compact-code">${escapeHtml(JSON.stringify(revision.structured_payload_json || {}, null, 2))}</div>
+      </div>
+
+      <div class="knowledge-section">
+        <div class="section-header"><h3>Evidence</h3><span class="pill">${escapeHtml(String(evidenceLinks.length || hitEvidence.length || 0))}</span></div>
+        <div class="detail-list">
+          ${
+            evidenceLinks.length
+              ? evidenceLinks
+                  .map((link) => {
+                    const evidence = evidenceById.get(Number(link.evidence_unit_id));
+                    return `
+                      <div class="detail-list-item">
+                        <div class="detail-list-head">
+                          <strong>Evidence #${escapeHtml(String(link.evidence_unit_id))}</strong>
+                          <span class="pill">${escapeHtml(link.role || "supporting")}</span>
+                        </div>
+                        <div class="helper">rank=${escapeHtml(String(link.rank || "-"))} · ${escapeHtml(link.summary || "")}</div>
+                        ${evidence ? `<div class="knowledge-evidence-text">${escapeHtml(evidence.text || "")}</div>` : ""}
+                        ${evidence?.source_locator ? `<div class="helper">locator=${escapeHtml(JSON.stringify(evidence.source_locator))}</div>` : ""}
+                      </div>
+                    `;
+                  })
+                  .join("")
+              : hitEvidence.length
+                ? hitEvidence
+                    .map(
+                      (evidence) => `
+                        <div class="detail-list-item">
+                          <div class="detail-list-head"><strong>Evidence #${escapeHtml(String(evidence.evidence_id || "-"))}</strong><span class="pill">${escapeHtml(evidence.content_health_status || "-")}</span></div>
+                          <div class="knowledge-evidence-text">${escapeHtml(evidence.text_excerpt || "")}</div>
+                          <div class="helper">${escapeHtml(evidence.source_ref || "")}</div>
+                        </div>
+                      `,
+                    )
+                    .join("")
+                : `<div class="empty">当前知识项没有关联 evidence。</div>`
+          }
+        </div>
+      </div>
+
+      <div class="knowledge-section">
+        <div class="section-header"><h3>Provenance</h3></div>
+        <div class="code compact-code">${escapeHtml(JSON.stringify({
+          provenance_type: revision.provenance_type,
+          provenance_json: revision.provenance_json,
+          source_note: revision.source_note,
+          applicability_scope_json: revision.applicability_scope_json,
+          search_audit: searchHit?.audit_info || null,
+        }, null, 2))}</div>
+      </div>
+    </div>
+  `;
+}
+
+async function showKnowledgeItem(itemId) {
+  const kbId = currentKBOrThrow();
+  const detail = await api(`/kbs/${kbId}/items/${itemId}`);
+  const evidenceIds = (detail.current_revision?.evidence_links || [])
+    .map((link) => Number(link.evidence_unit_id || 0))
+    .filter((value) => value > 0);
+  const evidenceUnits = await Promise.all(
+    [...new Set(evidenceIds)].map((evidenceId) => api(`/kbs/${kbId}/evidence/${evidenceId}`).catch(() => null)),
+  );
+  const searchHit = findSearchHitForItem(itemId);
+  openHtmlDrawer(
+    `知识项 #${itemId}`,
+    renderKnowledgeItemDetail(detail, evidenceUnits.filter(Boolean), searchHit),
+  );
 }
 
 function renderSearchLabCompare() {
@@ -2905,7 +3138,14 @@ function renderSourceGovernance() {
 }
 
 async function refreshSelectedData() {
-  await Promise.all([refreshBindings(), refreshDocuments(), refreshCurrentKBStats(), refreshRetrievalLogs(), refreshSourceGovernance()]);
+  await Promise.all([
+    refreshBindings(),
+    refreshDocuments(),
+    refreshCurrentKBStats(),
+    refreshCurrentRelease(),
+    refreshRetrievalLogs(),
+    refreshSourceGovernance(),
+  ]);
 }
 
 async function refreshAll() {
@@ -2947,6 +3187,7 @@ function renderAll() {
   renderRetrievalLogs();
   renderSourceGovernance();
   renderSystemReadiness();
+  renderDemoGuide();
   updateMetrics();
   renderRecentActivity();
 }
@@ -2962,6 +3203,8 @@ function attachStaticEvents() {
   bindEvent("refresh-ops", "click", () => withFeedback(refreshOps, "运维状态已刷新")().catch(() => {}));
 
   bindEvent("connect-wallet", "click", () => withFeedback(loginWithWallet, "knowledge 登录成功")().catch(() => {}));
+  bindEvent("demo-login", "click", () => withFeedback(loginWithDemo, "Demo 已就绪")().catch(() => {}));
+  bindEvent("quick-demo-login", "click", () => withFeedback(loginWithDemo, "Demo 已就绪")().catch(() => {}));
   bindEvent("logout-button", "click", () => withFeedback(logout, "已退出 knowledge")().catch(() => {}));
   bindEvent("dashboard-refresh-all", "click", () => withFeedback(refreshAll, "已刷新全部数据")().catch(() => {}));
 
@@ -3374,6 +3617,19 @@ function attachStaticEvents() {
     if (action === "show-retrieval-log") {
       const log = state.retrievalLogs.find((item) => item.id === Number(target.dataset.logId));
       if (log) openDrawer(`检索日志 #${log.id}`, log);
+      return;
+    }
+    if (action === "show-knowledge-item") {
+      withFeedback(() => showKnowledgeItem(Number(target.dataset.itemId)))().catch(() => {});
+      return;
+    }
+    if (action === "run-demo-search") {
+      const searchInput = el("search-lab-query");
+      if (searchInput && !searchInput.value) {
+        searchInput.value = "Agent knowledge versioning";
+      }
+      setView("search-lab");
+      withFeedback(runSearchLabCompare, "Demo 检索已完成")().catch(() => {});
       return;
     }
     if (action === "jump-view") {
