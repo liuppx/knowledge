@@ -10,7 +10,7 @@
 
 ## API
 
-- 持续维护 `docs/control-plane-api.md`，避免控制台接口散落在各文档里
+- 持续维护 `docs/控制面API文档.md`，避免控制台接口散落在各文档里
 - 保持 `/warehouse/status` 作为当前唯一状态查询接口
 
 ## 网关访问层

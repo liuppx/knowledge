@@ -24,199 +24,169 @@
     </script>
   </head>
   <body>
-    <div id="app-root" class="layout">
+    <main id="auth-gate" class="auth-gate">
+      <div class="auth-brand">
+        <span class="auth-brand-mark">K</span>
+        <span>knowledge</span>
+      </div>
+      <section class="auth-card" aria-labelledby="auth-title">
+        <div class="auth-card-head">
+          <span class="auth-product-icon"><i class="bi bi-journal-check"></i></span>
+          <h1 id="auth-title">登录 knowledge</h1>
+          <p>进入你的知识工作区，整理来源、验证知识并安全地交付给 Agent。</p>
+        </div>
+        <div class="auth-actions">
+          <button id="auth-connect-wallet" class="auth-primary"><i class="bi bi-wallet2"></i><span>使用钱包登录</span></button>
+          <button id="auth-demo-login" class="auth-secondary"><i class="bi bi-lightning-charge"></i><span>进入 Demo 工作区</span></button>
+        </div>
+        <div class="auth-wallet-state">
+          <span class="auth-status-dot"></span>
+          <span id="auth-wallet-status">正在检测可用钱包...</span>
+        </div>
+        <div class="auth-divider"><span>登录后可以</span></div>
+        <div class="auth-capabilities">
+          <span><i class="bi bi-folder2-open"></i>接入知识来源</span>
+          <span><i class="bi bi-shield-check"></i>审计证据与版本</span>
+          <span><i class="bi bi-diagram-3"></i>供用户与 Agent 使用</span>
+        </div>
+      </section>
+      <footer class="auth-footer">Agent-ready knowledge workspace</footer>
+    </main>
+
+    <div id="app-root" class="layout hidden">
       <aside class="sidebar">
         <div class="brand">
           <div class="brand-title"><span class="brand-mark">K</span>knowledge</div>
           <div class="brand-subtitle">Agent-ready knowledge workspace</div>
         </div>
 
-        <div class="wallet-card">
-          <p><strong>knowledge 登录</strong></p>
-          <div class="wallet-summary">
-            <p id="login-status" class="muted">未登录</p>
-            <div id="wallet-address" class="wallet-address" title="">未连接钱包</div>
-          </div>
-          <div class="sidebar-actions">
-            <button id="connect-wallet">钱包登录</button>
-            <button id="demo-login" class="ghost">Demo 试用</button>
-            <button id="logout-button" class="secondary">退出</button>
-          </div>
-        </div>
+        <button class="workspace-switcher" data-action="jump-view" data-view="kbs">
+          <span class="workspace-icon"><i class="bi bi-collection"></i></span>
+          <span class="workspace-copy">
+            <small>当前知识库</small>
+            <strong id="selected-kb-name">未选择知识库</strong>
+            <span id="selected-kb-desc">创建或选择一个工作区</span>
+          </span>
+          <i class="bi bi-chevron-expand"></i>
+        </button>
 
-        <div class="nav-card">
-          <p><strong>工作区</strong></p>
+        <nav class="product-nav" aria-label="产品导航">
           <div class="nav-list">
             <button class="nav-item active" data-view-target="dashboard"><i class="bi bi-speedometer2"></i>概览</button>
-            <button class="nav-item" data-view-target="kbs"><i class="bi bi-collection"></i>知识库</button>
-            <button class="nav-item" data-view-target="warehouse"><i class="bi bi-folder2-open"></i>资产仓库</button>
-            <button class="nav-item" data-view-target="tasks"><i class="bi bi-list-check"></i>导入任务</button>
-            <button class="nav-item" data-view-target="documents"><i class="bi bi-file-earmark-text"></i>文档与切片</button>
-            <button class="nav-item" data-view-target="search-lab"><i class="bi bi-search"></i>检索调试</button>
+            <div class="nav-section-label requires-workspace">知识生产</div>
+            <button class="nav-item requires-workspace" data-view-target="warehouse"><i class="bi bi-folder2-open"></i>资产仓库</button>
+            <button class="nav-item requires-workspace" data-view-target="tasks"><i class="bi bi-list-check"></i>导入任务</button>
+            <button class="nav-item requires-workspace" data-view-target="documents"><i class="bi bi-file-earmark-text"></i>来源文档</button>
+            <button class="nav-item requires-workspace" data-view-target="knowledge-items"><i class="bi bi-diagram-3"></i>知识地图</button>
+            <div class="nav-section-label requires-workspace">验证与交付</div>
+            <button class="nav-item requires-workspace" data-view-target="search-lab"><i class="bi bi-search"></i>检索验证</button>
+            <div class="nav-section-label">设置</div>
+            <button class="nav-item" data-view-target="kbs"><i class="bi bi-sliders"></i>知识库设置</button>
             <button class="nav-item" data-view-target="ops"><i class="bi bi-activity"></i>运维状态</button>
-            <button class="nav-item" data-view-target="guides"><i class="bi bi-terminal"></i>接入指引</button>
+            <button class="nav-item" data-view-target="guides"><i class="bi bi-braces"></i>开发者接入</button>
           </div>
-        </div>
+        </nav>
 
-        <div class="nav-card">
-          <p><strong>当前选中知识库</strong></p>
-          <p id="selected-kb-name">未选择</p>
-          <p id="selected-kb-desc" class="muted">请选择一个知识库后继续来源治理、知识项管理与发布。</p>
-        </div>
       </aside>
 
       <main class="main">
         <section class="topbar">
           <div>
-            <h1>knowledge 管理控制台</h1>
-            <div class="topbar-meta">把原始资产整理为可发布、可审计、可被 Agent 消费的专业知识。</div>
+            <h1 id="page-title">工作区概览</h1>
+            <div class="topbar-meta" id="page-description">掌握知识生产进度、内容健康度和需要处理的工作。</div>
           </div>
-          <div class="toolbar">
-            <button data-action="jump-view" data-view="kbs"><i class="bi bi-play-circle"></i>开始试用</button>
-            <button class="secondary" id="jump-dashboard">概览</button>
-            <button class="secondary" id="jump-warehouse">资产仓库</button>
-            <button class="secondary" id="jump-search-lab">检索调试</button>
+          <div class="toolbar topbar-actions">
+            <div class="header-account">
+              <span class="account-dot"></span>
+              <div class="header-account-copy"><strong id="login-status">已登录</strong><span id="wallet-address" title="">-</span></div>
+              <button id="logout-button" class="ghost icon-only" title="退出登录"><i class="bi bi-box-arrow-right"></i></button>
+            </div>
+            <button id="primary-workspace-action" data-action="jump-view" data-view="kbs"><i class="bi bi-plus-lg"></i><span>创建知识库</span></button>
           </div>
-          <div class="status-pills">
-            <span class="pill" id="pill-wallet">钱包：未登录</span>
-            <span class="pill" id="pill-kb">知识库：0</span>
-            <span class="pill" id="pill-task">任务：0</span>
-          </div>
+          <div class="hidden"><span id="page-workspace-name"></span><span id="pill-wallet"></span><span id="pill-kb"></span><span id="pill-task"></span><button id="connect-wallet"></button><button id="demo-login"></button><button id="dashboard-refresh-all"></button><button id="jump-dashboard"></button><button id="jump-warehouse"></button><button id="jump-search-lab"></button></div>
         </section>
 
         <section class="view active" data-view="dashboard">
-          <div class="summary-grid">
-            <div class="card">
-              <div class="metric-value" id="metric-kbs">0</div>
-              <div class="metric-label">知识库数量</div>
+          <div id="dashboard-empty-workspace" class="workspace-empty-state hidden">
+            <div class="workspace-empty-visual"><i class="bi bi-journal-plus"></i></div>
+            <div class="eyebrow">开始使用 knowledge</div>
+            <h2>创建你的第一个知识库</h2>
+            <p>知识库是内容来源、正式知识和检索发布的独立工作区。创建后即可上传 Markdown、PDF 或文本资料。</p>
+            <div class="workspace-empty-actions">
+              <button id="workspace-empty-create"><i class="bi bi-plus-lg"></i>创建知识库</button>
+              <button id="workspace-empty-demo" class="secondary"><i class="bi bi-lightning-charge"></i>体验 Demo</button>
             </div>
-            <div class="card">
-              <div class="metric-value" id="metric-bindings">0</div>
-              <div class="metric-label">当前知识库绑定源</div>
+            <button class="workspace-existing-link" data-action="jump-view" data-view="kbs">查看已有知识库</button>
+          </div>
+
+          <div id="dashboard-workspace-content" class="dashboard-workspace-content hidden">
+          <div class="workspace-welcome">
+            <div>
+              <div class="eyebrow">Knowledge workspace</div>
+              <h2>把分散信息变成可信、可复用的知识</h2>
+              <p>从来源接入、知识整理到检索验证，围绕当前知识库持续完成内容闭环。</p>
             </div>
-            <div class="card">
-              <div class="metric-value" id="metric-docs">0</div>
-              <div class="metric-label">当前知识库文档数</div>
-            </div>
-            <div class="card">
-              <div class="metric-value" id="metric-tasks">0</div>
-              <div class="metric-label">任务总数</div>
+            <div class="workspace-welcome-actions">
+              <button data-action="jump-view" data-view="knowledge-items"><i class="bi bi-diagram-3"></i>浏览知识</button>
+              <button class="secondary" data-action="jump-view" data-view="search-lab"><i class="bi bi-search"></i>验证检索</button>
             </div>
           </div>
 
-          <div class="card quickstart-card">
-            <div class="quickstart-copy">
-              <div class="eyebrow">推荐试用路径</div>
-              <h2>用一个文件跑通知识库主链路</h2>
-              <p>先创建知识库，再上传或绑定资产，创建导入任务，最后在文档与检索里验证结果。</p>
-              <div class="quickstart-actions">
-                <button id="quick-demo-login"><i class="bi bi-lightning-charge"></i>一键进入 Demo</button>
-                <button class="secondary" data-action="jump-view" data-view="guides">查看接入说明</button>
-              </div>
-            </div>
-            <div class="quickstart-steps">
-              <button class="quickstart-step" data-action="jump-view" data-view="kbs">
-                <span>01</span>
-                <strong>创建知识库</strong>
-                <small>配置名称、chunk 和检索参数</small>
-              </button>
-              <button class="quickstart-step" data-action="jump-view" data-view="warehouse">
-                <span>02</span>
-                <strong>接入资产</strong>
-                <small>上传文件或初始化 warehouse 凭证</small>
-              </button>
-              <button class="quickstart-step" data-action="jump-view" data-view="tasks">
-                <span>03</span>
-                <strong>执行导入</strong>
-                <small>从绑定源创建导入或重建任务</small>
-              </button>
-              <button class="quickstart-step" data-action="jump-view" data-view="documents">
-                <span>04</span>
-                <strong>查看切片</strong>
-                <small>确认文档、chunk 与 metadata</small>
-              </button>
-              <button class="quickstart-step" data-action="jump-view" data-view="search-lab">
-                <span>05</span>
-                <strong>验证检索</strong>
-                <small>对比 formal / evidence 命中</small>
-              </button>
+          <div class="summary-grid product-metrics">
+            <button class="metric-card" data-action="jump-view" data-view="knowledge-items">
+              <span class="metric-icon"><i class="bi bi-diagram-3"></i></span>
+              <span class="metric-copy"><strong id="metric-knowledge-items">0</strong><small>正式知识项</small></span>
+              <i class="bi bi-arrow-right"></i>
+            </button>
+            <button class="metric-card" data-action="jump-view" data-view="documents">
+              <span class="metric-icon"><i class="bi bi-file-earmark-text"></i></span>
+              <span class="metric-copy"><strong id="metric-docs">0</strong><small>已索引文档</small></span>
+              <i class="bi bi-arrow-right"></i>
+            </button>
+            <button class="metric-card" data-action="jump-view" data-view="warehouse">
+              <span class="metric-icon"><i class="bi bi-link-45deg"></i></span>
+              <span class="metric-copy"><strong id="metric-bindings">0</strong><small>内容来源</small></span>
+              <i class="bi bi-arrow-right"></i>
+            </button>
+            <button class="metric-card" data-action="jump-view" data-view="tasks">
+              <span class="metric-icon"><i class="bi bi-list-check"></i></span>
+              <span class="metric-copy"><strong id="metric-tasks">0</strong><small>导入任务</small></span>
+              <i class="bi bi-arrow-right"></i>
+            </button>
+            <div class="hidden">
+              <div class="metric-value" id="metric-kbs">0</div>
             </div>
           </div>
 
           <div id="demo-guide" class="card demo-guide-card hidden"></div>
 
-          <div class="grid-2">
-            <div class="card">
+          <div class="dashboard-main-grid">
+            <div class="card activity-panel">
               <div class="section-header">
                 <h2>最近活动</h2>
                 <div class="toolbar">
-                  <button class="secondary" id="dashboard-refresh-all">刷新全部</button>
+                  <button class="ghost" data-action="jump-view" data-view="tasks">查看全部</button>
                 </div>
               </div>
-              <div class="helper">聚合最近上传、任务执行和当前知识库文档索引，方便按真实数据流转顺序做联调。</div>
               <div id="recent-activity" class="empty">暂无最近活动，先上传或导入一个文件。</div>
             </div>
 
+            <div class="dashboard-side-stack">
             <div class="card">
               <div class="section-header">
-                <h2>当前知识库统计</h2>
+                <h2>知识健康度</h2>
               </div>
               <div id="current-kb-stats" class="empty">请选择知识库后查看统计。</div>
             </div>
-          </div>
-
-          <div class="grid-2">
             <div class="card">
               <div class="section-header">
-                <h2>知识库功能总览</h2>
+                <h2>需要关注</h2>
               </div>
-              <div class="feature-grid">
-                <div class="feature-item">
-                  <div class="feature-title">1. 资产接入</div>
-                  <div class="feature-text">通过受限 WebDAV `ak/sk` 接入 `warehouse`，只访问当前 Knowledge App 目录下被显式授权的资产。</div>
-                </div>
-                <div class="feature-item">
-                  <div class="feature-title">2. 索引建库</div>
-                  <div class="feature-text">按文件类型切块，生成 embedding，写入向量库，并维护导入任务明细与重试能力。</div>
-                </div>
-                <div class="feature-item">
-                  <div class="feature-title">3. 知识项治理</div>
-                  <div class="feature-text">支持候选知识项、人工知识项、修订与证据关联，避免退回 chunk 主叙事。</div>
-                </div>
-                <div class="feature-item">
-                  <div class="feature-title">4. 发布与授权</div>
-                  <div class="feature-text">以发布快照和服务授权作为稳定服务读面，并提供检索调试与审计能力。</div>
-                </div>
-              </div>
+              <div id="system-readiness" class="empty">尚未加载工作区状态。</div>
             </div>
-
-            <div class="card">
-              <div class="section-header">
-                <h2>产品工作流</h2>
-              </div>
-              <div class="workflow-steps">
-                <div class="workflow-step"><strong>Step 1</strong><span>钱包登录</span></div>
-                <div class="workflow-step"><strong>Step 2</strong><span>导入读凭证 / 写凭证</span></div>
-                <div class="workflow-step"><strong>Step 3</strong><span>按凭证浏览 / 上传资产</span></div>
-                <div class="workflow-step"><strong>Step 4</strong><span>来源扫描与证据构建</span></div>
-                <div class="workflow-step"><strong>Step 5</strong><span>知识项审核与工作区整理</span></div>
-                <div class="workflow-step"><strong>Step 6</strong><span>发布、授权与检索审计</span></div>
-              </div>
             </div>
           </div>
-
-          <div class="card">
-            <div class="section-header">
-              <h2>系统就绪状态</h2>
-            </div>
-            <div id="system-readiness" class="empty">尚未加载系统就绪状态。</div>
-          </div>
-
-          <div class="card">
-              <div class="section-header">
-                <h2>系统输出</h2>
-              </div>
-              <div id="output" class="code"></div>
+          <div id="output" class="hidden" aria-hidden="true"></div>
           </div>
         </section>
 
@@ -382,12 +352,13 @@
                 <div class="path-input-wrap">
                   <input id="target-dir" data-path-field="target-dir" value="{{ warehouse_upload_dir }}" />
                 </div>
-                <input id="upload-file" type="file" />
+                <input id="upload-file" type="file" multiple accept=".md,.markdown,.txt,.pdf,.docx,.html,.htm,.json,.csv" />
                 <div class="toolbar">
-                  <button id="upload-app">上传到 uploads</button>
+                  <button id="upload-app">上传文件</button>
                   <button class="secondary" id="refresh-uploads">刷新上传记录</button>
                 </div>
               </div>
+              <div id="upload-batch-status" class="upload-batch-status hidden"></div>
               <div class="helper">上传只使用当前写凭证。未配置写凭证时不会回退到钱包代理访问。</div>
               <hr />
               <div id="warehouse-preview" class="empty">点击左侧文件可查看预览，点击目录可进入。</div>
@@ -498,6 +469,35 @@
           </div>
         </section>
 
+        <section class="view" data-view="knowledge-items">
+          <div class="card knowledge-browser">
+            <div class="section-header">
+              <div>
+                <h2>知识项</h2>
+                <div class="helper">浏览当前知识库的正式知识项，并从列表或分类地图进入可审计详情。</div>
+              </div>
+              <div class="toolbar">
+                <div class="knowledge-view-switch" role="group" aria-label="知识项视图">
+                  <button class="active" data-action="set-knowledge-view" data-mode="list" title="列表视图"><i class="bi bi-list-ul"></i><span>列表</span></button>
+                  <button data-action="set-knowledge-view" data-mode="map" title="地图视图"><i class="bi bi-diagram-3"></i><span>地图</span></button>
+                </div>
+                <button class="secondary" id="refresh-knowledge-items"><i class="bi bi-arrow-clockwise"></i>刷新</button>
+              </div>
+            </div>
+            <div class="knowledge-browser-filters">
+              <label class="knowledge-search-field">
+                <i class="bi bi-search"></i>
+                <input id="knowledge-item-filter" placeholder="搜索标题、陈述、类型或来源" />
+              </label>
+              <select id="knowledge-item-type-filter" aria-label="按知识类型筛选"><option value="">全部类型</option></select>
+              <select id="knowledge-item-status-filter" aria-label="按生命周期筛选"><option value="">全部状态</option></select>
+              <button class="ghost" id="clear-knowledge-item-filters">清空筛选</button>
+            </div>
+            <div id="knowledge-item-summary" class="knowledge-browser-summary"></div>
+            <div id="knowledge-item-browser" class="empty">请选择知识库后浏览知识项。</div>
+          </div>
+        </section>
+
         <section class="view" data-view="search-lab">
           <div class="grid-2">
             <div class="card">
@@ -563,7 +563,7 @@
                 <div class="workflow-step"><strong>Step 4</strong><span>管理侧通过 `search-lab`、`retrieval-logs`、`source-governance` 调试命中与健康度。</span></div>
                 <div class="workflow-step"><strong>Step 5</strong><span>如需发布变更，先在工作区更新知识项，再通过 `releases` 与 `grants` 控制读面。</span></div>
               </div>
-              <div class="helper">交互式 OpenAPI：`/docs`。仓库文档：`docs/api-integration.md`。</div>
+              <div class="helper">接口契约：`docs/openapi/knowledge.openapi.yaml`。交互式文档：`/docs` 和 `/redoc`。</div>
             </div>
 
             <div class="card">
@@ -611,7 +611,7 @@
                 <div class="workflow-step"><strong>4</strong><span>完成 source scan、evidence build、candidate 生成与人工知识项整理。</span></div>
                 <div class="workflow-step"><strong>5</strong><span>通过 release 发布稳定视图，再为服务创建 grant，并用 search lab 验证结果。</span></div>
               </div>
-              <div class="helper">完整手册见 `docs/console-operations.md`。</div>
+              <div class="helper">完整手册见 `docs/控制台操作手册.md`。</div>
             </div>
 
             <div class="card">

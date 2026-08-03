@@ -24,16 +24,18 @@
 
 - `backend/knowledge`: FastAPI 应用
 - `tests`: 后端测试
-- `docs/README.md`: 文档索引
-- `docs/api-integration.md`: 外部服务 API 接入文档
-- `docs/control-plane-api.md`: 控制台 / 测试常用控制面接口文档
-- `docs/console-operations.md`: 控制台操作手册
-- `docs/warehouse-auth-refactor.md`: `warehouse` 鉴权与绑定重构说明
-- `docs/warehouse-credential-usage.md`: `warehouse` 读写凭证使用说明
-- `docs/todo-warehouse-auth-refactor.md`: `warehouse` 鉴权收口 TODO
-- `docs/prd-bot-knowledge.md`: bot/chat 产品重构 PRD
-- `docs/technical-design-m1-m2.md`: M1 / M2 技术方案
-- `docs/agent-run-context-assets.md`: Agent Run、Context Asset 与 Chat/Warehouse 集成设计
+- `docs/文档索引.md`: 文档索引
+- `docs/openapi/knowledge.openapi.yaml`: OpenAPI 3.1 权威接口定义
+- `docs/openapi/README.md`: OpenAPI 生成与使用说明
+- `docs/API接入文档.md`: 外部服务 API 接入文档
+- `docs/控制面API文档.md`: 控制台 / 测试常用控制面接口文档
+- `docs/控制台操作手册.md`: 控制台操作手册
+- `docs/Warehouse鉴权与绑定重构说明.md`: `warehouse` 鉴权与绑定重构说明
+- `docs/Warehouse凭证使用说明.md`: `warehouse` 读写凭证使用说明
+- `docs/Warehouse鉴权收口待办.md`: `warehouse` 鉴权收口 TODO
+- `docs/Bot与Chat知识库重构PRD.md`: bot/chat 产品重构 PRD
+- `docs/M1-M2技术方案.md`: M1 / M2 技术方案
+- `docs/Agent运行与上下文资产设计.md`: Agent Run、Context Asset 与 Chat/Warehouse 集成设计
 
 ## 本地启动
 
@@ -77,7 +79,9 @@ uvicorn knowledge.main:app --reload --host 127.0.0.1 --port 8000
 启动后打开：
 
 - 控制台: `http://127.0.0.1:8000/`
-- OpenAPI: `http://127.0.0.1:8000/docs`
+- OpenAPI YAML: `docs/openapi/knowledge.openapi.yaml`
+- Swagger UI: `http://127.0.0.1:8000/docs`
+- ReDoc: `http://127.0.0.1:8000/redoc`
 - Health: `http://127.0.0.1:8000/health`
 
 快速验证：
@@ -139,7 +143,7 @@ cp .env.example .env
 - 同一用户默认最多并发执行 1 个任务，避免单用户大任务挤占全部处理能力
 - `sqlite` 环境会自动退回串行处理；生产建议使用 PostgreSQL 以启用更稳的并发处理
 - 默认部署建议只常驻 `1` 个 worker，其余实例按需启停
-- 独立 worker 的 systemd 部署与扩缩容建议见 `docs/worker-deployment.md`
+- 独立 worker 的 systemd 部署与扩缩容建议见 `docs/Worker部署与扩缩容建议.md`
 
 ## 本地开发默认值
 
@@ -238,12 +242,13 @@ cp .env.example .env
 
 ## 文档
 
-- 文档索引：`docs/README.md`
-- 外部服务接入：`docs/api-integration.md`
-- 控制面接口：`docs/control-plane-api.md`
-- 控制台操作手册：`docs/console-operations.md`
-- `warehouse` 鉴权设计：`docs/warehouse-auth-refactor.md`
-- `warehouse` 凭证使用：`docs/warehouse-credential-usage.md`
-- `warehouse` 收口 TODO：`docs/todo-warehouse-auth-refactor.md`
-- 产品重构 PRD：`docs/prd-bot-knowledge.md`
-- M1 / M2 技术方案：`docs/technical-design-m1-m2.md`
+- 文档索引：`docs/文档索引.md`
+- OpenAPI 接口定义：`docs/openapi/knowledge.openapi.yaml`
+- 外部服务接入：`docs/API接入文档.md`
+- 控制面接口：`docs/控制面API文档.md`
+- 控制台操作手册：`docs/控制台操作手册.md`
+- `warehouse` 鉴权设计：`docs/Warehouse鉴权与绑定重构说明.md`
+- `warehouse` 凭证使用：`docs/Warehouse凭证使用说明.md`
+- `warehouse` 收口 TODO：`docs/Warehouse鉴权收口待办.md`
+- 产品重构 PRD：`docs/Bot与Chat知识库重构PRD.md`
+- M1 / M2 技术方案：`docs/M1-M2技术方案.md`

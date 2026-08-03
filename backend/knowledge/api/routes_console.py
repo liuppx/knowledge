@@ -10,7 +10,7 @@ from knowledge.services.warehouse_scope import warehouse_app_id, warehouse_app_r
 templates = Jinja2Templates(directory=str(__import__("pathlib").Path(__file__).resolve().parents[1] / "templates"))
 router = APIRouter(include_in_schema=False)
 settings = get_settings()
-CONSOLE_ASSET_VERSION = "20260803-knowledge-detail-1"
+CONSOLE_ASSET_VERSION = "20260803-validation-upload-1"
 
 
 @router.get("/", response_class=HTMLResponse)

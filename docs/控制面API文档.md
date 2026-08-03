@@ -1,12 +1,14 @@
 # Knowledge 控制面 API 文档
 
+接口契约统一维护在 `docs/openapi/knowledge.openapi.yaml`。本文档保留控制台和治理场景说明，不再手工承担完整接口定义。
+
 本文档覆盖控制台和测试常用的控制面接口。
 
 不包含：
 
 - `service search` 面向外部服务的读面接口
 
-那部分继续参考 `docs/api-integration.md`。
+那部分继续参考 `docs/API接入文档.md`。
 
 ## 1. 登录
 
@@ -322,7 +324,7 @@ GET /warehouse/browse?path=/apps/knowledge.yeying.pub/uploads&use_write_credenti
 
 ## 9. 相关文档
 
-- `docs/api-integration.md`
-- `docs/warehouse-auth-refactor.md`
-- `docs/warehouse-credential-usage.md`
-- `docs/console-operations.md`
+- `docs/API接入文档.md`
+- `docs/Warehouse鉴权与绑定重构说明.md`
+- `docs/Warehouse凭证使用说明.md`
+- `docs/控制台操作手册.md`

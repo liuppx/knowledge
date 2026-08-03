@@ -326,4 +326,3 @@ Chat 的 `ChatMessage` 只保存可选 `runId`，不保存 manifest 全量内容
 - WebDAV/S3 可读取 manifest 和 artifact。
 - principal 撤销后历史 run 可审查、新 run 被拒绝。
 - Chat 普通聊天和现有 Warehouse 上传/导入流程不回归。
-

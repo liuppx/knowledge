@@ -7,6 +7,7 @@ const DEFAULT_WAREHOUSE_WEBDAV_PREFIX = APP_CONFIG.warehouse_webdav_prefix || "/
 const WAREHOUSE_TEMP_TOKEN_KEY = "knowledge:warehouse_temp_token";
 const WAREHOUSE_TEMP_WALLET_KEY = "knowledge:warehouse_temp_wallet";
 const WAREHOUSE_TEMP_STAGE_KEY = "knowledge:warehouse_temp_stage";
+const SELECTED_KB_KEY = "knowledge:selected_kb_id";
 
 const state = {
   token: localStorage.getItem("knowledge_token") || "",
@@ -43,6 +44,9 @@ const state = {
   kbs: [],
   bindings: [],
   documents: [],
+  knowledgeItems: [],
+  knowledgeItemDetails: [],
+  knowledgeViewMode: "list",
   tasks: [],
   uploads: [],
   longMemories: [],
@@ -63,6 +67,7 @@ const state = {
   kbEditorMode: "edit",
   taskPollingTimer: null,
   taskPollingInFlight: false,
+  workspaceSwitching: false,
 };
 
 const TASK_POLL_INTERVAL_MS = 3000;
@@ -328,6 +333,22 @@ function renderWalletSummary() {
     walletAddress.textContent = walletLabel;
     walletAddress.title = wallet;
   }
+  renderAuthGate(providerName);
+}
+
+function renderAuthGate(providerName = detectedWalletName()) {
+  const loggedIn = Boolean(state.token && state.wallet);
+  const gate = el("auth-gate");
+  const appRoot = el("app-root");
+  gate?.classList.toggle("hidden", loggedIn);
+  appRoot?.classList.toggle("hidden", !loggedIn);
+  const status = el("auth-wallet-status");
+  if (status) {
+    status.textContent = providerName
+      ? `已检测到 ${providerName}，可以继续登录`
+      : "未检测到钱包，也可以先进入 Demo 工作区";
+  }
+  document.body.classList.toggle("auth-mode", !loggedIn);
 }
 
 function fillKBForm(kb = null) {
@@ -594,6 +615,20 @@ function notify(type, message) {
 
 function setView(view) {
   state.currentView = view;
+  const viewMeta = {
+    dashboard: ["工作区概览", "掌握知识生产进度、内容健康度和需要处理的工作。"],
+    kbs: ["知识库设置", "管理工作区、内容来源和检索配置。"],
+    warehouse: ["资产仓库", "上传文件或连接已有内容目录。"],
+    tasks: ["导入任务", "跟踪内容解析、切片和索引进度。"],
+    documents: ["来源文档", "检查已索引文档、切片内容和来源信息。"],
+    "knowledge-items": ["知识地图", "浏览、筛选并审计可供用户和 Agent 使用的正式知识。"],
+    "search-lab": ["检索验证", "用真实问题验证知识命中、证据和发布结果。"],
+    ops: ["运维状态", "查看服务、存储和后台任务健康状态。"],
+    guides: ["开发者接入", "通过 API 和 Agent 工作流消费已发布知识。"],
+  };
+  const [title, description] = viewMeta[view] || viewMeta.dashboard;
+  setText("page-title", title);
+  setText("page-description", description);
   document.querySelectorAll(".nav-item").forEach((item) => {
     item.classList.toggle("active", item.dataset.viewTarget === view);
   });
@@ -825,15 +860,38 @@ function clearSession() {
 
 function updateSelectedKBUI() {
   const kb = state.selectedKB;
+  const primaryAction = el("primary-workspace-action");
   if (!kb) {
-    el("selected-kb-name").textContent = "未选择";
-    el("selected-kb-desc").textContent = "请选择一个知识库后继续来源治理、知识项管理与发布。";
+    el("selected-kb-name").textContent = "未选择知识库";
+    el("selected-kb-desc").textContent = "创建或选择一个工作区";
+    setText("page-workspace-name", "未选择知识库");
+    if (primaryAction) {
+      primaryAction.dataset.view = "kbs";
+      primaryAction.querySelector("span").textContent = "创建知识库";
+    }
+    renderDashboardWorkspaceState();
     return;
   }
-  el("selected-kb-name").textContent = `#${kb.id} ${kb.name}`;
-  el("selected-kb-desc").textContent = kb.description || "无描述";
+  el("selected-kb-name").textContent = kb.name;
+  el("selected-kb-desc").textContent = kb.description || `知识库 #${kb.id}`;
+  setText("page-workspace-name", kb.name);
+  if (primaryAction) {
+    primaryAction.dataset.view = "warehouse";
+    primaryAction.querySelector("span").textContent = "添加内容";
+  }
   el("task-kb-id").value = kb.id;
   if (el("memory-kb-id")) el("memory-kb-id").value = kb.id;
+  renderDashboardWorkspaceState();
+}
+
+function renderDashboardWorkspaceState() {
+  const hasWorkspace = Boolean(state.selectedKB);
+  el("dashboard-empty-workspace")?.classList.toggle("hidden", hasWorkspace);
+  el("dashboard-workspace-content")?.classList.toggle("hidden", !hasWorkspace);
+  document.body.classList.toggle("no-workspace", !hasWorkspace);
+  if (!hasWorkspace && document.querySelector(`.nav-item.active.requires-workspace`)) {
+    setView("dashboard");
+  }
 }
 
 function setWarehouseReady(ready) {
@@ -846,6 +904,7 @@ function updateMetrics() {
   el("metric-bindings").textContent = String(state.bindings.length);
   el("metric-docs").textContent = String(state.documents.length);
   el("metric-tasks").textContent = String(state.tasks.length);
+  setText("metric-knowledge-items", String(state.knowledgeItems.length));
   el("pill-kb").textContent = `知识库：${state.kbs.length}`;
   el("pill-task").textContent = `任务：${state.tasks.length}`;
 }
@@ -1659,7 +1718,7 @@ async function loginWithDemo() {
     searchInput.value = "Agent knowledge versioning";
   }
   await refreshCurrentRelease();
-  setView("kbs");
+  setView("dashboard");
   setOutput({ demo: true, wallet_address: token.wallet_address, kb });
 }
 
@@ -2090,8 +2149,11 @@ async function refreshKBs() {
     const latest = state.kbs.find((kb) => kb.id === state.selectedKB.id);
     state.selectedKB = latest || state.kbs[0] || null;
   } else {
-    state.selectedKB = state.kbs[0] || null;
+    const rememberedId = Number(localStorage.getItem(SELECTED_KB_KEY) || 0);
+    state.selectedKB = state.kbs.find((kb) => kb.id === rememberedId) || state.kbs[0] || null;
   }
+  if (state.selectedKB) localStorage.setItem(SELECTED_KB_KEY, String(state.selectedKB.id));
+  else localStorage.removeItem(SELECTED_KB_KEY);
   updateSelectedKBUI();
   renderKBList();
   updateMetrics();
@@ -2129,7 +2191,9 @@ function renderKBList() {
             <span class="pill">${escapeHtml(kb.status)}</span>
           </div>
           <div class="list-actions">
-            <button class="secondary" data-action="select-kb" data-kb-id="${kb.id}">选中</button>
+            ${state.selectedKB?.id === kb.id
+              ? `<button class="secondary" disabled><i class="bi bi-check2"></i>当前使用</button>`
+              : `<button class="secondary" data-action="select-kb" data-kb-id="${kb.id}">切换到此知识库</button>`}
             <button class="ghost" data-action="edit-kb" data-kb-id="${kb.id}">编辑</button>
             <button class="ghost" data-action="show-kb" data-kb-id="${kb.id}">JSON</button>
             <button class="danger" data-action="delete-kb" data-kb-id="${kb.id}">删除</button>
@@ -2173,9 +2237,55 @@ async function createKB() {
     body: JSON.stringify(payload),
   });
   setOutput(kb);
+  state.selectedKB = kb;
+  localStorage.setItem(SELECTED_KB_KEY, String(kb.id));
   await refreshKBs();
   await refreshSelectedData();
   closeKBEditor();
+  setView("warehouse");
+}
+
+function clearSelectedWorkspaceData() {
+  state.bindings = [];
+  state.documents = [];
+  state.knowledgeItems = [];
+  state.knowledgeItemDetails = [];
+  state.currentKBStats = null;
+  state.currentKBWorkbench = null;
+  state.currentRelease = null;
+  state.searchLabCompare = null;
+  state.retrievalLogs = [];
+  state.sourceGovernance = null;
+}
+
+async function switchKnowledgeBase(kbId) {
+  const kb = state.kbs.find((item) => item.id === Number(kbId));
+  if (!kb || state.selectedKB?.id === kb.id || state.workspaceSwitching) return;
+  state.workspaceSwitching = true;
+  document.body.classList.add("workspace-switching");
+  clearSelectedWorkspaceData();
+  state.selectedKB = kb;
+  localStorage.setItem(SELECTED_KB_KEY, String(kb.id));
+  updateSelectedKBUI();
+  renderAll();
+  try {
+    await refreshSelectedData();
+    renderAll();
+    setView("dashboard");
+  } finally {
+    state.workspaceSwitching = false;
+    document.body.classList.remove("workspace-switching");
+  }
+}
+
+async function editKnowledgeBase(kbId) {
+  if (state.selectedKB?.id !== Number(kbId)) {
+    await switchKnowledgeBase(kbId);
+  }
+  const kb = state.kbs.find((item) => item.id === Number(kbId));
+  if (!kb) throw new Error("知识库不存在或已被删除");
+  setView("kbs");
+  openKBEditor("edit", kb);
 }
 
 async function updateKB() {
@@ -2217,6 +2327,7 @@ async function deleteKB(kbId = null) {
   await api(`/kbs/${targetId}`, { method: "DELETE" });
   if (state.selectedKB?.id === targetId) {
     state.selectedKB = null;
+    clearSelectedWorkspaceData();
   }
   setOutput({ ok: true, deleted_kb_id: targetId });
   await refreshKBs();
@@ -2384,18 +2495,43 @@ async function uploadAppFile() {
   if (!state.writeCredential) {
     throw new Error("请先配置写凭证");
   }
-  const form = new FormData();
-  form.append("file", fileInput.files[0]);
-  form.append("target_dir", el("target-dir").value || currentWarehouseUploadDir());
-  const result = await api("/warehouse/upload", {
-    method: "POST",
-    body: form,
-  });
-  el("task-source-path").value = result.warehouse_path;
-  el("binding-path").value = result.warehouse_path;
-  setOutput(result);
+  const files = [...fileInput.files];
+  const targetDir = el("target-dir").value || currentWarehouseUploadDir();
+  const status = el("upload-batch-status");
+  const button = el("upload-app");
+  const uploaded = [];
+  const failed = [];
+  button.disabled = true;
+  status.classList.remove("hidden");
+  try {
+    for (const [index, file] of files.entries()) {
+      status.innerHTML = `<i class="bi bi-arrow-repeat"></i><span>正在上传 ${index + 1} / ${files.length}：${escapeHtml(file.name)}</span>`;
+      const form = new FormData();
+      form.append("file", file);
+      form.append("target_dir", targetDir);
+      try {
+        uploaded.push(await api("/warehouse/upload", { method: "POST", body: form }));
+      } catch (error) {
+        failed.push({ file_name: file.name, error: error instanceof Error ? error.message : String(error) });
+      }
+    }
+  } finally {
+    button.disabled = false;
+  }
+  if (files.length === 1 && uploaded[0]) {
+    el("task-source-path").value = uploaded[0].warehouse_path;
+    el("binding-path").value = uploaded[0].warehouse_path;
+  } else if (uploaded.length) {
+    el("task-source-path").value = targetDir;
+    el("binding-path").value = targetDir;
+  }
+  status.className = `upload-batch-status ${failed.length ? "warning" : "success"}`;
+  status.innerHTML = `<i class="bi ${failed.length ? "bi-exclamation-triangle" : "bi-check-circle"}"></i><span>已上传 ${uploaded.length} 个文件${failed.length ? `，失败 ${failed.length} 个` : ""}</span>`;
+  setOutput({ uploaded, failed });
+  fileInput.value = "";
   await refreshUploads();
-  await browseWarehouse(el("target-dir").value || currentWarehouseUploadDir());
+  await browseWarehouse(targetDir);
+  if (failed.length) throw new Error(`${failed.length} 个文件上传失败，请查看批次结果`);
 }
 
 async function refreshUploads() {
@@ -3040,6 +3176,121 @@ async function showKnowledgeItem(itemId) {
   );
 }
 
+function knowledgeItemRows() {
+  const detailById = new Map(state.knowledgeItemDetails.map((detail) => [Number(detail?.item?.id), detail]));
+  return state.knowledgeItems.map((item) => {
+    const detail = detailById.get(Number(item.id));
+    return { ...item, revision: detail?.current_revision || null };
+  });
+}
+
+function filteredKnowledgeItemRows() {
+  const query = String(el("knowledge-item-filter")?.value || "").trim().toLowerCase();
+  const type = el("knowledge-item-type-filter")?.value || "";
+  const status = el("knowledge-item-status-filter")?.value || "";
+  return knowledgeItemRows().filter((item) => {
+    if (type && item.item_type !== type) return false;
+    if (status && item.lifecycle_status !== status) return false;
+    if (!query) return true;
+    const revision = item.revision || {};
+    return [revision.title, revision.statement, item.item_type, item.origin_type, item.lifecycle_status]
+      .some((value) => String(value || "").toLowerCase().includes(query));
+  });
+}
+
+function renderKnowledgeItemCard(item, mapMode = false) {
+  const revision = item.revision || {};
+  const statusTone = item.lifecycle_status === "confirmed" || item.lifecycle_status === "active" ? "success" : "warning";
+  return `
+    <article class="knowledge-item-card${mapMode ? " map-node" : ""}">
+      <div class="knowledge-item-card-head">
+        <span class="knowledge-item-id">#${escapeHtml(String(item.id))}</span>
+        <span class="pill ${statusTone}">${escapeHtml(item.lifecycle_status || "-")}</span>
+      </div>
+      <h3>${escapeHtml(revision.title || `知识项 #${item.id}`)}</h3>
+      <p>${escapeHtml(revision.statement || "暂无陈述摘要")}</p>
+      <div class="knowledge-item-meta">
+        <span><i class="bi bi-box-arrow-in-right"></i>${escapeHtml(item.origin_type || "-")}</span>
+        <span><i class="bi bi-clock"></i>${escapeHtml(formatDate(item.updated_at))}</span>
+      </div>
+      <div class="knowledge-item-card-footer">
+        <span class="pill">rev ${escapeHtml(String(revision.revision_no || "-"))}</span>
+        <button class="secondary" data-action="show-knowledge-item" data-item-id="${escapeHtml(String(item.id))}">查看详情</button>
+      </div>
+    </article>
+  `;
+}
+
+function renderKnowledgeItems() {
+  const browser = el("knowledge-item-browser");
+  const summary = el("knowledge-item-summary");
+  if (!browser || !summary) return;
+  if (!state.selectedKB) {
+    browser.className = "empty";
+    browser.textContent = "请先选择知识库。";
+    summary.innerHTML = "";
+    return;
+  }
+  const allRows = knowledgeItemRows();
+  const rows = filteredKnowledgeItemRows();
+  const typeCount = new Set(allRows.map((item) => item.item_type).filter(Boolean)).size;
+  summary.innerHTML = `<span><strong>${formatNumber(rows.length)}</strong> / ${formatNumber(allRows.length)} 项</span><span>${formatNumber(typeCount)} 种知识类型</span><span>当前知识库：${escapeHtml(state.selectedKB.name || `#${state.selectedKB.id}`)}</span>`;
+  if (!rows.length) {
+    browser.className = "empty";
+    browser.textContent = allRows.length ? "没有符合当前筛选条件的知识项。" : "当前知识库还没有正式知识项。";
+    return;
+  }
+  browser.className = state.knowledgeViewMode === "map" ? "knowledge-map" : "knowledge-item-list";
+  if (state.knowledgeViewMode === "list") {
+    browser.innerHTML = rows.map((item) => renderKnowledgeItemCard(item)).join("");
+    return;
+  }
+  const groups = new Map();
+  rows.forEach((item) => {
+    const key = item.item_type || "uncategorized";
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(item);
+  });
+  browser.innerHTML = [...groups.entries()].map(([type, items]) => `
+    <section class="knowledge-map-lane">
+      <div class="knowledge-map-lane-head"><strong>${escapeHtml(type)}</strong><span class="pill">${formatNumber(items.length)}</span></div>
+      <div class="knowledge-map-nodes">${items.map((item) => renderKnowledgeItemCard(item, true)).join("")}</div>
+    </section>
+  `).join("");
+}
+
+function updateKnowledgeItemFilters() {
+  const rows = knowledgeItemRows();
+  const typeSelect = el("knowledge-item-type-filter");
+  const statusSelect = el("knowledge-item-status-filter");
+  if (!typeSelect || !statusSelect) return;
+  const currentType = typeSelect.value;
+  const currentStatus = statusSelect.value;
+  const types = [...new Set(rows.map((item) => item.item_type).filter(Boolean))].sort();
+  const statuses = [...new Set(rows.map((item) => item.lifecycle_status).filter(Boolean))].sort();
+  typeSelect.innerHTML = `<option value="">全部类型</option>${types.map((value) => `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`).join("")}`;
+  statusSelect.innerHTML = `<option value="">全部状态</option>${statuses.map((value) => `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`).join("")}`;
+  typeSelect.value = types.includes(currentType) ? currentType : "";
+  statusSelect.value = statuses.includes(currentStatus) ? currentStatus : "";
+}
+
+async function refreshKnowledgeItems() {
+  if (!state.selectedKB) {
+    state.knowledgeItems = [];
+    state.knowledgeItemDetails = [];
+    updateKnowledgeItemFilters();
+    renderKnowledgeItems();
+    return;
+  }
+  state.knowledgeItems = await api(`/kbs/${state.selectedKB.id}/items`);
+  state.knowledgeItemDetails = await Promise.all(
+    state.knowledgeItems.map((item) => api(`/kbs/${state.selectedKB.id}/items/${item.id}`).catch(() => null)),
+  );
+  state.knowledgeItemDetails = state.knowledgeItemDetails.filter(Boolean);
+  updateKnowledgeItemFilters();
+  renderKnowledgeItems();
+}
+
 function renderSearchLabCompare() {
   const box = el("search-lab-compare");
   if (!box) return;
@@ -3145,6 +3396,7 @@ async function refreshSelectedData() {
     refreshCurrentRelease(),
     refreshRetrievalLogs(),
     refreshSourceGovernance(),
+    refreshKnowledgeItems(),
   ]);
 }
 
@@ -3186,6 +3438,7 @@ function renderAll() {
   renderSearchLabCompare();
   renderRetrievalLogs();
   renderSourceGovernance();
+  renderKnowledgeItems();
   renderSystemReadiness();
   renderDemoGuide();
   updateMetrics();
@@ -3203,8 +3456,15 @@ function attachStaticEvents() {
   bindEvent("refresh-ops", "click", () => withFeedback(refreshOps, "运维状态已刷新")().catch(() => {}));
 
   bindEvent("connect-wallet", "click", () => withFeedback(loginWithWallet, "knowledge 登录成功")().catch(() => {}));
+  bindEvent("auth-connect-wallet", "click", () => withFeedback(loginWithWallet, "knowledge 登录成功")().catch(() => {}));
   bindEvent("demo-login", "click", () => withFeedback(loginWithDemo, "Demo 已就绪")().catch(() => {}));
+  bindEvent("auth-demo-login", "click", () => withFeedback(loginWithDemo, "Demo 已就绪")().catch(() => {}));
   bindEvent("quick-demo-login", "click", () => withFeedback(loginWithDemo, "Demo 已就绪")().catch(() => {}));
+  bindEvent("workspace-empty-demo", "click", () => withFeedback(loginWithDemo, "Demo 已就绪")().catch(() => {}));
+  bindEvent("workspace-empty-create", "click", () => {
+    setView("kbs");
+    openKBEditor("create");
+  });
   bindEvent("logout-button", "click", () => withFeedback(logout, "已退出 knowledge")().catch(() => {}));
   bindEvent("dashboard-refresh-all", "click", () => withFeedback(refreshAll, "已刷新全部数据")().catch(() => {}));
 
@@ -3293,7 +3553,7 @@ function attachStaticEvents() {
   bindEvent("clear-warehouse-temp-session", "click", () =>
     withFeedback(() => clearWarehouseTempSession(), "warehouse 临时会话已清理")().catch(() => {}),
   );
-  bindEvent("upload-app", "click", () => withFeedback(uploadAppFile, "文件已上传到 Knowledge App 目录")().catch(() => {}));
+  bindEvent("upload-app", "click", () => withFeedback(uploadAppFile, "文件上传完成")().catch(() => {}));
   bindEvent("refresh-uploads", "click", () => withFeedback(refreshUploads, "上传记录已刷新")().catch(() => {}));
 
   bindEvent("create-import-task", "click", () => withFeedback(() => createImportTask(), "导入任务已创建")().catch(() => {}));
@@ -3330,6 +3590,16 @@ function attachStaticEvents() {
   });
   bindEvent("document-filter", "input", () => renderDocuments());
   bindEvent("refresh-documents", "click", () => withFeedback(refreshDocuments, "文档列表已刷新")().catch(() => {}));
+  bindEvent("refresh-knowledge-items", "click", () => withFeedback(refreshKnowledgeItems, "知识项已刷新")().catch(() => {}));
+  bindEvent("knowledge-item-filter", "input", renderKnowledgeItems);
+  bindEvent("knowledge-item-type-filter", "change", renderKnowledgeItems);
+  bindEvent("knowledge-item-status-filter", "change", renderKnowledgeItems);
+  bindEvent("clear-knowledge-item-filters", "click", () => {
+    el("knowledge-item-filter").value = "";
+    el("knowledge-item-type-filter").value = "";
+    el("knowledge-item-status-filter").value = "";
+    renderKnowledgeItems();
+  });
   bindEvent("run-search-lab", "click", () => withFeedback(runSearchLabCompare, "Search Lab 对比已更新")().catch(() => {}));
   bindEvent("refresh-search-lab", "click", () =>
     withFeedback(async () => {
@@ -3412,15 +3682,7 @@ function attachStaticEvents() {
     if (!target) return;
     const { action } = target.dataset;
     if (action === "select-kb") {
-      const kb = state.kbs.find((item) => item.id === Number(target.dataset.kbId));
-      state.selectedKB = kb || null;
-      refreshSelectedData()
-        .then(renderAll)
-        .then(() => notify("info", "已切换当前知识库"))
-        .catch((err) => {
-          notify("error", err.message);
-          setOutput(err.message);
-        });
+      withFeedback(() => switchKnowledgeBase(Number(target.dataset.kbId)), "已切换知识库")().catch(() => {});
       return;
     }
     if (action === "show-kb") {
@@ -3429,16 +3691,7 @@ function attachStaticEvents() {
       return;
     }
     if (action === "edit-kb") {
-      const kb = state.kbs.find((item) => item.id === Number(target.dataset.kbId));
-      if (!kb) return;
-      state.selectedKB = kb;
-      updateSelectedKBUI();
-      renderKBList();
-      try {
-        openKBEditor("edit", kb);
-      } catch (err) {
-        notify("error", err.message);
-      }
+      withFeedback(() => editKnowledgeBase(Number(target.dataset.kbId)))().catch(() => {});
       return;
     }
     if (action === "delete-kb") {
@@ -3621,6 +3874,14 @@ function attachStaticEvents() {
     }
     if (action === "show-knowledge-item") {
       withFeedback(() => showKnowledgeItem(Number(target.dataset.itemId)))().catch(() => {});
+      return;
+    }
+    if (action === "set-knowledge-view") {
+      state.knowledgeViewMode = target.dataset.mode === "map" ? "map" : "list";
+      document.querySelectorAll('[data-action="set-knowledge-view"]').forEach((button) => {
+        button.classList.toggle("active", button.dataset.mode === state.knowledgeViewMode);
+      });
+      renderKnowledgeItems();
       return;
     }
     if (action === "run-demo-search") {
