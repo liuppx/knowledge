@@ -24,7 +24,10 @@
 
 - `backend/knowledge`: FastAPI 应用
 - `tests`: 后端测试
-- `docs/文档索引.md`: 文档索引
+- `docs/README.md`: 文档入口与版本说明
+- `docs/知识库架构V1.md`: 当前已经实现的知识库架构
+- `docs/知识库架构V2.md`: 尚未实现或尚未完整实现的目标架构
+- `docs/社区产品关系与开发边界.md`: Knowledge 与社区其他系统的关系
 - `docs/openapi/knowledge.openapi.yaml`: OpenAPI 3.1 权威接口定义
 - `docs/openapi/README.md`: OpenAPI 生成与使用说明
 - `docs/API接入文档.md`: 外部服务 API 接入文档
@@ -34,7 +37,6 @@
 - `docs/Warehouse凭证使用说明.md`: `warehouse` 读写凭证使用说明
 - `docs/Warehouse鉴权收口待办.md`: `warehouse` 鉴权收口 TODO
 - `docs/Bot与Chat知识库重构PRD.md`: bot/chat 产品重构 PRD
-- `docs/M1-M2技术方案.md`: M1 / M2 技术方案
 - `docs/Agent运行与上下文资产设计.md`: Agent Run、Context Asset 与 Chat/Warehouse 集成设计
 
 ## 本地启动
@@ -242,7 +244,10 @@ cp .env.example .env
 
 ## 文档
 
-- 文档索引：`docs/文档索引.md`
+- 文档入口：`docs/README.md`
+- 当前架构：`docs/知识库架构V1.md`
+- 目标架构：`docs/知识库架构V2.md`
+- 社区系统边界：`docs/社区产品关系与开发边界.md`
 - OpenAPI 接口定义：`docs/openapi/knowledge.openapi.yaml`
 - 外部服务接入：`docs/API接入文档.md`
 - 控制面接口：`docs/控制面API文档.md`
@@ -251,4 +256,3 @@ cp .env.example .env
 - `warehouse` 凭证使用：`docs/Warehouse凭证使用说明.md`
 - `warehouse` 收口 TODO：`docs/Warehouse鉴权收口待办.md`
 - 产品重构 PRD：`docs/Bot与Chat知识库重构PRD.md`
-- M1 / M2 技术方案：`docs/M1-M2技术方案.md`
