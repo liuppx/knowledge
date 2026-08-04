@@ -28,6 +28,10 @@ SERVICE_PRINCIPAL_STATUSES = ("active", "disabled", "revoked")
 SERVICE_GRANT_STATUSES = ("active", "expired", "revoked", "suspended")
 SERVICE_GRANT_RELEASE_SELECTION_MODES = ("latest_published", "pinned_release")
 RETRIEVAL_QUERY_MODES = ("formal_first", "formal_only", "evidence_only", "audit", "search_lab_compare")
+AGENT_RUN_STATUSES = ("running", "completed", "failed", "cancelled")
+AGENT_RUN_TYPES = ("research",)
+AGENT_RUN_MANIFEST_SYNC_STATUSES = ("pending", "synced", "failed")
+AGENT_ARTIFACT_STATUSES = ("draft", "final")
 WAREHOUSE_ACCESS_CREDENTIAL_KINDS = ("read", "read_write")
 WAREHOUSE_ACCESS_CREDENTIAL_STATUSES = ("active", "invalid", "revoked_local")
 
@@ -514,6 +518,7 @@ class ServicePrincipal(Base):
 
     grants: Mapped[list["ServiceGrant"]] = relationship(back_populates="service_principal", cascade="all, delete-orphan")
     retrieval_logs: Mapped[list["RetrievalLog"]] = relationship(back_populates="service_principal")
+    agent_runs: Mapped[list["AgentRun"]] = relationship(back_populates="service_principal")
 
 
 class ServiceGrant(Base):
@@ -544,6 +549,62 @@ class ServiceGrant(Base):
     retrieval_logs: Mapped[list["RetrievalLog"]] = relationship(back_populates="service_grant")
 
 
+class AgentRun(Base):
+    __tablename__ = "agent_runs"
+    __table_args__ = (
+        UniqueConstraint("service_principal_id", "external_id", name="uq_agent_runs_principal_external_id"),
+        Index("ix_agent_runs_owner_created_at", "owner_wallet_address", "created_at"),
+        Index("ix_agent_runs_principal_created_at", "service_principal_id", "created_at"),
+    )
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    owner_wallet_address: Mapped[str] = mapped_column(ForeignKey("wallet_users.wallet_address"), index=True, nullable=False)
+    service_principal_id: Mapped[int] = mapped_column(ForeignKey("service_principals.id"), index=True, nullable=False)
+    session_id: Mapped[str] = mapped_column(String(255), default="", nullable=False)
+    external_id: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    run_type: Mapped[str] = mapped_column(String(32), default="research", nullable=False)
+    status: Mapped[str] = mapped_column(String(32), default="running", nullable=False)
+    warehouse_run_path: Mapped[str] = mapped_column(String(1024), default="", nullable=False)
+    input_manifest_json: Mapped[list] = mapped_column(JSON, default=list, nullable=False)
+    context_manifest_json: Mapped[list] = mapped_column(JSON, default=list, nullable=False)
+    metadata_json: Mapped[dict] = mapped_column(JSON, default=dict, nullable=False)
+    error_summary: Mapped[str] = mapped_column(Text, default="", nullable=False)
+    manifest_sync_status: Mapped[str] = mapped_column(String(32), default="pending", nullable=False)
+    manifest_synced_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    manifest_sync_error: Mapped[str] = mapped_column(Text, default="", nullable=False)
+    started_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, nullable=False)
+    finished_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, onupdate=utcnow, nullable=False)
+
+    service_principal: Mapped["ServicePrincipal"] = relationship(back_populates="agent_runs")
+    artifacts: Mapped[list["AgentRunArtifact"]] = relationship(back_populates="run", cascade="all, delete-orphan")
+    retrieval_logs: Mapped[list["RetrievalLog"]] = relationship(back_populates="agent_run")
+
+
+class AgentRunArtifact(Base):
+    __tablename__ = "agent_run_artifacts"
+    __table_args__ = (UniqueConstraint("run_id", "artifact_key", name="uq_agent_run_artifacts_run_key"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    run_id: Mapped[str] = mapped_column(ForeignKey("agent_runs.id"), index=True, nullable=False)
+    artifact_key: Mapped[str] = mapped_column(String(255), nullable=False)
+    artifact_type: Mapped[str] = mapped_column(String(64), default="other", nullable=False)
+    role: Mapped[str] = mapped_column(String(128), default="output", nullable=False)
+    status: Mapped[str] = mapped_column(String(32), default="draft", nullable=False)
+    warehouse_path: Mapped[str] = mapped_column(String(1024), nullable=False)
+    file_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    content_type: Mapped[str] = mapped_column(String(255), nullable=False)
+    size: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    generated_by_json: Mapped[dict] = mapped_column(JSON, default=dict, nullable=False)
+    metadata_json: Mapped[dict] = mapped_column(JSON, default=dict, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, onupdate=utcnow, nullable=False)
+
+    run: Mapped["AgentRun"] = relationship(back_populates="artifacts")
+
+
 class RetrievalLog(Base):
     __tablename__ = "retrieval_logs"
     __table_args__ = (
@@ -556,6 +617,7 @@ class RetrievalLog(Base):
     kb_id: Mapped[Optional[int]] = mapped_column(ForeignKey("knowledge_bases.id"), index=True, nullable=True)
     service_grant_id: Mapped[Optional[int]] = mapped_column(ForeignKey("service_grants.id"), index=True, nullable=True)
     service_principal_id: Mapped[Optional[int]] = mapped_column(ForeignKey("service_principals.id"), index=True, nullable=True)
+    agent_run_id: Mapped[Optional[str]] = mapped_column(ForeignKey("agent_runs.id"), index=True, nullable=True)
     query: Mapped[str] = mapped_column(Text, nullable=False)
     query_mode: Mapped[str] = mapped_column(String(32), default=RETRIEVAL_QUERY_MODES[0], nullable=False)
     release_id: Mapped[Optional[int]] = mapped_column(ForeignKey("kb_releases.id"), index=True, nullable=True)
@@ -566,4 +628,5 @@ class RetrievalLog(Base):
     knowledge_base: Mapped[Optional["KnowledgeBase"]] = relationship(back_populates="retrieval_logs")
     service_grant: Mapped[Optional["ServiceGrant"]] = relationship(back_populates="retrieval_logs")
     service_principal: Mapped[Optional["ServicePrincipal"]] = relationship(back_populates="retrieval_logs")
+    agent_run: Mapped[Optional["AgentRun"]] = relationship(back_populates="retrieval_logs")
     release: Mapped[Optional["KBRelease"]] = relationship(back_populates="retrieval_logs")

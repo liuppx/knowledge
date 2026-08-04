@@ -1,62 +1,39 @@
-# knowledge 文档索引
+# Knowledge 文档
 
-## 当前状态
+本目录采用“当前事实、未来架构、操作指南、接口契约、历史背景”分层。判断功能是否已经实现时，优先查看 V1、OpenAPI 和代码；V2 只描述尚未完成的目标。
 
-- 当前仓库只存在顶层 `docs/`，还没有稳定的 `knowledge/docs/` 目录。
-- `warehouse` 控制面鉴权已经切到“手工导入 WebDAV `ak/sk` 凭证”的主模型。
-- 旧 `/warehouse/auth/*` 绑定接口已经删除；如果看到旧描述，应以当前代码和本目录新文档为准。
+## 架构基线
 
-## 建议阅读顺序
+- [知识库架构 V1](知识库架构V1.md)：当前已经实现的知识库架构和能力边界。
+- [知识库架构 V2](知识库架构V2.md)：尚未实现或尚未完整实现的目标架构。
+- [社区产品关系与开发边界](社区产品关系与开发边界.md)：Knowledge 与 Chat、Warehouse、Router、Node、Wallet、Project、Agent 的关系。
 
-### 先看这些
+社区关系文档的上游来源：
 
-- `docs/control-plane-api.md`
-  - 控制台与测试最常用的控制面接口汇总。
-- `docs/warehouse-auth-refactor.md`
-  - 当前 `warehouse` 鉴权、绑定与兼容策略的主说明。
-- `docs/warehouse-credential-usage.md`
-  - 面向控制台操作的读凭证 / 写凭证使用说明。
-- `docs/api-integration.md`
-  - 面向外部服务接入。
-  - `service search`、`grant`、`release` 相关内容仍有参考价值。
-  - `warehouse` 控制面细节已拆到其他文档，不再在这里展开。
-- `docs/worker-deployment.md`
-  - 面向 worker 部署与运行维护。
-  - 当前仍可作为部署参考。
+- [liuppx/books - 社区产品关系与开发边界.md](https://github.com/liuppx/books/blob/main/yeying/%E7%A4%BE%E5%8C%BA%E4%BA%A7%E5%93%81%E5%85%B3%E7%B3%BB%E4%B8%8E%E5%BC%80%E5%8F%91%E8%BE%B9%E7%95%8C.md)
 
-### 这些文档需要重写或降级为历史参考
+## 接口契约
 
-- `docs/technical-design-m1-m2.md`
-  - 主要描述检索与 memory 演进，不覆盖当前 `warehouse` 凭证模型、绑定关系和失败语义。
-  - 可作为历史设计背景，不应当作为当前鉴权设计文档。
-- `docs/prd-bot-knowledge.md`
-  - 仍主要服务 bot/chat 产品叙事。
-  - 不覆盖当前控制台、绑定源、`warehouse` 权限收口后的操作事实。
+- [knowledge.openapi.yaml](openapi/knowledge.openapi.yaml)：OpenAPI 3.1 权威接口定义。
+- [OpenAPI 说明](openapi/README.md)：生成、更新和本地查看方式。
+- [API 接入文档](API接入文档.md)：认证、推荐调用顺序和稳定性建议。
+- [控制面 API 文档](控制面API文档.md)：控制台和治理场景说明。
 
-## 当前已补齐的关键文档
+## 使用与运维
 
-- `warehouse` 鉴权重构设计说明
-- `warehouse` 凭证使用说明
-- `warehouse` 收口 TODO
-- 控制面 API 文档
+- [控制台操作手册](控制台操作手册.md)
+- [Warehouse 凭证使用说明](Warehouse凭证使用说明.md)
+- [Warehouse 鉴权与绑定重构说明](Warehouse鉴权与绑定重构说明.md)
+- [Worker 部署与扩缩容建议](Worker部署与扩缩容建议.md)
 
-## 仍可继续补充的文档
+## 产品与验证
 
-- `warehouse` 迁移说明
-- 领域模型说明
-- task / worker 失败语义专项文档
+- [产品验证知识库](产品验证知识库.md)
+- [Bot 与 Chat 知识库重构 PRD](Bot与Chat知识库重构PRD.md)
+- [Agent 运行与上下文资产设计](Agent运行与上下文资产设计.md)
 
-## 重构中的事实来源
+## 历史与待办
 
-如果要判断当前代码到底实现到了哪里，优先看下面这些文件，而不是旧文档：
+- [Warehouse 鉴权收口待办](Warehouse鉴权收口待办.md)
 
-- `backend/knowledge/api/routes_warehouse.py`
-- `backend/knowledge/services/warehouse_access.py`
-- `backend/knowledge/templates/index.html`
-- `backend/knowledge/static/js/app.js`
-
-## 后续文档建议
-
-- 当前关于 `warehouse` 的主文档已经切到“设计说明 + 使用说明 + 控制面 API + TODO”。
-- 后续如果旧绑定彻底下线，再补单独的迁移说明。
-- 在仓库决定是否引入 `knowledge/docs/` 之前，先避免同时维护两套文档目录。
+历史或待办文档不能覆盖 V1、OpenAPI 和当前代码事实。完成的目标应迁入 V1；尚未实现的架构目标应迁入 V2。

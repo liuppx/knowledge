@@ -1,0 +1,6495 @@
+openapi: 3.1.0
+info:
+  title: knowledge
+  version: 1.0.0
+  description: knowledge 控制面、知识生产、发布、检索与 Agent Run API。
+paths:
+  /health:
+    get:
+      summary: Health
+      operationId: health_health_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                title: Response Health Health Get
+  /auth/challenge:
+    post:
+      tags:
+      - auth
+      summary: Create Challenge
+      operationId: create_challenge_auth_challenge_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChallengeRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChallengeResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /auth/verify:
+    post:
+      tags:
+      - auth
+      summary: Verify Signature
+      operationId: verify_signature_auth_verify_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /auth/demo:
+    post:
+      tags:
+      - auth
+      summary: Demo Login
+      operationId: demo_login_auth_demo_post
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+  /auth/refresh:
+    post:
+      tags:
+      - auth
+      summary: Refresh Token
+      operationId: refresh_token_auth_refresh_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /auth/logout:
+    post:
+      tags:
+      - auth
+      summary: Logout
+      operationId: logout_auth_logout_post
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                title: Response Logout Auth Logout Post
+  /kbs:
+    get:
+      tags:
+      - knowledge_bases
+      summary: List Kbs
+      operationId: list_kbs_kbs_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/KBResponse'
+                type: array
+                title: Response List Kbs Kbs Get
+      security:
+      - HTTPBearer: []
+    post:
+      tags:
+      - knowledge_bases
+      summary: Create Kb
+      operationId: create_kb_kbs_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/KBCreateRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KBResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - HTTPBearer: []
+  /kbs/{kb_id}:
+    get:
+      tags:
+      - knowledge_bases
+      summary: Get Kb
+      operationId: get_kb_kbs__kb_id__get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KBResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    patch:
+      tags:
+      - knowledge_bases
+      summary: Update Kb
+      operationId: update_kb_kbs__kb_id__patch
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/KBUpdateRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KBResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    delete:
+      tags:
+      - knowledge_bases
+      summary: Delete Kb
+      operationId: delete_kb_kbs__kb_id__delete
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                title: Response Delete Kb Kbs  Kb Id  Delete
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /kbs/{kb_id}/stats:
+    get:
+      tags:
+      - knowledge_bases
+      summary: Kb Stats
+      operationId: kb_stats_kbs__kb_id__stats_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KBStatsResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /kbs/{kb_id}/workbench:
+    get:
+      tags:
+      - knowledge_bases
+      summary: Kb Workbench
+      operationId: kb_workbench_kbs__kb_id__workbench_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KBWorkbenchResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /kbs/{kb_id}/sources:
+    post:
+      tags:
+      - sources
+      summary: Create Source
+      operationId: create_source_kbs__kb_id__sources_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SourceCreateRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SourceRead'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    get:
+      tags:
+      - sources
+      summary: List Sources
+      operationId: list_sources_kbs__kb_id__sources_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SourceRead'
+                title: Response List Sources Kbs  Kb Id  Sources Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /kbs/{kb_id}/sources/{source_id}:
+    get:
+      tags:
+      - sources
+      summary: Get Source
+      operationId: get_source_kbs__kb_id__sources__source_id__get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      - name: source_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Source Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SourceRead'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    patch:
+      tags:
+      - sources
+      summary: Update Source
+      operationId: update_source_kbs__kb_id__sources__source_id__patch
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      - name: source_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Source Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SourceUpdateRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SourceRead'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /kbs/{kb_id}/sources/{source_id}/scan:
+    post:
+      tags:
+      - sources
+      summary: Scan Source
+      operationId: scan_source_kbs__kb_id__sources__source_id__scan_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      - name: source_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Source Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SourceScanResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /kbs/{kb_id}/assets:
+    get:
+      tags:
+      - assets
+      summary: List Assets
+      operationId: list_assets_kbs__kb_id__assets_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      - name: source_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Source Id
+      - name: availability_status
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Availability Status
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SourceAssetRead'
+                title: Response List Assets Kbs  Kb Id  Assets Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /kbs/{kb_id}/sources/{source_id}/assets:
+    get:
+      tags:
+      - assets
+      summary: List Source Assets
+      operationId: list_source_assets_kbs__kb_id__sources__source_id__assets_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      - name: source_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Source Id
+      - name: availability_status
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Availability Status
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SourceAssetRead'
+                title: Response List Source Assets Kbs  Kb Id  Sources  Source Id  Assets Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /service/runs:
+    post:
+      tags:
+      - agent_runs
+      summary: Create Agent Run
+      operationId: create_agent_run_service_runs_post
+      parameters:
+      - name: X-Service-Api-Key
+        in: header
+        required: true
+        schema:
+          type: string
+          title: X-Service-Api-Key
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentRunCreateRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentRunRead'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /service/runs/{run_id}:
+    get:
+      tags:
+      - agent_runs
+      summary: Get Agent Run
+      operationId: get_agent_run_service_runs__run_id__get
+      parameters:
+      - name: run_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Run Id
+      - name: X-Service-Api-Key
+        in: header
+        required: true
+        schema:
+          type: string
+          title: X-Service-Api-Key
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentRunRead'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /service/runs/{run_id}/context:
+    put:
+      tags:
+      - agent_runs
+      summary: Update Agent Run Context
+      operationId: update_agent_run_context_service_runs__run_id__context_put
+      parameters:
+      - name: run_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Run Id
+      - name: X-Service-Api-Key
+        in: header
+        required: true
+        schema:
+          type: string
+          title: X-Service-Api-Key
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentRunContextUpdateRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentRunRead'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /service/runs/{run_id}/complete:
+    post:
+      tags:
+      - agent_runs
+      summary: Complete Agent Run
+      operationId: complete_agent_run_service_runs__run_id__complete_post
+      parameters:
+      - name: run_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Run Id
+      - name: X-Service-Api-Key
+        in: header
+        required: true
+        schema:
+          type: string
+          title: X-Service-Api-Key
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentRunFinishRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentRunRead'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /service/runs/{run_id}/artifacts:
+    post:
+      tags:
+      - agent_runs
+      summary: Upload Agent Run Artifact
+      operationId: upload_agent_run_artifact_service_runs__run_id__artifacts_post
+      parameters:
+      - name: run_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Run Id
+      - name: X-Service-Api-Key
+        in: header
+        required: true
+        schema:
+          type: string
+          title: X-Service-Api-Key
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Body_upload_agent_run_artifact_service_runs__run_id__artifacts_post'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentRunArtifactRead'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /service/runs/{run_id}/fail:
+    post:
+      tags:
+      - agent_runs
+      summary: Fail Agent Run
+      operationId: fail_agent_run_service_runs__run_id__fail_post
+      parameters:
+      - name: run_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Run Id
+      - name: X-Service-Api-Key
+        in: header
+        required: true
+        schema:
+          type: string
+          title: X-Service-Api-Key
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentRunFinishRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentRunRead'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /service/runs/{run_id}/cancel:
+    post:
+      tags:
+      - agent_runs
+      summary: Cancel Agent Run
+      operationId: cancel_agent_run_service_runs__run_id__cancel_post
+      parameters:
+      - name: run_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Run Id
+      - name: X-Service-Api-Key
+        in: header
+        required: true
+        schema:
+          type: string
+          title: X-Service-Api-Key
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentRunFinishRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentRunRead'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /runs/{run_id}/manifest/retry:
+    post:
+      tags:
+      - agent_runs
+      summary: Retry Agent Run Manifest
+      operationId: retry_agent_run_manifest_runs__run_id__manifest_retry_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: run_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Run Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentRunRead'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /warehouse/status:
+    get:
+      tags:
+      - warehouse_sources
+      summary: Warehouse Status
+      operationId: warehouse_status_warehouse_status_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarehouseStatusResponse'
+      security:
+      - HTTPBearer: []
+  /warehouse/bootstrap/challenge:
+    post:
+      tags:
+      - warehouse_sources
+      summary: Warehouse Bootstrap Challenge
+      operationId: warehouse_bootstrap_challenge_warehouse_bootstrap_challenge_post
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarehouseBootstrapChallengeResponse'
+      security:
+      - HTTPBearer: []
+  /warehouse/bootstrap/initialize:
+    post:
+      tags:
+      - warehouse_sources
+      summary: Warehouse Bootstrap Initialize
+      operationId: warehouse_bootstrap_initialize_warehouse_bootstrap_initialize_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WarehouseBootstrapInitializeRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarehouseBootstrapInitializeResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - HTTPBearer: []
+  /warehouse/credentials/read:
+    get:
+      tags:
+      - warehouse_sources
+      summary: List Read Credentials
+      operationId: list_read_credentials_warehouse_credentials_read_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/WarehouseCredentialSummary'
+                type: array
+                title: Response List Read Credentials Warehouse Credentials Read Get
+      security:
+      - HTTPBearer: []
+    post:
+      tags:
+      - warehouse_sources
+      summary: Create Read Credential
+      operationId: create_read_credential_warehouse_credentials_read_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WarehouseCredentialCreateRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarehouseCredentialSummary'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - HTTPBearer: []
+  /warehouse/credentials/read/{credential_id}/secret:
+    get:
+      tags:
+      - warehouse_sources
+      summary: Reveal Read Credential Secret
+      operationId: reveal_read_credential_secret_warehouse_credentials_read__credential_id__secret_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: credential_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Credential Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarehouseCredentialRevealResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /warehouse/credentials/read/{credential_id}:
+    delete:
+      tags:
+      - warehouse_sources
+      summary: Delete Read Credential
+      operationId: delete_read_credential_warehouse_credentials_read__credential_id__delete
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: credential_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Credential Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                title: Response Delete Read Credential Warehouse Credentials Read  Credential Id  Delete
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /warehouse/credentials/write:
+    get:
+      tags:
+      - warehouse_sources
+      summary: Get Write Credential
+      operationId: get_write_credential_warehouse_credentials_write_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarehouseWriteCredentialResponse'
+      security:
+      - HTTPBearer: []
+    post:
+      tags:
+      - warehouse_sources
+      summary: Upsert Write Credential
+      operationId: upsert_write_credential_warehouse_credentials_write_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WarehouseCredentialCreateRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarehouseCredentialSummary'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - HTTPBearer: []
+    delete:
+      tags:
+      - warehouse_sources
+      summary: Delete Write Credential
+      operationId: delete_write_credential_warehouse_credentials_write_delete
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                title: Response Delete Write Credential Warehouse Credentials Write Delete
+      security:
+      - HTTPBearer: []
+  /warehouse/credentials/write/secret:
+    get:
+      tags:
+      - warehouse_sources
+      summary: Reveal Write Credential Secret
+      operationId: reveal_write_credential_secret_warehouse_credentials_write_secret_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarehouseCredentialRevealResponse'
+      security:
+      - HTTPBearer: []
+  /warehouse/browse:
+    get:
+      tags:
+      - warehouse_sources
+      summary: Browse Warehouse
+      operationId: browse_warehouse_warehouse_browse_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: path
+        in: query
+        required: false
+        schema:
+          type: string
+          default: /apps/knowledge.yeying.pub
+          title: Path
+      - name: credential_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Credential Id
+      - name: use_write_credential
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: false
+          title: Use Write Credential
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarehouseBrowseResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /warehouse/upload:
+    post:
+      tags:
+      - warehouse_sources
+      summary: Upload To App Dir
+      operationId: upload_to_app_dir_warehouse_upload_post
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Body_upload_to_app_dir_warehouse_upload_post'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - HTTPBearer: []
+  /warehouse/uploads:
+    get:
+      tags:
+      - warehouse_sources
+      summary: List Upload Records
+      operationId: list_upload_records_warehouse_uploads_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  type: object
+                type: array
+                title: Response List Upload Records Warehouse Uploads Get
+      security:
+      - HTTPBearer: []
+  /warehouse/preview:
+    get:
+      tags:
+      - warehouse_sources
+      summary: Preview Warehouse File
+      operationId: preview_warehouse_file_warehouse_preview_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: path
+        in: query
+        required: true
+        schema:
+          type: string
+          title: Path
+      - name: credential_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Credential Id
+      - name: use_write_credential
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: false
+          title: Use Write Credential
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                title: Response Preview Warehouse File Warehouse Preview Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /kbs/{kb_id}/bindings:
+    post:
+      tags:
+      - warehouse_sources
+      summary: Create Binding
+      operationId: create_binding_kbs__kb_id__bindings_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SourceBindingCreateRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SourceBindingResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    get:
+      tags:
+      - warehouse_sources
+      summary: List Bindings
+      operationId: list_bindings_kbs__kb_id__bindings_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SourceBindingResponse'
+                title: Response List Bindings Kbs  Kb Id  Bindings Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /kbs/{kb_id}/bindings/{binding_id}:
+    delete:
+      tags:
+      - warehouse_sources
+      summary: Delete Binding
+      operationId: delete_binding_kbs__kb_id__bindings__binding_id__delete
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      - name: binding_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Binding Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                title: Response Delete Binding Kbs  Kb Id  Bindings  Binding Id  Delete
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    patch:
+      tags:
+      - warehouse_sources
+      summary: Update Binding
+      operationId: update_binding_kbs__kb_id__bindings__binding_id__patch
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      - name: binding_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Binding Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SourceBindingUpdateRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SourceBindingResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /kbs/{kb_id}/tasks/import:
+    post:
+      tags:
+      - ingestion_tasks
+      summary: Create Import Task
+      operationId: create_import_task_kbs__kb_id__tasks_import_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskCreateRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /kbs/{kb_id}/tasks/reindex:
+    post:
+      tags:
+      - ingestion_tasks
+      summary: Create Reindex Task
+      operationId: create_reindex_task_kbs__kb_id__tasks_reindex_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskCreateRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /kbs/{kb_id}/tasks/delete:
+    post:
+      tags:
+      - ingestion_tasks
+      summary: Create Delete Task
+      operationId: create_delete_task_kbs__kb_id__tasks_delete_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskCreateRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /kbs/{kb_id}/tasks/import-from-bindings:
+    post:
+      tags:
+      - ingestion_tasks
+      summary: Create Import Task From Bindings
+      operationId: create_import_task_from_bindings_kbs__kb_id__tasks_import_from_bindings_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BindingTaskCreateRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /kbs/{kb_id}/tasks/reindex-from-bindings:
+    post:
+      tags:
+      - ingestion_tasks
+      summary: Create Reindex Task From Bindings
+      operationId: create_reindex_task_from_bindings_kbs__kb_id__tasks_reindex_from_bindings_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BindingTaskCreateRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /kbs/{kb_id}/tasks/delete-from-bindings:
+    post:
+      tags:
+      - ingestion_tasks
+      summary: Create Delete Task From Bindings
+      operationId: create_delete_task_from_bindings_kbs__kb_id__tasks_delete_from_bindings_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BindingTaskCreateRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /tasks:
+    get:
+      tags:
+      - ingestion_tasks
+      summary: List Tasks
+      operationId: list_tasks_tasks_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/TaskResponse'
+                type: array
+                title: Response List Tasks Tasks Get
+      security:
+      - HTTPBearer: []
+  /tasks/{task_id}:
+    get:
+      tags:
+      - ingestion_tasks
+      summary: Get Task
+      operationId: get_task_tasks__task_id__get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: task_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Task Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /tasks/process-pending:
+    post:
+      tags:
+      - ingestion_tasks
+      summary: Process Pending Tasks
+      operationId: process_pending_tasks_tasks_process_pending_post
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                title: Response Process Pending Tasks Tasks Process Pending Post
+      security:
+      - HTTPBearer: []
+  /tasks/{task_id}/retry:
+    post:
+      tags:
+      - ingestion_tasks
+      summary: Retry Task
+      operationId: retry_task_tasks__task_id__retry_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: task_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Task Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /tasks/{task_id}/cancel:
+    post:
+      tags:
+      - ingestion_tasks
+      summary: Cancel Task
+      operationId: cancel_task_tasks__task_id__cancel_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: task_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Task Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /tasks/{task_id}/items:
+    get:
+      tags:
+      - ingestion_tasks
+      summary: Task Items
+      operationId: task_items_tasks__task_id__items_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: task_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Task Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                title: Response Task Items Tasks  Task Id  Items Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /kbs/{kb_id}/documents:
+    get:
+      tags:
+      - documents
+      summary: List Documents
+      operationId: list_documents_kbs__kb_id__documents_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                title: Response List Documents Kbs  Kb Id  Documents Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /kbs/{kb_id}/documents/{doc_id}:
+    get:
+      tags:
+      - documents
+      summary: Get Document
+      operationId: get_document_kbs__kb_id__documents__doc_id__get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      - name: doc_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Doc Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                title: Response Get Document Kbs  Kb Id  Documents  Doc Id  Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    delete:
+      tags:
+      - documents
+      summary: Delete Document
+      operationId: delete_document_kbs__kb_id__documents__doc_id__delete
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      - name: doc_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Doc Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                title: Response Delete Document Kbs  Kb Id  Documents  Doc Id  Delete
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /kbs/{kb_id}/assets/{asset_id}/build-evidence:
+    post:
+      tags:
+      - evidence
+      summary: Build Evidence For Asset
+      operationId: build_evidence_for_asset_kbs__kb_id__assets__asset_id__build_evidence_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      - name: asset_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Asset Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvidenceBuildResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /kbs/{kb_id}/sources/{source_id}/build-evidence:
+    post:
+      tags:
+      - evidence
+      summary: Build Evidence For Source
+      operationId: build_evidence_for_source_kbs__kb_id__sources__source_id__build_evidence_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      - name: source_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Source Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvidenceBuildResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /kbs/{kb_id}/evidence:
+    get:
+      tags:
+      - evidence
+      summary: List Evidence
+      operationId: list_evidence_kbs__kb_id__evidence_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      - name: source_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Source Id
+      - name: asset_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Asset Id
+      - name: evidence_type
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Evidence Type
+      - name: vector_status
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Vector Status
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EvidenceUnitRead'
+                title: Response List Evidence Kbs  Kb Id  Evidence Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /kbs/{kb_id}/evidence/{evidence_id}:
+    get:
+      tags:
+      - evidence
+      summary: Get Evidence
+      operationId: get_evidence_kbs__kb_id__evidence__evidence_id__get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      - name: evidence_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Evidence Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvidenceUnitRead'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /kbs/{kb_id}/assets/{asset_id}/generate-candidates:
+    post:
+      tags:
+      - items
+      summary: Generate Candidates For Asset
+      operationId: generate_candidates_for_asset_kbs__kb_id__assets__asset_id__generate_candidates_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      - name: asset_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Asset Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CandidateGenerationResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /kbs/{kb_id}/sources/{source_id}/generate-candidates:
+    post:
+      tags:
+      - items
+      summary: Generate Candidates For Source
+      operationId: generate_candidates_for_source_kbs__kb_id__sources__source_id__generate_candidates_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      - name: source_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Source Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CandidateGenerationResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /kbs/{kb_id}/candidates:
+    get:
+      tags:
+      - items
+      summary: List Candidates
+      operationId: list_candidates_kbs__kb_id__candidates_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/KnowledgeItemCandidateRead'
+                title: Response List Candidates Kbs  Kb Id  Candidates Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /kbs/{kb_id}/candidates/{candidate_id}/accept:
+    post:
+      tags:
+      - items
+      summary: Accept Candidate
+      operationId: accept_candidate_kbs__kb_id__candidates__candidate_id__accept_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      - name: candidate_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Candidate Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CandidateAcceptRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KnowledgeItemDetailResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /kbs/{kb_id}/candidates/{candidate_id}/reject:
+    post:
+      tags:
+      - items
+      summary: Reject Candidate
+      operationId: reject_candidate_kbs__kb_id__candidates__candidate_id__reject_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      - name: candidate_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Candidate Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CandidateRejectRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KnowledgeItemCandidateRead'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /kbs/{kb_id}/items:
+    get:
+      tags:
+      - items
+      summary: List Items
+      operationId: list_items_kbs__kb_id__items_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/KnowledgeItemRead'
+                title: Response List Items Kbs  Kb Id  Items Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /kbs/{kb_id}/items/manual:
+    post:
+      tags:
+      - items
+      summary: Create Manual Item
+      operationId: create_manual_item_kbs__kb_id__items_manual_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ManualItemCreateRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KnowledgeItemDetailResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /kbs/{kb_id}/items/{item_id}:
+    get:
+      tags:
+      - items
+      summary: Get Item
+      operationId: get_item_kbs__kb_id__items__item_id__get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      - name: item_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Item Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KnowledgeItemDetailResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    patch:
+      tags:
+      - items
+      summary: Update Item
+      operationId: update_item_kbs__kb_id__items__item_id__patch
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      - name: item_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Item Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ManualItemUpdateRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KnowledgeItemDetailResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /kbs/{kb_id}/releases:
+    post:
+      tags:
+      - releases
+      summary: Publish Release
+      operationId: publish_release_kbs__kb_id__releases_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReleasePublishRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReleaseDetailResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    get:
+      tags:
+      - releases
+      summary: List Releases
+      operationId: list_releases_kbs__kb_id__releases_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/KBReleaseRead'
+                title: Response List Releases Kbs  Kb Id  Releases Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /kbs/{kb_id}/releases/{release_id}/hotfix:
+    post:
+      tags:
+      - releases
+      summary: Hotfix Release
+      operationId: hotfix_release_kbs__kb_id__releases__release_id__hotfix_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      - name: release_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Release Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReleaseHotfixRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReleaseDetailResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /kbs/{kb_id}/releases/{release_id}/rollback:
+    post:
+      tags:
+      - releases
+      summary: Rollback Release
+      operationId: rollback_release_kbs__kb_id__releases__release_id__rollback_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      - name: release_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Release Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReleaseRollbackRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReleaseDetailResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /kbs/{kb_id}/releases/current:
+    get:
+      tags:
+      - releases
+      summary: Get Current Release
+      operationId: get_current_release_kbs__kb_id__releases_current_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReleaseDetailResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /kbs/{kb_id}/releases/{release_id}:
+    get:
+      tags:
+      - releases
+      summary: Get Release
+      operationId: get_release_kbs__kb_id__releases__release_id__get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      - name: release_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Release Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReleaseDetailResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /service-principals:
+    get:
+      tags:
+      - grants
+      summary: List Service Principals
+      operationId: list_service_principals_service_principals_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/ServicePrincipalRead'
+                type: array
+                title: Response List Service Principals Service Principals Get
+      security:
+      - HTTPBearer: []
+    post:
+      tags:
+      - grants
+      summary: Create Service Principal
+      operationId: create_service_principal_service_principals_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ServicePrincipalCreateRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServicePrincipalCreateResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - HTTPBearer: []
+  /service-principals/verify:
+    post:
+      tags:
+      - grants
+      summary: Verify Service Principal
+      operationId: verify_service_principal_service_principals_verify_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ServicePrincipalVerifyRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServicePrincipalVerifyResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /service-principals/{principal_id}:
+    patch:
+      tags:
+      - grants
+      summary: Update Service Principal
+      operationId: update_service_principal_service_principals__principal_id__patch
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: principal_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Principal Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ServicePrincipalUpdateRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServicePrincipalRead'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /kbs/{kb_id}/grants:
+    post:
+      tags:
+      - grants
+      summary: Create Service Grant
+      operationId: create_service_grant_kbs__kb_id__grants_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ServiceGrantCreateRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceGrantRead'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    get:
+      tags:
+      - grants
+      summary: List Service Grants
+      operationId: list_service_grants_kbs__kb_id__grants_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ServiceGrantRead'
+                title: Response List Service Grants Kbs  Kb Id  Grants Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /kbs/{kb_id}/grants/{grant_id}:
+    patch:
+      tags:
+      - grants
+      summary: Update Service Grant
+      operationId: update_service_grant_kbs__kb_id__grants__grant_id__patch
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      - name: grant_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Grant Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ServiceGrantUpdateRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceGrantRead'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /service/grants:
+    get:
+      tags:
+      - grants
+      summary: List Service Grants For Principal
+      operationId: list_service_grants_for_principal_service_grants_get
+      parameters:
+      - name: X-Service-Api-Key
+        in: header
+        required: true
+        schema:
+          type: string
+          title: X-Service-Api-Key
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ServiceGrantResolvedRead'
+                title: Response List Service Grants For Principal Service Grants Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /service/kbs:
+    get:
+      tags:
+      - grants
+      summary: List Service Kbs
+      operationId: list_service_kbs_service_kbs_get
+      parameters:
+      - name: X-Service-Api-Key
+        in: header
+        required: true
+        schema:
+          type: string
+          title: X-Service-Api-Key
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ServiceKnowledgeBaseRead'
+                title: Response List Service Kbs Service Kbs Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /service/releases/current:
+    get:
+      tags:
+      - grants
+      summary: Get Service Current Release
+      operationId: get_service_current_release_service_releases_current_get
+      parameters:
+      - name: kb_id
+        in: query
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      - name: X-Service-Api-Key
+        in: header
+        required: true
+        schema:
+          type: string
+          title: X-Service-Api-Key
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceCurrentReleaseResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /service/search:
+    post:
+      tags:
+      - service_search
+      summary: Service Search
+      operationId: service_search_service_search_post
+      parameters:
+      - name: X-Service-Api-Key
+        in: header
+        required: true
+        schema:
+          type: string
+          title: X-Service-Api-Key
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ServiceSearchRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceSearchResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /service/search/formal:
+    post:
+      tags:
+      - service_search
+      summary: Service Search Formal
+      operationId: service_search_formal_service_search_formal_post
+      parameters:
+      - name: X-Service-Api-Key
+        in: header
+        required: true
+        schema:
+          type: string
+          title: X-Service-Api-Key
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ServiceSearchRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceSearchResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /service/search/evidence:
+    post:
+      tags:
+      - service_search
+      summary: Service Search Evidence
+      operationId: service_search_evidence_service_search_evidence_post
+      parameters:
+      - name: X-Service-Api-Key
+        in: header
+        required: true
+        schema:
+          type: string
+          title: X-Service-Api-Key
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ServiceSearchRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceSearchResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /kbs/{kb_id}/search-lab/compare:
+    post:
+      tags:
+      - search_lab
+      summary: Compare Search Modes
+      operationId: compare_search_modes_kbs__kb_id__search_lab_compare_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchLabCompareRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchLabCompareResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /kbs/{kb_id}/retrieval-logs:
+    get:
+      tags:
+      - search_lab
+      summary: List Retrieval Logs
+      operationId: list_retrieval_logs_kbs__kb_id__retrieval_logs_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 50
+          title: Limit
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RetrievalLogRead'
+                title: Response List Retrieval Logs Kbs  Kb Id  Retrieval Logs Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /kbs/{kb_id}/retrieval-logs/{log_id}:
+    get:
+      tags:
+      - search_lab
+      summary: Get Retrieval Log
+      operationId: get_retrieval_log_kbs__kb_id__retrieval_logs__log_id__get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      - name: log_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Log Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RetrievalLogRead'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /kbs/{kb_id}/source-governance:
+    get:
+      tags:
+      - search_lab
+      summary: Get Source Governance
+      operationId: get_source_governance_kbs__kb_id__source_governance_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SourceGovernanceResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /memory/long-term:
+    get:
+      tags:
+      - memory
+      summary: List Long Term
+      operationId: list_long_term_memory_long_term_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/LongTermMemoryResponse'
+                type: array
+                title: Response List Long Term Memory Long Term Get
+      security:
+      - HTTPBearer: []
+    post:
+      tags:
+      - memory
+      summary: Create Long Term
+      operationId: create_long_term_memory_long_term_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LongTermMemoryCreateRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LongTermMemoryResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - HTTPBearer: []
+  /memory/long-term/{memory_id}:
+    patch:
+      tags:
+      - memory
+      summary: Update Long Term
+      operationId: update_long_term_memory_long_term__memory_id__patch
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: memory_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Memory Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LongTermMemoryUpdateRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LongTermMemoryResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    delete:
+      tags:
+      - memory
+      summary: Delete Long Term
+      operationId: delete_long_term_memory_long_term__memory_id__delete
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: memory_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Memory Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /memory/short-term:
+    get:
+      tags:
+      - memory
+      summary: List Short Term
+      operationId: list_short_term_memory_short_term_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: session_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Id
+      - name: memory_namespace
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Memory Namespace
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ShortTermMemoryResponse'
+                title: Response List Short Term Memory Short Term Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    post:
+      tags:
+      - memory
+      summary: Create Short Term
+      operationId: create_short_term_memory_short_term_post
+      security:
+      - HTTPBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShortTermMemoryCreateRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShortTermMemoryResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /memory/short-term/{memory_id}:
+    delete:
+      tags:
+      - memory
+      summary: Delete Short Term
+      operationId: delete_short_term_memory_short_term__memory_id__delete
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: memory_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Memory Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /memory/ingestions:
+    get:
+      tags:
+      - memory
+      summary: List Ingestions
+      operationId: list_ingestions_memory_ingestions_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: session_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Session Id
+      - name: trace_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Trace Id
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 20
+          title: Limit
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MemoryIngestionEventResponse'
+                title: Response List Ingestions Memory Ingestions Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /memory/ingest:
+    post:
+      tags:
+      - memory
+      summary: Ingest Memory
+      operationId: ingest_memory_memory_ingest_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MemoryIngestionRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MemoryIngestionResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - HTTPBearer: []
+  /ops/overview:
+    get:
+      tags:
+      - ops
+      summary: Overview
+      operationId: overview_ops_overview_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                title: Response Overview Ops Overview Get
+      security:
+      - HTTPBearer: []
+  /ops/stores/health:
+    get:
+      tags:
+      - ops
+      summary: Stores Health
+      operationId: stores_health_ops_stores_health_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                title: Response Stores Health Ops Stores Health Get
+      security:
+      - HTTPBearer: []
+  /ops/workers:
+    get:
+      tags:
+      - ops
+      summary: Workers
+      operationId: workers_ops_workers_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  type: object
+                type: array
+                title: Response Workers Ops Workers Get
+      security:
+      - HTTPBearer: []
+  /ops/tasks/failures:
+    get:
+      tags:
+      - ops
+      summary: Recent Task Failures
+      operationId: recent_task_failures_ops_tasks_failures_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: trace_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Trace Id
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 10
+          title: Limit
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                title: Response Recent Task Failures Ops Tasks Failures Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+components:
+  schemas:
+    AgentRunArtifactRead:
+      properties:
+        id:
+          type: integer
+          title: Id
+        run_id:
+          type: string
+          title: Run Id
+        artifact_key:
+          type: string
+          title: Artifact Key
+        artifact_type:
+          type: string
+          title: Artifact Type
+        role:
+          type: string
+          title: Role
+        status:
+          type: string
+          title: Status
+        warehouse_path:
+          type: string
+          title: Warehouse Path
+        file_name:
+          type: string
+          title: File Name
+        content_type:
+          type: string
+          title: Content Type
+        size:
+          type: integer
+          title: Size
+        sha256:
+          type: string
+          title: Sha256
+        generated_by_json:
+          type: object
+          title: Generated By Json
+        metadata_json:
+          type: object
+          title: Metadata Json
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+      type: object
+      required:
+      - id
+      - run_id
+      - artifact_key
+      - artifact_type
+      - role
+      - status
+      - warehouse_path
+      - file_name
+      - content_type
+      - size
+      - sha256
+      - created_at
+      - updated_at
+      title: AgentRunArtifactRead
+    AgentRunContextUpdateRequest:
+      properties:
+        context:
+          items:
+            type: object
+          type: array
+          title: Context
+      type: object
+      title: AgentRunContextUpdateRequest
+    AgentRunCreateRequest:
+      properties:
+        session_id:
+          type: string
+          title: Session Id
+          default: ''
+        external_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: External Id
+        run_type:
+          type: string
+          title: Run Type
+          default: research
+        inputs:
+          items:
+            type: object
+          type: array
+          title: Inputs
+        metadata:
+          type: object
+          title: Metadata
+      type: object
+      title: AgentRunCreateRequest
+    AgentRunFinishRequest:
+      properties:
+        error_summary:
+          type: string
+          title: Error Summary
+          default: ''
+      type: object
+      title: AgentRunFinishRequest
+    AgentRunRead:
+      properties:
+        id:
+          type: string
+          title: Id
+        owner_wallet_address:
+          type: string
+          title: Owner Wallet Address
+        service_principal_id:
+          type: integer
+          title: Service Principal Id
+        session_id:
+          type: string
+          title: Session Id
+        external_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: External Id
+        run_type:
+          type: string
+          title: Run Type
+        status:
+          type: string
+          title: Status
+        warehouse_run_path:
+          type: string
+          title: Warehouse Run Path
+        input_manifest_json:
+          items: {}
+          type: array
+          title: Input Manifest Json
+        context_manifest_json:
+          items: {}
+          type: array
+          title: Context Manifest Json
+        metadata_json:
+          type: object
+          title: Metadata Json
+        error_summary:
+          type: string
+          title: Error Summary
+        manifest_sync_status:
+          type: string
+          title: Manifest Sync Status
+        manifest_synced_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Manifest Synced At
+        manifest_sync_error:
+          type: string
+          title: Manifest Sync Error
+        started_at:
+          type: string
+          format: date-time
+          title: Started At
+        finished_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Finished At
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+      type: object
+      required:
+      - id
+      - owner_wallet_address
+      - service_principal_id
+      - session_id
+      - run_type
+      - status
+      - warehouse_run_path
+      - error_summary
+      - manifest_sync_status
+      - manifest_sync_error
+      - started_at
+      - created_at
+      - updated_at
+      title: AgentRunRead
+    BindingTaskCreateRequest:
+      properties:
+        binding_ids:
+          items:
+            type: integer
+          type: array
+          title: Binding Ids
+      type: object
+      title: BindingTaskCreateRequest
+    Body_upload_agent_run_artifact_service_runs__run_id__artifacts_post:
+      properties:
+        file:
+          type: string
+          format: binary
+          title: File
+        artifact_key:
+          type: string
+          title: Artifact Key
+        artifact_type:
+          type: string
+          title: Artifact Type
+          default: other
+        role:
+          type: string
+          title: Role
+          default: output
+        status:
+          type: string
+          title: Status
+          default: draft
+        generated_by:
+          type: string
+          title: Generated By
+          default: '{}'
+        metadata:
+          type: string
+          title: Metadata
+          default: '{}'
+      type: object
+      required:
+      - file
+      - artifact_key
+      title: Body_upload_agent_run_artifact_service_runs__run_id__artifacts_post
+    Body_upload_to_app_dir_warehouse_upload_post:
+      properties:
+        file:
+          type: string
+          format: binary
+          title: File
+        target_dir:
+          type: string
+          title: Target Dir
+          default: /apps/knowledge.yeying.pub/uploads
+      type: object
+      required:
+      - file
+      title: Body_upload_to_app_dir_warehouse_upload_post
+    CandidateAcceptRequest:
+      properties:
+        title:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Title
+        statement:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Statement
+        item_type:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Item Type
+        structured_payload_json:
+          anyOf:
+          - type: object
+          - type: 'null'
+          title: Structured Payload Json
+        item_contract_version:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Item Contract Version
+        evidence_unit_ids:
+          items:
+            type: integer
+          type: array
+          title: Evidence Unit Ids
+        source_note:
+          type: string
+          title: Source Note
+          default: ''
+        applicability_scope_json:
+          type: object
+          title: Applicability Scope Json
+        effective_from:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Effective From
+        effective_to:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Effective To
+      type: object
+      title: CandidateAcceptRequest
+    CandidateGenerationResponse:
+      properties:
+        kb_id:
+          type: integer
+          title: Kb Id
+        source_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Source Id
+        asset_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Asset Id
+        created_count:
+          type: integer
+          title: Created Count
+          default: 0
+        reused_count:
+          type: integer
+          title: Reused Count
+          default: 0
+        candidates:
+          items:
+            $ref: '#/components/schemas/KnowledgeItemCandidateRead'
+          type: array
+          title: Candidates
+      type: object
+      required:
+      - kb_id
+      title: CandidateGenerationResponse
+    CandidateRejectRequest:
+      properties:
+        source_note:
+          type: string
+          title: Source Note
+          default: ''
+      type: object
+      title: CandidateRejectRequest
+    ChallengeRequest:
+      properties:
+        wallet_address:
+          type: string
+          maxLength: 64
+          minLength: 42
+          title: Wallet Address
+      type: object
+      required:
+      - wallet_address
+      title: ChallengeRequest
+    ChallengeResponse:
+      properties:
+        wallet_address:
+          type: string
+          title: Wallet Address
+        nonce:
+          type: string
+          title: Nonce
+        message:
+          type: string
+          title: Message
+        expires_at:
+          type: string
+          format: date-time
+          title: Expires At
+      type: object
+      required:
+      - wallet_address
+      - nonce
+      - message
+      - expires_at
+      title: ChallengeResponse
+    EvidenceBuildResponse:
+      properties:
+        kb_id:
+          type: integer
+          title: Kb Id
+        source_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Source Id
+        asset_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Asset Id
+        processed_asset_count:
+          type: integer
+          title: Processed Asset Count
+          default: 0
+        built_evidence_count:
+          type: integer
+          title: Built Evidence Count
+          default: 0
+        skipped_asset_count:
+          type: integer
+          title: Skipped Asset Count
+          default: 0
+        failed_asset_ids:
+          items:
+            type: integer
+          type: array
+          title: Failed Asset Ids
+      type: object
+      required:
+      - kb_id
+      title: EvidenceBuildResponse
+    EvidenceUnitRead:
+      properties:
+        id:
+          type: integer
+          title: Id
+        kb_id:
+          type: integer
+          title: Kb Id
+        asset_id:
+          type: integer
+          title: Asset Id
+        evidence_type:
+          type: string
+          title: Evidence Type
+        text:
+          type: string
+          title: Text
+        metadata_json:
+          type: object
+          title: Metadata Json
+        source_locator:
+          type: object
+          title: Source Locator
+        vector_status:
+          type: string
+          title: Vector Status
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+      type: object
+      required:
+      - id
+      - kb_id
+      - asset_id
+      - evidence_type
+      - text
+      - vector_status
+      - created_at
+      title: EvidenceUnitRead
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    KBBindingStatusCountsResponse:
+      properties:
+        total:
+          type: integer
+          title: Total
+        enabled:
+          type: integer
+          title: Enabled
+        disabled:
+          type: integer
+          title: Disabled
+        indexed:
+          type: integer
+          title: Indexed
+        syncing:
+          type: integer
+          title: Syncing
+        failed:
+          type: integer
+          title: Failed
+        pending_sync:
+          type: integer
+          title: Pending Sync
+      type: object
+      required:
+      - total
+      - enabled
+      - disabled
+      - indexed
+      - syncing
+      - failed
+      - pending_sync
+      title: KBBindingStatusCountsResponse
+    KBConfig:
+      properties:
+        chunk_size:
+          type: integer
+          title: Chunk Size
+          default: 800
+        chunk_overlap:
+          type: integer
+          title: Chunk Overlap
+          default: 120
+        retrieval_top_k:
+          type: integer
+          title: Retrieval Top K
+          default: 6
+        memory_top_k:
+          type: integer
+          title: Memory Top K
+          default: 4
+        embedding_model:
+          type: string
+          title: Embedding Model
+          default: text-embedding-3-small
+      type: object
+      title: KBConfig
+    KBCreateRequest:
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          minLength: 1
+          title: Name
+        description:
+          type: string
+          title: Description
+          default: ''
+        retrieval_config:
+          anyOf:
+          - $ref: '#/components/schemas/KBConfig'
+          - type: 'null'
+      type: object
+      required:
+      - name
+      title: KBCreateRequest
+    KBRecentTaskResponse:
+      properties:
+        id:
+          type: integer
+          title: Id
+        task_type:
+          type: string
+          title: Task Type
+        status:
+          type: string
+          title: Status
+        source_paths:
+          items:
+            type: string
+          type: array
+          title: Source Paths
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        finished_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Finished At
+      type: object
+      required:
+      - id
+      - task_type
+      - status
+      - source_paths
+      - created_at
+      title: KBRecentTaskResponse
+    KBReleaseItemRead:
+      properties:
+        id:
+          type: integer
+          title: Id
+        release_id:
+          type: integer
+          title: Release Id
+        knowledge_item_id:
+          type: integer
+          title: Knowledge Item Id
+        knowledge_item_revision_id:
+          type: integer
+          title: Knowledge Item Revision Id
+        item_version_hash:
+          type: string
+          title: Item Version Hash
+        content_health_status:
+          type: string
+          title: Content Health Status
+      type: object
+      required:
+      - id
+      - release_id
+      - knowledge_item_id
+      - knowledge_item_revision_id
+      - item_version_hash
+      - content_health_status
+      title: KBReleaseItemRead
+    KBReleaseRead:
+      properties:
+        id:
+          type: integer
+          title: Id
+        kb_id:
+          type: integer
+          title: Kb Id
+        version:
+          type: string
+          title: Version
+        status:
+          type: string
+          title: Status
+        release_note:
+          type: string
+          title: Release Note
+        published_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Published At
+        created_by:
+          type: string
+          title: Created By
+        supersedes_release_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Supersedes Release Id
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+      type: object
+      required:
+      - id
+      - kb_id
+      - version
+      - status
+      - release_note
+      - created_by
+      - created_at
+      - updated_at
+      title: KBReleaseRead
+    KBResponse:
+      properties:
+        id:
+          type: integer
+          title: Id
+        name:
+          type: string
+          title: Name
+        description:
+          type: string
+          title: Description
+        status:
+          type: string
+          title: Status
+        retrieval_config:
+          type: object
+          title: Retrieval Config
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+      type: object
+      required:
+      - id
+      - name
+      - description
+      - status
+      - retrieval_config
+      - created_at
+      - updated_at
+      title: KBResponse
+    KBStatsResponse:
+      properties:
+        kb_id:
+          type: integer
+          title: Kb Id
+        bindings_count:
+          type: integer
+          title: Bindings Count
+        documents_count:
+          type: integer
+          title: Documents Count
+        chunks_count:
+          type: integer
+          title: Chunks Count
+        latest_task_status:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Latest Task Status
+        latest_task_finished_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Latest Task Finished At
+      type: object
+      required:
+      - kb_id
+      - bindings_count
+      - documents_count
+      - chunks_count
+      title: KBStatsResponse
+    KBUpdateRequest:
+      properties:
+        name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Name
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        retrieval_config:
+          anyOf:
+          - $ref: '#/components/schemas/KBConfig'
+          - type: 'null'
+      type: object
+      title: KBUpdateRequest
+    KBWorkbenchResponse:
+      properties:
+        kb_id:
+          type: integer
+          title: Kb Id
+        kb_name:
+          type: string
+          title: Kb Name
+        kb_description:
+          type: string
+          title: Kb Description
+        kb_status:
+          type: string
+          title: Kb Status
+        stats:
+          $ref: '#/components/schemas/KBStatsResponse'
+        binding_status_counts:
+          $ref: '#/components/schemas/KBBindingStatusCountsResponse'
+        bindings:
+          items:
+            $ref: '#/components/schemas/SourceBindingResponse'
+          type: array
+          title: Bindings
+        recent_tasks:
+          items:
+            $ref: '#/components/schemas/KBRecentTaskResponse'
+          type: array
+          title: Recent Tasks
+      type: object
+      required:
+      - kb_id
+      - kb_name
+      - kb_description
+      - kb_status
+      - stats
+      - binding_status_counts
+      - bindings
+      - recent_tasks
+      title: KBWorkbenchResponse
+    KnowledgeItemCandidateRead:
+      properties:
+        id:
+          type: integer
+          title: Id
+        kb_id:
+          type: integer
+          title: Kb Id
+        title:
+          type: string
+          title: Title
+        statement:
+          type: string
+          title: Statement
+        item_type:
+          type: string
+          title: Item Type
+        structured_payload_json:
+          type: object
+          title: Structured Payload Json
+        item_contract_version:
+          type: string
+          title: Item Contract Version
+        origin_type:
+          type: string
+          title: Origin Type
+        origin_confidence:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Origin Confidence
+        review_status:
+          type: string
+          title: Review Status
+        created_from_job_id:
+          type: string
+          title: Created From Job Id
+        provenance_json:
+          type: object
+          title: Provenance Json
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+      type: object
+      required:
+      - id
+      - kb_id
+      - title
+      - statement
+      - item_type
+      - item_contract_version
+      - origin_type
+      - review_status
+      - created_from_job_id
+      - created_at
+      - updated_at
+      title: KnowledgeItemCandidateRead
+    KnowledgeItemDetailResponse:
+      properties:
+        item:
+          $ref: '#/components/schemas/KnowledgeItemRead'
+        current_revision:
+          anyOf:
+          - $ref: '#/components/schemas/KnowledgeItemRevisionDetailRead'
+          - type: 'null'
+        revisions:
+          items:
+            $ref: '#/components/schemas/KnowledgeItemRevisionDetailRead'
+          type: array
+          title: Revisions
+      type: object
+      required:
+      - item
+      title: KnowledgeItemDetailResponse
+    KnowledgeItemEvidenceLinkRead:
+      properties:
+        id:
+          type: integer
+          title: Id
+        knowledge_item_revision_id:
+          type: integer
+          title: Knowledge Item Revision Id
+        evidence_unit_id:
+          type: integer
+          title: Evidence Unit Id
+        role:
+          type: string
+          title: Role
+        rank:
+          type: integer
+          title: Rank
+        summary:
+          type: string
+          title: Summary
+      type: object
+      required:
+      - id
+      - knowledge_item_revision_id
+      - evidence_unit_id
+      - role
+      - rank
+      - summary
+      title: KnowledgeItemEvidenceLinkRead
+    KnowledgeItemRead:
+      properties:
+        id:
+          type: integer
+          title: Id
+        kb_id:
+          type: integer
+          title: Kb Id
+        item_type:
+          type: string
+          title: Item Type
+        origin_type:
+          type: string
+          title: Origin Type
+        lifecycle_status:
+          type: string
+          title: Lifecycle Status
+        current_revision_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Current Revision Id
+        is_hotfix:
+          type: boolean
+          title: Is Hotfix
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+      type: object
+      required:
+      - id
+      - kb_id
+      - item_type
+      - origin_type
+      - lifecycle_status
+      - is_hotfix
+      - created_at
+      - updated_at
+      title: KnowledgeItemRead
+    KnowledgeItemRevisionDetailRead:
+      properties:
+        id:
+          type: integer
+          title: Id
+        knowledge_item_id:
+          type: integer
+          title: Knowledge Item Id
+        revision_no:
+          type: integer
+          title: Revision No
+        title:
+          type: string
+          title: Title
+        statement:
+          type: string
+          title: Statement
+        structured_payload_json:
+          type: object
+          title: Structured Payload Json
+        item_contract_version:
+          type: string
+          title: Item Contract Version
+        review_status:
+          type: string
+          title: Review Status
+        visibility_status:
+          type: string
+          title: Visibility Status
+        created_by:
+          type: string
+          title: Created By
+        reviewed_by:
+          type: string
+          title: Reviewed By
+        provenance_type:
+          type: string
+          title: Provenance Type
+        provenance_json:
+          type: object
+          title: Provenance Json
+        source_note:
+          type: string
+          title: Source Note
+        applicability_scope_json:
+          type: object
+          title: Applicability Scope Json
+        effective_from:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Effective From
+        effective_to:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Effective To
+        is_workspace_head:
+          type: boolean
+          title: Is Workspace Head
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+        evidence_links:
+          items:
+            $ref: '#/components/schemas/KnowledgeItemEvidenceLinkRead'
+          type: array
+          title: Evidence Links
+      type: object
+      required:
+      - id
+      - knowledge_item_id
+      - revision_no
+      - title
+      - statement
+      - item_contract_version
+      - review_status
+      - visibility_status
+      - created_by
+      - reviewed_by
+      - provenance_type
+      - source_note
+      - is_workspace_head
+      - created_at
+      - updated_at
+      title: KnowledgeItemRevisionDetailRead
+    LongTermMemoryCreateRequest:
+      properties:
+        kb_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Kb Id
+        category:
+          type: string
+          title: Category
+          default: general
+        content:
+          type: string
+          title: Content
+        source:
+          type: string
+          title: Source
+          default: bot
+        score:
+          type: integer
+          title: Score
+          default: 100
+      type: object
+      required:
+      - content
+      title: LongTermMemoryCreateRequest
+    LongTermMemoryResponse:
+      properties:
+        id:
+          type: integer
+          title: Id
+        owner_wallet_address:
+          type: string
+          title: Owner Wallet Address
+        kb_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Kb Id
+        category:
+          type: string
+          title: Category
+        content:
+          type: string
+          title: Content
+        source:
+          type: string
+          title: Source
+        score:
+          type: integer
+          title: Score
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+      type: object
+      required:
+      - id
+      - owner_wallet_address
+      - category
+      - content
+      - source
+      - score
+      - created_at
+      title: LongTermMemoryResponse
+    LongTermMemoryUpdateRequest:
+      properties:
+        category:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Category
+        content:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Content
+        source:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Source
+        score:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Score
+      type: object
+      title: LongTermMemoryUpdateRequest
+    ManualItemCreateRequest:
+      properties:
+        title:
+          type: string
+          title: Title
+        statement:
+          type: string
+          title: Statement
+        item_type:
+          type: string
+          title: Item Type
+        structured_payload_json:
+          type: object
+          title: Structured Payload Json
+        item_contract_version:
+          type: string
+          title: Item Contract Version
+          default: v1
+        evidence_unit_ids:
+          items:
+            type: integer
+          type: array
+          title: Evidence Unit Ids
+        source_note:
+          type: string
+          title: Source Note
+          default: ''
+        applicability_scope_json:
+          type: object
+          title: Applicability Scope Json
+        effective_from:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Effective From
+        effective_to:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Effective To
+      type: object
+      required:
+      - title
+      - statement
+      - item_type
+      title: ManualItemCreateRequest
+    ManualItemUpdateRequest:
+      properties:
+        title:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Title
+        statement:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Statement
+        item_type:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Item Type
+        structured_payload_json:
+          anyOf:
+          - type: object
+          - type: 'null'
+          title: Structured Payload Json
+        item_contract_version:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Item Contract Version
+        evidence_unit_ids:
+          anyOf:
+          - items:
+              type: integer
+            type: array
+          - type: 'null'
+          title: Evidence Unit Ids
+        source_note:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Source Note
+        applicability_scope_json:
+          anyOf:
+          - type: object
+          - type: 'null'
+          title: Applicability Scope Json
+        effective_from:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Effective From
+        effective_to:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Effective To
+      type: object
+      title: ManualItemUpdateRequest
+    MemoryIngestionEventResponse:
+      properties:
+        id:
+          type: integer
+          title: Id
+        owner_wallet_address:
+          type: string
+          title: Owner Wallet Address
+        session_id:
+          type: string
+          title: Session Id
+        kb_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Kb Id
+        source:
+          type: string
+          title: Source
+        status:
+          type: string
+          title: Status
+        trace_id:
+          type: string
+          title: Trace Id
+        query_preview:
+          type: string
+          title: Query Preview
+        answer_preview:
+          type: string
+          title: Answer Preview
+        source_refs_json:
+          items:
+            type: string
+          type: array
+          title: Source Refs Json
+        short_term_created:
+          type: integer
+          title: Short Term Created
+        long_term_created:
+          type: integer
+          title: Long Term Created
+        notes_json:
+          type: object
+          title: Notes Json
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+      type: object
+      required:
+      - id
+      - owner_wallet_address
+      - session_id
+      - source
+      - status
+      - trace_id
+      - query_preview
+      - answer_preview
+      - source_refs_json
+      - short_term_created
+      - long_term_created
+      - notes_json
+      - created_at
+      title: MemoryIngestionEventResponse
+    MemoryIngestionRequest:
+      properties:
+        session_id:
+          type: string
+          title: Session Id
+        memory_namespace:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Memory Namespace
+        kb_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Kb Id
+        query:
+          type: string
+          title: Query
+        answer:
+          type: string
+          title: Answer
+          default: ''
+        source:
+          type: string
+          title: Source
+          default: bot
+        trace_id:
+          type: string
+          title: Trace Id
+          default: ''
+        source_refs:
+          items:
+            type: string
+          type: array
+          title: Source Refs
+        long_term_candidates:
+          items:
+            type: string
+          type: array
+          title: Long Term Candidates
+        short_term_candidates:
+          items:
+            type: string
+          type: array
+          title: Short Term Candidates
+        persist_recent_turn:
+          type: boolean
+          title: Persist Recent Turn
+          default: true
+      type: object
+      required:
+      - session_id
+      - query
+      title: MemoryIngestionRequest
+    MemoryIngestionResponse:
+      properties:
+        session_id:
+          type: string
+          title: Session Id
+        memory_namespace:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Memory Namespace
+        trace_id:
+          type: string
+          title: Trace Id
+        source:
+          type: string
+          title: Source
+        short_term_created:
+          items:
+            $ref: '#/components/schemas/ShortTermMemoryResponse'
+          type: array
+          title: Short Term Created
+        long_term_created:
+          items:
+            $ref: '#/components/schemas/LongTermMemoryResponse'
+          type: array
+          title: Long Term Created
+        skipped_short_term:
+          items:
+            type: string
+          type: array
+          title: Skipped Short Term
+        skipped_long_term:
+          items:
+            type: string
+          type: array
+          title: Skipped Long Term
+        event:
+          $ref: '#/components/schemas/MemoryIngestionEventResponse'
+      type: object
+      required:
+      - session_id
+      - trace_id
+      - source
+      - short_term_created
+      - long_term_created
+      - skipped_short_term
+      - skipped_long_term
+      - event
+      title: MemoryIngestionResponse
+    RefreshRequest:
+      properties:
+        refresh_token:
+          type: string
+          title: Refresh Token
+      type: object
+      required:
+      - refresh_token
+      title: RefreshRequest
+    ReleaseDetailResponse:
+      properties:
+        release:
+          $ref: '#/components/schemas/KBReleaseRead'
+        items:
+          items:
+            $ref: '#/components/schemas/KBReleaseItemRead'
+          type: array
+          title: Items
+      type: object
+      required:
+      - release
+      title: ReleaseDetailResponse
+    ReleaseHotfixRequest:
+      properties:
+        version:
+          type: string
+          title: Version
+        release_note:
+          type: string
+          title: Release Note
+          default: ''
+        knowledge_item_ids:
+          items:
+            type: integer
+          type: array
+          title: Knowledge Item Ids
+        base_release_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Base Release Id
+      type: object
+      required:
+      - version
+      title: ReleaseHotfixRequest
+    ReleasePublishRequest:
+      properties:
+        version:
+          type: string
+          title: Version
+        release_note:
+          type: string
+          title: Release Note
+          default: ''
+      type: object
+      required:
+      - version
+      title: ReleasePublishRequest
+    ReleaseRollbackRequest:
+      properties:
+        version:
+          type: string
+          title: Version
+        release_note:
+          type: string
+          title: Release Note
+          default: ''
+      type: object
+      required:
+      - version
+      title: ReleaseRollbackRequest
+    RetrievalLogRead:
+      properties:
+        id:
+          type: integer
+          title: Id
+        owner_wallet_address:
+          type: string
+          title: Owner Wallet Address
+        kb_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Kb Id
+        service_grant_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Service Grant Id
+        service_principal_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Service Principal Id
+        query:
+          type: string
+          title: Query
+        query_mode:
+          type: string
+          title: Query Mode
+        release_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Release Id
+        result_summary_json:
+          type: object
+          title: Result Summary Json
+        trace_json:
+          type: object
+          title: Trace Json
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+      type: object
+      required:
+      - id
+      - owner_wallet_address
+      - query
+      - query_mode
+      - created_at
+      title: RetrievalLogRead
+    SearchLabCompareRequest:
+      properties:
+        query:
+          type: string
+          title: Query
+        top_k:
+          type: integer
+          title: Top K
+          default: 5
+        result_view:
+          type: string
+          title: Result View
+          default: audit
+        availability_mode:
+          type: string
+          title: Availability Mode
+          default: allow_all
+      type: object
+      required:
+      - query
+      title: SearchLabCompareRequest
+    SearchLabCompareResponse:
+      properties:
+        kb_id:
+          type: integer
+          title: Kb Id
+        query:
+          type: string
+          title: Query
+        current_release:
+          anyOf:
+          - $ref: '#/components/schemas/KBReleaseRead'
+          - type: 'null'
+        retrieval_log_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Retrieval Log Id
+        formal_only:
+          $ref: '#/components/schemas/ServiceSearchResponse'
+        evidence_only:
+          $ref: '#/components/schemas/ServiceSearchResponse'
+        formal_first:
+          $ref: '#/components/schemas/ServiceSearchResponse'
+      type: object
+      required:
+      - kb_id
+      - query
+      - formal_only
+      - evidence_only
+      - formal_first
+      title: SearchLabCompareResponse
+    ServiceCurrentReleaseResponse:
+      properties:
+        kb_id:
+          type: integer
+          title: Kb Id
+        release:
+          $ref: '#/components/schemas/KBReleaseRead'
+        grant:
+          $ref: '#/components/schemas/ServiceGrantResolvedRead'
+      type: object
+      required:
+      - kb_id
+      - release
+      - grant
+      title: ServiceCurrentReleaseResponse
+    ServiceGrantCreateRequest:
+      properties:
+        service_principal_id:
+          type: integer
+          title: Service Principal Id
+        release_selection_mode:
+          type: string
+          title: Release Selection Mode
+          default: latest_published
+        pinned_release_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Pinned Release Id
+        default_result_mode:
+          type: string
+          title: Default Result Mode
+          default: compact
+        expires_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Expires At
+      type: object
+      required:
+      - service_principal_id
+      title: ServiceGrantCreateRequest
+    ServiceGrantRead:
+      properties:
+        id:
+          type: integer
+          title: Id
+        owner_wallet_address:
+          type: string
+          title: Owner Wallet Address
+        kb_id:
+          type: integer
+          title: Kb Id
+        service_principal_id:
+          type: integer
+          title: Service Principal Id
+        grant_status:
+          type: string
+          title: Grant Status
+        release_selection_mode:
+          type: string
+          title: Release Selection Mode
+        pinned_release_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Pinned Release Id
+        default_result_mode:
+          type: string
+          title: Default Result Mode
+        expires_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Expires At
+        revoked_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Revoked At
+        revoked_by:
+          type: string
+          title: Revoked By
+        last_used_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Last Used At
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+      type: object
+      required:
+      - id
+      - owner_wallet_address
+      - kb_id
+      - service_principal_id
+      - grant_status
+      - release_selection_mode
+      - default_result_mode
+      - revoked_by
+      - created_at
+      - updated_at
+      title: ServiceGrantRead
+    ServiceGrantResolvedRead:
+      properties:
+        id:
+          type: integer
+          title: Id
+        owner_wallet_address:
+          type: string
+          title: Owner Wallet Address
+        kb_id:
+          type: integer
+          title: Kb Id
+        service_principal_id:
+          type: integer
+          title: Service Principal Id
+        grant_status:
+          type: string
+          title: Grant Status
+        release_selection_mode:
+          type: string
+          title: Release Selection Mode
+        pinned_release_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Pinned Release Id
+        default_result_mode:
+          type: string
+          title: Default Result Mode
+        expires_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Expires At
+        revoked_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Revoked At
+        revoked_by:
+          type: string
+          title: Revoked By
+        last_used_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Last Used At
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+        kb_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Kb Name
+        resolved_release:
+          anyOf:
+          - $ref: '#/components/schemas/KBReleaseRead'
+          - type: 'null'
+      type: object
+      required:
+      - id
+      - owner_wallet_address
+      - kb_id
+      - service_principal_id
+      - grant_status
+      - release_selection_mode
+      - default_result_mode
+      - revoked_by
+      - created_at
+      - updated_at
+      title: ServiceGrantResolvedRead
+    ServiceGrantUpdateRequest:
+      properties:
+        grant_status:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Grant Status
+        release_selection_mode:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Release Selection Mode
+        pinned_release_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Pinned Release Id
+        default_result_mode:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Default Result Mode
+        expires_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Expires At
+        revoked_by:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Revoked By
+      type: object
+      title: ServiceGrantUpdateRequest
+    ServiceKnowledgeBaseRead:
+      properties:
+        kb_id:
+          type: integer
+          title: Kb Id
+        kb_name:
+          type: string
+          title: Kb Name
+        grant:
+          $ref: '#/components/schemas/ServiceGrantResolvedRead'
+      type: object
+      required:
+      - kb_id
+      - kb_name
+      - grant
+      title: ServiceKnowledgeBaseRead
+    ServicePrincipalCreateRequest:
+      properties:
+        service_id:
+          type: string
+          title: Service Id
+        display_name:
+          type: string
+          title: Display Name
+        identity_type:
+          type: string
+          title: Identity Type
+          default: api_key
+      type: object
+      required:
+      - service_id
+      - display_name
+      title: ServicePrincipalCreateRequest
+    ServicePrincipalCreateResponse:
+      properties:
+        principal:
+          $ref: '#/components/schemas/ServicePrincipalRead'
+        api_key:
+          type: string
+          title: Api Key
+      type: object
+      required:
+      - principal
+      - api_key
+      title: ServicePrincipalCreateResponse
+    ServicePrincipalRead:
+      properties:
+        id:
+          type: integer
+          title: Id
+        owner_wallet_address:
+          type: string
+          title: Owner Wallet Address
+        service_id:
+          type: string
+          title: Service Id
+        display_name:
+          type: string
+          title: Display Name
+        identity_type:
+          type: string
+          title: Identity Type
+        credential_fingerprint:
+          type: string
+          title: Credential Fingerprint
+        public_key_jwk:
+          type: object
+          title: Public Key Jwk
+        principal_status:
+          type: string
+          title: Principal Status
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+      type: object
+      required:
+      - id
+      - owner_wallet_address
+      - service_id
+      - display_name
+      - identity_type
+      - credential_fingerprint
+      - principal_status
+      - created_at
+      - updated_at
+      title: ServicePrincipalRead
+    ServicePrincipalUpdateRequest:
+      properties:
+        display_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Display Name
+        principal_status:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Principal Status
+      type: object
+      title: ServicePrincipalUpdateRequest
+    ServicePrincipalVerifyRequest:
+      properties:
+        api_key:
+          type: string
+          title: Api Key
+      type: object
+      required:
+      - api_key
+      title: ServicePrincipalVerifyRequest
+    ServicePrincipalVerifyResponse:
+      properties:
+        principal:
+          $ref: '#/components/schemas/ServicePrincipalRead'
+      type: object
+      required:
+      - principal
+      title: ServicePrincipalVerifyResponse
+    ServiceSearchEvidenceSummary:
+      properties:
+        evidence_id:
+          type: integer
+          title: Evidence Id
+        evidence_type:
+          type: string
+          title: Evidence Type
+        text_excerpt:
+          type: string
+          title: Text Excerpt
+        content_health_status:
+          type: string
+          title: Content Health Status
+        source_ref:
+          type: string
+          title: Source Ref
+      type: object
+      required:
+      - evidence_id
+      - evidence_type
+      - text_excerpt
+      - content_health_status
+      - source_ref
+      title: ServiceSearchEvidenceSummary
+    ServiceSearchHit:
+      properties:
+        result_kind:
+          type: string
+          title: Result Kind
+        score:
+          type: number
+          title: Score
+        content_health_status:
+          type: string
+          title: Content Health Status
+        source_health_summary:
+          type: string
+          title: Source Health Summary
+        source_refs:
+          items:
+            type: string
+          type: array
+          title: Source Refs
+        knowledge_item_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Knowledge Item Id
+        knowledge_item_revision_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Knowledge Item Revision Id
+        title:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Title
+        statement:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Statement
+        item_type:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Item Type
+        updated_at:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Updated At
+        evidence_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Evidence Id
+        evidence_type:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Evidence Type
+        text:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Text
+        evidence_summaries:
+          items:
+            $ref: '#/components/schemas/ServiceSearchEvidenceSummary'
+          type: array
+          title: Evidence Summaries
+        source_health_details:
+          items:
+            $ref: '#/components/schemas/ServiceSearchSourceHealthDetail'
+          type: array
+          title: Source Health Details
+        audit_info:
+          type: object
+          title: Audit Info
+      type: object
+      required:
+      - result_kind
+      - score
+      - content_health_status
+      - source_health_summary
+      title: ServiceSearchHit
+    ServiceSearchRequest:
+      properties:
+        kb_id:
+          type: integer
+          title: Kb Id
+        query:
+          type: string
+          title: Query
+        top_k:
+          type: integer
+          title: Top K
+          default: 5
+        result_view:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Result View
+        availability_mode:
+          type: string
+          title: Availability Mode
+          default: allow_all
+      type: object
+      required:
+      - kb_id
+      - query
+      title: ServiceSearchRequest
+    ServiceSearchResponse:
+      properties:
+        kb_id:
+          type: integer
+          title: Kb Id
+        mode:
+          type: string
+          title: Mode
+        result_view:
+          type: string
+          title: Result View
+        availability_mode:
+          type: string
+          title: Availability Mode
+        release:
+          anyOf:
+          - $ref: '#/components/schemas/KBReleaseRead'
+          - type: 'null'
+        grant:
+          anyOf:
+          - $ref: '#/components/schemas/ServiceGrantResolvedRead'
+          - type: 'null'
+        hits:
+          items:
+            $ref: '#/components/schemas/ServiceSearchHit'
+          type: array
+          title: Hits
+      type: object
+      required:
+      - kb_id
+      - mode
+      - result_view
+      - availability_mode
+      title: ServiceSearchResponse
+    ServiceSearchSourceHealthDetail:
+      properties:
+        source_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Source Id
+        asset_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Asset Id
+        asset_path:
+          type: string
+          title: Asset Path
+        availability_status:
+          type: string
+          title: Availability Status
+      type: object
+      required:
+      - asset_path
+      - availability_status
+      title: ServiceSearchSourceHealthDetail
+    ShortTermMemoryCreateRequest:
+      properties:
+        session_id:
+          type: string
+          title: Session Id
+        memory_namespace:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Memory Namespace
+        memory_type:
+          type: string
+          enum:
+          - recent_turn
+          - summary
+          - temporary_fact
+          - recent_preference
+          title: Memory Type
+        content:
+          type: string
+          title: Content
+        ttl_or_expire_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Ttl Or Expire At
+      type: object
+      required:
+      - session_id
+      - memory_type
+      - content
+      title: ShortTermMemoryCreateRequest
+    ShortTermMemoryResponse:
+      properties:
+        id:
+          type: integer
+          title: Id
+        owner_wallet_address:
+          type: string
+          title: Owner Wallet Address
+        session_id:
+          type: string
+          title: Session Id
+        memory_namespace:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Memory Namespace
+        memory_type:
+          type: string
+          title: Memory Type
+        content:
+          type: string
+          title: Content
+        ttl_or_expire_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Ttl Or Expire At
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+      type: object
+      required:
+      - id
+      - owner_wallet_address
+      - session_id
+      - memory_type
+      - content
+      - created_at
+      title: ShortTermMemoryResponse
+    SourceAssetRead:
+      properties:
+        id:
+          type: integer
+          title: Id
+        kb_id:
+          type: integer
+          title: Kb Id
+        source_id:
+          type: integer
+          title: Source Id
+        asset_path:
+          type: string
+          title: Asset Path
+        asset_name:
+          type: string
+          title: Asset Name
+        asset_type:
+          type: string
+          title: Asset Type
+        source_version:
+          type: string
+          title: Source Version
+        availability_status:
+          type: string
+          title: Availability Status
+        last_ingested_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Last Ingested At
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+      type: object
+      required:
+      - id
+      - kb_id
+      - source_id
+      - asset_path
+      - asset_name
+      - asset_type
+      - source_version
+      - availability_status
+      - created_at
+      - updated_at
+      title: SourceAssetRead
+    SourceBindingCreateRequest:
+      properties:
+        source_path:
+          type: string
+          title: Source Path
+        scope_type:
+          type: string
+          enum:
+          - auto
+          - file
+          - directory
+          title: Scope Type
+          default: auto
+        credential_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Credential Id
+      type: object
+      required:
+      - source_path
+      title: SourceBindingCreateRequest
+    SourceBindingResponse:
+      properties:
+        id:
+          type: integer
+          title: Id
+        kb_id:
+          type: integer
+          title: Kb Id
+        source_type:
+          type: string
+          title: Source Type
+        source_path:
+          type: string
+          title: Source Path
+        scope_type:
+          type: string
+          title: Scope Type
+        credential_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Credential Id
+        credential_kind:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Credential Kind
+        credential_key_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Credential Key Id
+        credential_key_secret_masked:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Credential Key Secret Masked
+        credential_root_path:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Credential Root Path
+        credential_status:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Credential Status
+        enabled:
+          type: boolean
+          title: Enabled
+        last_imported_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Last Imported At
+        sync_status:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Sync Status
+        status_reason:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Status Reason
+        document_count:
+          type: integer
+          title: Document Count
+          default: 0
+        chunk_count:
+          type: integer
+          title: Chunk Count
+          default: 0
+        last_document_indexed_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Last Document Indexed At
+        latest_task_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Latest Task Id
+        latest_task_status:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Latest Task Status
+        latest_task_finished_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Latest Task Finished At
+        active_task_count:
+          type: integer
+          title: Active Task Count
+          default: 0
+      type: object
+      required:
+      - id
+      - kb_id
+      - source_type
+      - source_path
+      - scope_type
+      - enabled
+      title: SourceBindingResponse
+    SourceBindingUpdateRequest:
+      properties:
+        enabled:
+          type: boolean
+          title: Enabled
+      type: object
+      required:
+      - enabled
+      title: SourceBindingUpdateRequest
+    SourceCreateRequest:
+      properties:
+        source_type:
+          type: string
+          title: Source Type
+          default: warehouse
+        source_path:
+          type: string
+          title: Source Path
+        scope_type:
+          type: string
+          title: Scope Type
+          default: directory
+        enabled:
+          type: boolean
+          title: Enabled
+          default: true
+        missing_policy:
+          type: string
+          title: Missing Policy
+          default: mark_missing
+      type: object
+      required:
+      - source_path
+      title: SourceCreateRequest
+    SourceGovernanceAssetRead:
+      properties:
+        asset_id:
+          type: integer
+          title: Asset Id
+        source_id:
+          type: integer
+          title: Source Id
+        asset_path:
+          type: string
+          title: Asset Path
+        availability_status:
+          type: string
+          title: Availability Status
+        evidence_count:
+          type: integer
+          title: Evidence Count
+          default: 0
+        last_ingested_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Last Ingested At
+      type: object
+      required:
+      - asset_id
+      - source_id
+      - asset_path
+      - availability_status
+      title: SourceGovernanceAssetRead
+    SourceGovernanceResponse:
+      properties:
+        kb_id:
+          type: integer
+          title: Kb Id
+        status_counts:
+          type: object
+          title: Status Counts
+        sources:
+          items:
+            $ref: '#/components/schemas/SourceGovernanceSourceRead'
+          type: array
+          title: Sources
+        assets:
+          items:
+            $ref: '#/components/schemas/SourceGovernanceAssetRead'
+          type: array
+          title: Assets
+      type: object
+      required:
+      - kb_id
+      title: SourceGovernanceResponse
+    SourceGovernanceSourceRead:
+      properties:
+        source_id:
+          type: integer
+          title: Source Id
+        source_path:
+          type: string
+          title: Source Path
+        sync_status:
+          type: string
+          title: Sync Status
+        affected_assets:
+          items:
+            $ref: '#/components/schemas/SourceGovernanceAssetRead'
+          type: array
+          title: Affected Assets
+      type: object
+      required:
+      - source_id
+      - source_path
+      - sync_status
+      title: SourceGovernanceSourceRead
+    SourceRead:
+      properties:
+        id:
+          type: integer
+          title: Id
+        kb_id:
+          type: integer
+          title: Kb Id
+        source_type:
+          type: string
+          title: Source Type
+        source_path:
+          type: string
+          title: Source Path
+        scope_type:
+          type: string
+          title: Scope Type
+        enabled:
+          type: boolean
+          title: Enabled
+        sync_status:
+          type: string
+          title: Sync Status
+        missing_policy:
+          type: string
+          title: Missing Policy
+        last_seen_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Last Seen At
+        last_synced_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Last Synced At
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+      type: object
+      required:
+      - id
+      - kb_id
+      - source_type
+      - source_path
+      - scope_type
+      - enabled
+      - sync_status
+      - missing_policy
+      - created_at
+      - updated_at
+      title: SourceRead
+    SourceScanResponse:
+      properties:
+        source:
+          $ref: '#/components/schemas/SourceRead'
+        stats:
+          $ref: '#/components/schemas/SourceScanStatsResponse'
+      type: object
+      required:
+      - source
+      - stats
+      title: SourceScanResponse
+    SourceScanStatsResponse:
+      properties:
+        total_assets:
+          type: integer
+          title: Total Assets
+          default: 0
+        discovered_assets:
+          type: integer
+          title: Discovered Assets
+          default: 0
+        available_assets:
+          type: integer
+          title: Available Assets
+          default: 0
+        changed_assets:
+          type: integer
+          title: Changed Assets
+          default: 0
+        missing_assets:
+          type: integer
+          title: Missing Assets
+          default: 0
+        ignored_assets:
+          type: integer
+          title: Ignored Assets
+          default: 0
+        scanned_at:
+          type: string
+          format: date-time
+          title: Scanned At
+      type: object
+      required:
+      - scanned_at
+      title: SourceScanStatsResponse
+    SourceUpdateRequest:
+      properties:
+        enabled:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Enabled
+        missing_policy:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Missing Policy
+      type: object
+      title: SourceUpdateRequest
+    TaskCreateRequest:
+      properties:
+        source_paths:
+          items:
+            type: string
+          type: array
+          title: Source Paths
+        credential_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Credential Id
+      type: object
+      required:
+      - source_paths
+      title: TaskCreateRequest
+    TaskResponse:
+      properties:
+        id:
+          type: integer
+          title: Id
+        owner_wallet_address:
+          type: string
+          title: Owner Wallet Address
+        kb_id:
+          type: integer
+          title: Kb Id
+        task_type:
+          type: string
+          title: Task Type
+        status:
+          type: string
+          title: Status
+        source_paths:
+          items:
+            type: string
+          type: array
+          title: Source Paths
+        stats_json:
+          type: object
+          title: Stats Json
+        error_message:
+          type: string
+          title: Error Message
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        started_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Started At
+        finished_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Finished At
+        queue_state:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Queue State
+        queue_position:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Queue Position
+        current_running_task_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Current Running Task Id
+        current_running_task_type:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Current Running Task Type
+        cancelable:
+          type: boolean
+          title: Cancelable
+          default: false
+        claimed_by:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Claimed By
+        heartbeat_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Heartbeat At
+        last_stage:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Last Stage
+        wait_duration_ms:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Wait Duration Ms
+        run_duration_ms:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Run Duration Ms
+      type: object
+      required:
+      - id
+      - owner_wallet_address
+      - kb_id
+      - task_type
+      - status
+      - source_paths
+      - stats_json
+      - error_message
+      - created_at
+      title: TaskResponse
+    TokenResponse:
+      properties:
+        access_token:
+          type: string
+          title: Access Token
+        refresh_token:
+          type: string
+          title: Refresh Token
+        token_type:
+          type: string
+          title: Token Type
+          default: bearer
+        wallet_address:
+          type: string
+          title: Wallet Address
+        expires_at:
+          type: string
+          format: date-time
+          title: Expires At
+        refresh_expires_at:
+          type: string
+          format: date-time
+          title: Refresh Expires At
+      type: object
+      required:
+      - access_token
+      - refresh_token
+      - wallet_address
+      - expires_at
+      - refresh_expires_at
+      title: TokenResponse
+    UploadResponse:
+      properties:
+        warehouse_path:
+          type: string
+          title: Warehouse Path
+        file_name:
+          type: string
+          title: File Name
+        size:
+          type: integer
+          title: Size
+        uploaded_at:
+          type: string
+          format: date-time
+          title: Uploaded At
+        can_import:
+          type: boolean
+          title: Can Import
+          default: true
+      type: object
+      required:
+      - warehouse_path
+      - file_name
+      - size
+      - uploaded_at
+      title: UploadResponse
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+    VerifyRequest:
+      properties:
+        wallet_address:
+          type: string
+          title: Wallet Address
+        signature:
+          type: string
+          title: Signature
+      type: object
+      required:
+      - wallet_address
+      - signature
+      title: VerifyRequest
+    WarehouseBootstrapChallengeResponse:
+      properties:
+        wallet_address:
+          type: string
+          title: Wallet Address
+        challenge:
+          type: string
+          title: Challenge
+        nonce:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Nonce
+        issued_at:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Issued At
+        expires_at:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Expires At
+      type: object
+      required:
+      - wallet_address
+      - challenge
+      title: WarehouseBootstrapChallengeResponse
+    WarehouseBootstrapInitializeRequest:
+      properties:
+        mode:
+          type: string
+          enum:
+          - uploads_bundle
+          - app_root_write
+          title: Mode
+          default: uploads_bundle
+        signature:
+          type: string
+          title: Signature
+      type: object
+      required:
+      - signature
+      title: WarehouseBootstrapInitializeRequest
+    WarehouseBootstrapInitializeResponse:
+      properties:
+        mode:
+          type: string
+          enum:
+          - uploads_bundle
+          - app_root_write
+          title: Mode
+        mode_label:
+          type: string
+          title: Mode Label
+        wallet_address:
+          type: string
+          title: Wallet Address
+        target_path:
+          type: string
+          title: Target Path
+        write_key_id:
+          type: string
+          title: Write Key Id
+        read_key_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Read Key Id
+        write_credential:
+          $ref: '#/components/schemas/WarehouseCredentialSummary'
+        read_credential:
+          anyOf:
+          - $ref: '#/components/schemas/WarehouseCredentialSummary'
+          - type: 'null'
+      type: object
+      required:
+      - mode
+      - mode_label
+      - wallet_address
+      - target_path
+      - write_key_id
+      - write_credential
+      title: WarehouseBootstrapInitializeResponse
+    WarehouseBrowseResponse:
+      properties:
+        wallet_address:
+          type: string
+          title: Wallet Address
+        path:
+          type: string
+          title: Path
+        credential_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Credential Id
+        credential_kind:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Credential Kind
+        entries:
+          items:
+            $ref: '#/components/schemas/WarehouseEntry'
+          type: array
+          title: Entries
+      type: object
+      required:
+      - wallet_address
+      - path
+      - entries
+      title: WarehouseBrowseResponse
+    WarehouseCredentialCreateRequest:
+      properties:
+        key_id:
+          type: string
+          title: Key Id
+        key_secret:
+          type: string
+          title: Key Secret
+        root_path:
+          type: string
+          title: Root Path
+      type: object
+      required:
+      - key_id
+      - key_secret
+      - root_path
+      title: WarehouseCredentialCreateRequest
+    WarehouseCredentialRevealResponse:
+      properties:
+        id:
+          type: integer
+          title: Id
+        credential_kind:
+          type: string
+          enum:
+          - read
+          - read_write
+          title: Credential Kind
+        key_id:
+          type: string
+          title: Key Id
+        key_secret:
+          type: string
+          title: Key Secret
+      type: object
+      required:
+      - id
+      - credential_kind
+      - key_id
+      - key_secret
+      title: WarehouseCredentialRevealResponse
+    WarehouseCredentialSummary:
+      properties:
+        id:
+          type: integer
+          title: Id
+        credential_kind:
+          type: string
+          enum:
+          - read
+          - read_write
+          title: Credential Kind
+        key_id:
+          type: string
+          title: Key Id
+        key_secret_masked:
+          type: string
+          title: Key Secret Masked
+        root_path:
+          type: string
+          title: Root Path
+        status:
+          type: string
+          title: Status
+        last_verified_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Last Verified At
+        last_used_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Last Used At
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+      type: object
+      required:
+      - id
+      - credential_kind
+      - key_id
+      - key_secret_masked
+      - root_path
+      - status
+      - created_at
+      - updated_at
+      title: WarehouseCredentialSummary
+    WarehouseEntry:
+      properties:
+        path:
+          type: string
+          title: Path
+        name:
+          type: string
+          title: Name
+        entry_type:
+          type: string
+          enum:
+          - file
+          - directory
+          title: Entry Type
+        size:
+          type: integer
+          title: Size
+          default: 0
+        modified_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Modified At
+      type: object
+      required:
+      - path
+      - name
+      - entry_type
+      title: WarehouseEntry
+    WarehouseStatusResponse:
+      properties:
+        wallet_address:
+          type: string
+          title: Wallet Address
+        credentials_ready:
+          type: boolean
+          title: Credentials Ready
+          default: false
+        read_credentials_count:
+          type: integer
+          title: Read Credentials Count
+          default: 0
+        write_credential_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Write Credential Id
+        write_credential_status:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Write Credential Status
+        write_root_path:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Write Root Path
+        current_app_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Current App Id
+        current_app_root:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Current App Root
+        current_app_upload_dir:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Current App Upload Dir
+        warehouse_base_url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Warehouse Base Url
+      type: object
+      required:
+      - wallet_address
+      title: WarehouseStatusResponse
+    WarehouseWriteCredentialResponse:
+      properties:
+        configured:
+          type: boolean
+          title: Configured
+        credential:
+          anyOf:
+          - $ref: '#/components/schemas/WarehouseCredentialSummary'
+          - type: 'null'
+      type: object
+      required:
+      - configured
+      title: WarehouseWriteCredentialResponse
+  securitySchemes:
+    HTTPBearer:
+      type: http
+      scheme: bearer
+servers:
+- url: http://127.0.0.1:8000
+  description: 本地开发环境

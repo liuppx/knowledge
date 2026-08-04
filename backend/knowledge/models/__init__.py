@@ -1,5 +1,7 @@
 from knowledge.models.entities import (
     AuthChallenge,
+    AgentRun,
+    AgentRunArtifact,
     EvidenceUnit,
     EmbeddingRecord,
     ImportedChunk,
@@ -30,6 +32,8 @@ from knowledge.models.entities import (
 
 __all__ = [
     "AuthChallenge",
+    "AgentRun",
+    "AgentRunArtifact",
     "EvidenceUnit",
     "EmbeddingRecord",
     "ImportedChunk",
