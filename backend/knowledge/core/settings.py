@@ -52,6 +52,8 @@ class Settings(BaseSettings):
     model_provider_mode: str = "mock"
     model_gateway_base_url: str = ""
     model_gateway_api_key: str = ""
+    analysis_planner_model: str = "gpt-4o-mini"
+    analysis_planner_timeout_seconds: int = 30
     embedding_model: str = "text-embedding-3-small"
     embedding_dimensions: int = 32
 

@@ -602,6 +602,190 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /service/runs/{run_id}/inputs:
+    get:
+      tags:
+      - agent_runs
+      summary: List Agent Run Inputs
+      operationId: list_agent_run_inputs_service_runs__run_id__inputs_get
+      parameters:
+      - name: run_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Run Id
+      - name: X-Service-Api-Key
+        in: header
+        required: true
+        schema:
+          type: string
+          title: X-Service-Api-Key
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AgentRunInputRead'
+                title: Response List Agent Run Inputs Service Runs  Run Id  Inputs Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /service/runs/{run_id}/steps:
+    get:
+      tags:
+      - agent_runs
+      summary: List Agent Run Steps
+      operationId: list_agent_run_steps_service_runs__run_id__steps_get
+      parameters:
+      - name: run_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Run Id
+      - name: X-Service-Api-Key
+        in: header
+        required: true
+        schema:
+          type: string
+          title: X-Service-Api-Key
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AgentRunStepRead'
+                title: Response List Agent Run Steps Service Runs  Run Id  Steps Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /service/runs/{run_id}/events:
+    get:
+      tags:
+      - agent_runs
+      summary: List Agent Run Events
+      operationId: list_agent_run_events_service_runs__run_id__events_get
+      parameters:
+      - name: run_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Run Id
+      - name: after
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 0
+          title: After
+      - name: X-Service-Api-Key
+        in: header
+        required: true
+        schema:
+          type: string
+          title: X-Service-Api-Key
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AgentRunEventRead'
+                title: Response List Agent Run Events Service Runs  Run Id  Events Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /service/runs/{run_id}/artifacts:
+    get:
+      tags:
+      - agent_runs
+      summary: List Agent Run Artifacts
+      operationId: list_agent_run_artifacts_service_runs__run_id__artifacts_get
+      parameters:
+      - name: run_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Run Id
+      - name: X-Service-Api-Key
+        in: header
+        required: true
+        schema:
+          type: string
+          title: X-Service-Api-Key
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AgentRunArtifactRead'
+                title: Response List Agent Run Artifacts Service Runs  Run Id  Artifacts Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    post:
+      tags:
+      - agent_runs
+      summary: Upload Agent Run Artifact
+      operationId: upload_agent_run_artifact_service_runs__run_id__artifacts_post
+      parameters:
+      - name: run_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Run Id
+      - name: X-Service-Api-Key
+        in: header
+        required: true
+        schema:
+          type: string
+          title: X-Service-Api-Key
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Body_upload_agent_run_artifact_service_runs__run_id__artifacts_post'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentRunArtifactRead'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /service/runs/{run_id}:
     get:
       tags:
@@ -704,44 +888,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AgentRunRead'
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-  /service/runs/{run_id}/artifacts:
-    post:
-      tags:
-      - agent_runs
-      summary: Upload Agent Run Artifact
-      operationId: upload_agent_run_artifact_service_runs__run_id__artifacts_post
-      parameters:
-      - name: run_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Run Id
-      - name: X-Service-Api-Key
-        in: header
-        required: true
-        schema:
-          type: string
-          title: X-Service-Api-Key
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/Body_upload_agent_run_artifact_service_runs__run_id__artifacts_post'
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AgentRunArtifactRead'
         '422':
           description: Validation Error
           content:
@@ -3479,11 +3625,54 @@ components:
             type: object
           type: array
           title: Inputs
+        intent:
+          type: string
+          title: Intent
+          default: ''
+        constraints:
+          $ref: '#/components/schemas/SpreadsheetAnalysisConstraints'
         metadata:
           type: object
           title: Metadata
       type: object
       title: AgentRunCreateRequest
+    AgentRunEventRead:
+      properties:
+        sequence:
+          type: integer
+          title: Sequence
+        event_type:
+          type: string
+          title: Event Type
+        stage:
+          type: string
+          title: Stage
+        progress:
+          type: integer
+          title: Progress
+        message:
+          type: string
+          title: Message
+        retryable:
+          type: boolean
+          title: Retryable
+        payload_json:
+          type: object
+          title: Payload Json
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+      type: object
+      required:
+      - sequence
+      - event_type
+      - stage
+      - progress
+      - message
+      - retryable
+      - created_at
+      title: AgentRunEventRead
     AgentRunFinishRequest:
       properties:
         error_summary:
@@ -3492,6 +3681,59 @@ components:
           default: ''
       type: object
       title: AgentRunFinishRequest
+    AgentRunInputRead:
+      properties:
+        id:
+          type: integer
+          title: Id
+        input_key:
+          type: string
+          title: Input Key
+        kind:
+          type: string
+          title: Kind
+        role:
+          type: string
+          title: Role
+        warehouse_path:
+          type: string
+          title: Warehouse Path
+        version_id:
+          type: string
+          title: Version Id
+        etag:
+          type: string
+          title: Etag
+        sha256:
+          type: string
+          title: Sha256
+        size:
+          type: integer
+          title: Size
+        content_type:
+          type: string
+          title: Content Type
+        metadata_json:
+          type: object
+          title: Metadata Json
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+      type: object
+      required:
+      - id
+      - input_key
+      - kind
+      - role
+      - warehouse_path
+      - version_id
+      - etag
+      - sha256
+      - size
+      - content_type
+      - created_at
+      title: AgentRunInputRead
     AgentRunRead:
       properties:
         id:
@@ -3580,6 +3822,45 @@ components:
       - created_at
       - updated_at
       title: AgentRunRead
+    AgentRunStepRead:
+      properties:
+        id:
+          type: integer
+          title: Id
+        sequence:
+          type: integer
+          title: Sequence
+        step_type:
+          type: string
+          title: Step Type
+        status:
+          type: string
+          title: Status
+        metrics_json:
+          type: object
+          title: Metrics Json
+        error_summary:
+          type: string
+          title: Error Summary
+        started_at:
+          type: string
+          format: date-time
+          title: Started At
+        finished_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Finished At
+      type: object
+      required:
+      - id
+      - sequence
+      - step_type
+      - status
+      - error_summary
+      - started_at
+      title: AgentRunStepRead
     BindingTaskCreateRequest:
       properties:
         binding_ids:
@@ -5970,6 +6251,136 @@ components:
           title: Missing Policy
       type: object
       title: SourceUpdateRequest
+    SpreadsheetAggregationRequest:
+      properties:
+        column:
+          type: string
+          title: Column
+        op:
+          type: string
+          enum:
+          - count
+          - sum
+          - avg
+          - min
+          - max
+          title: Op
+        alias:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Alias
+      type: object
+      required:
+      - column
+      - op
+      title: SpreadsheetAggregationRequest
+    SpreadsheetAnalysisConstraints:
+      properties:
+        max_rows:
+          anyOf:
+          - type: integer
+            minimum: 1.0
+          - type: 'null'
+          title: Max Rows
+        allow_sampling:
+          type: boolean
+          title: Allow Sampling
+          default: true
+        output_formats:
+          items:
+            type: string
+            enum:
+            - markdown
+            - csv
+            - xlsx
+            - png
+          type: array
+          title: Output Formats
+        analysis_plan:
+          anyOf:
+          - $ref: '#/components/schemas/SpreadsheetAnalysisPlanRequest'
+          - type: 'null'
+      additionalProperties: true
+      type: object
+      title: SpreadsheetAnalysisConstraints
+    SpreadsheetAnalysisPlanRequest:
+      properties:
+        select:
+          items:
+            type: string
+          type: array
+          title: Select
+        filters:
+          items:
+            $ref: '#/components/schemas/SpreadsheetFilterRequest'
+          type: array
+          title: Filters
+        group_by:
+          items:
+            type: string
+          type: array
+          title: Group By
+        aggregations:
+          items:
+            $ref: '#/components/schemas/SpreadsheetAggregationRequest'
+          type: array
+          title: Aggregations
+        sort:
+          items:
+            $ref: '#/components/schemas/SpreadsheetSortRequest'
+          type: array
+          title: Sort
+        limit:
+          type: integer
+          maximum: 10000.0
+          minimum: 1.0
+          title: Limit
+          default: 1000
+      type: object
+      title: SpreadsheetAnalysisPlanRequest
+    SpreadsheetFilterRequest:
+      properties:
+        column:
+          type: string
+          title: Column
+        operator:
+          type: string
+          enum:
+          - eq
+          - ne
+          - gt
+          - gte
+          - lt
+          - lte
+          - contains
+          - in
+          - is_null
+          - not_null
+          title: Operator
+          default: eq
+        value:
+          title: Value
+      type: object
+      required:
+      - column
+      title: SpreadsheetFilterRequest
+    SpreadsheetSortRequest:
+      properties:
+        column:
+          type: string
+          title: Column
+        direction:
+          type: string
+          enum:
+          - asc
+          - desc
+          title: Direction
+          default: asc
+      type: object
+      required:
+      - column
+      title: SpreadsheetSortRequest
     TaskCreateRequest:
       properties:
         source_paths:

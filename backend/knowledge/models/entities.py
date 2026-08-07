@@ -28,8 +28,8 @@ SERVICE_PRINCIPAL_STATUSES = ("active", "disabled", "revoked")
 SERVICE_GRANT_STATUSES = ("active", "expired", "revoked", "suspended")
 SERVICE_GRANT_RELEASE_SELECTION_MODES = ("latest_published", "pinned_release")
 RETRIEVAL_QUERY_MODES = ("formal_first", "formal_only", "evidence_only", "audit", "search_lab_compare")
-AGENT_RUN_STATUSES = ("running", "completed", "failed", "cancelled")
-AGENT_RUN_TYPES = ("research",)
+AGENT_RUN_STATUSES = ("queued", "running", "completed", "failed", "cancelled")
+AGENT_RUN_TYPES = ("research", "spreadsheet_analysis")
 AGENT_RUN_MANIFEST_SYNC_STATUSES = ("pending", "synced", "failed")
 AGENT_ARTIFACT_STATUSES = ("draft", "final")
 WAREHOUSE_ACCESS_CREDENTIAL_KINDS = ("read", "read_write")
@@ -578,8 +578,69 @@ class AgentRun(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, onupdate=utcnow, nullable=False)
 
     service_principal: Mapped["ServicePrincipal"] = relationship(back_populates="agent_runs")
+    inputs: Mapped[list["AgentRunInput"]] = relationship(back_populates="run", cascade="all, delete-orphan")
+    steps: Mapped[list["AgentRunStep"]] = relationship(back_populates="run", cascade="all, delete-orphan")
+    events: Mapped[list["AgentRunEvent"]] = relationship(back_populates="run", cascade="all, delete-orphan")
     artifacts: Mapped[list["AgentRunArtifact"]] = relationship(back_populates="run", cascade="all, delete-orphan")
     retrieval_logs: Mapped[list["RetrievalLog"]] = relationship(back_populates="agent_run")
+
+
+class AgentRunInput(Base):
+    __tablename__ = "agent_run_inputs"
+    __table_args__ = (UniqueConstraint("run_id", "input_key", name="uq_agent_run_inputs_run_key"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    run_id: Mapped[str] = mapped_column(ForeignKey("agent_runs.id"), index=True, nullable=False)
+    input_key: Mapped[str] = mapped_column(String(128), nullable=False)
+    kind: Mapped[str] = mapped_column(String(64), default="warehouse_asset", nullable=False)
+    role: Mapped[str] = mapped_column(String(64), default="source", nullable=False)
+    warehouse_path: Mapped[str] = mapped_column(String(1024), nullable=False)
+    version_id: Mapped[str] = mapped_column(String(255), default="", nullable=False)
+    etag: Mapped[str] = mapped_column(String(255), default="", nullable=False)
+    sha256: Mapped[str] = mapped_column(String(64), default="", nullable=False)
+    size: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    content_type: Mapped[str] = mapped_column(String(255), default="application/octet-stream", nullable=False)
+    metadata_json: Mapped[dict] = mapped_column(JSON, default=dict, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, nullable=False)
+
+    run: Mapped["AgentRun"] = relationship(back_populates="inputs")
+
+
+class AgentRunStep(Base):
+    __tablename__ = "agent_run_steps"
+    __table_args__ = (UniqueConstraint("run_id", "sequence", name="uq_agent_run_steps_run_sequence"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    run_id: Mapped[str] = mapped_column(ForeignKey("agent_runs.id"), index=True, nullable=False)
+    sequence: Mapped[int] = mapped_column(Integer, nullable=False)
+    step_type: Mapped[str] = mapped_column(String(64), nullable=False)
+    status: Mapped[str] = mapped_column(String(32), default="running", nullable=False)
+    metrics_json: Mapped[dict] = mapped_column(JSON, default=dict, nullable=False)
+    error_summary: Mapped[str] = mapped_column(Text, default="", nullable=False)
+    started_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, nullable=False)
+    finished_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, onupdate=utcnow, nullable=False)
+
+    run: Mapped["AgentRun"] = relationship(back_populates="steps")
+
+
+class AgentRunEvent(Base):
+    __tablename__ = "agent_run_events"
+    __table_args__ = (UniqueConstraint("run_id", "sequence", name="uq_agent_run_events_run_sequence"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    run_id: Mapped[str] = mapped_column(ForeignKey("agent_runs.id"), index=True, nullable=False)
+    sequence: Mapped[int] = mapped_column(Integer, nullable=False)
+    event_type: Mapped[str] = mapped_column(String(64), nullable=False)
+    stage: Mapped[str] = mapped_column(String(64), default="", nullable=False)
+    progress: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    message: Mapped[str] = mapped_column(String(500), default="", nullable=False)
+    retryable: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    payload_json: Mapped[dict] = mapped_column(JSON, default=dict, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, nullable=False)
+
+    run: Mapped["AgentRun"] = relationship(back_populates="events")
 
 
 class AgentRunArtifact(Base):

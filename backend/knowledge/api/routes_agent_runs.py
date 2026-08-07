@@ -3,17 +3,21 @@ from __future__ import annotations
 import json
 
 from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, UploadFile
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from knowledge.api.deps import get_current_wallet
 from knowledge.db.session import get_db
-from knowledge.models import AgentRun
+from knowledge.models import AgentRun, AgentRunArtifact, AgentRunEvent, AgentRunInput, AgentRunStep
 from knowledge.schemas.agent_runs import (
     AgentRunArtifactRead,
     AgentRunContextUpdateRequest,
     AgentRunCreateRequest,
     AgentRunFinishRequest,
+    AgentRunEventRead,
+    AgentRunInputRead,
     AgentRunRead,
+    AgentRunStepRead,
 )
 from knowledge.services.agent_runs import AgentRunService
 from knowledge.services.agent_run_artifacts import AgentRunArtifactService
@@ -68,11 +72,65 @@ def create_agent_run(
             external_id=payload.external_id,
             run_type=payload.run_type,
             inputs=payload.inputs,
-            metadata=payload.metadata,
+            metadata={**payload.metadata, "intent": payload.intent, "constraints": payload.constraints.model_dump(exclude_none=True)},
         )
         return sync_manifest(db, run)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.get("/service/runs/{run_id}/inputs", response_model=list[AgentRunInputRead])
+def list_agent_run_inputs(
+    run_id: str,
+    principal=Depends(get_service_principal),
+    db: Session = Depends(get_db),
+) -> list[AgentRunInputRead]:
+    agent_run_service.get_run(db, principal, run_id)
+    return list(db.scalars(select(AgentRunInput).where(AgentRunInput.run_id == run_id).order_by(AgentRunInput.id.asc())).all())
+
+
+@router.get("/service/runs/{run_id}/steps", response_model=list[AgentRunStepRead])
+def list_agent_run_steps(
+    run_id: str,
+    principal=Depends(get_service_principal),
+    db: Session = Depends(get_db),
+) -> list[AgentRunStepRead]:
+    agent_run_service.get_run(db, principal, run_id)
+    return list(db.scalars(select(AgentRunStep).where(AgentRunStep.run_id == run_id).order_by(AgentRunStep.sequence.asc())).all())
+
+
+@router.get("/service/runs/{run_id}/events", response_model=list[AgentRunEventRead])
+def list_agent_run_events(
+    run_id: str,
+    after: int = 0,
+    principal=Depends(get_service_principal),
+    db: Session = Depends(get_db),
+) -> list[AgentRunEventRead]:
+    agent_run_service.get_run(db, principal, run_id)
+    return list(
+        db.scalars(
+            select(AgentRunEvent)
+            .where(AgentRunEvent.run_id == run_id)
+            .where(AgentRunEvent.sequence > max(0, after))
+            .order_by(AgentRunEvent.sequence.asc())
+        ).all()
+    )
+
+
+@router.get("/service/runs/{run_id}/artifacts", response_model=list[AgentRunArtifactRead])
+def list_agent_run_artifacts(
+    run_id: str,
+    principal=Depends(get_service_principal),
+    db: Session = Depends(get_db),
+) -> list[AgentRunArtifactRead]:
+    agent_run_service.get_run(db, principal, run_id)
+    return list(
+        db.scalars(
+            select(AgentRunArtifact)
+            .where(AgentRunArtifact.run_id == run_id)
+            .order_by(AgentRunArtifact.created_at.asc(), AgentRunArtifact.id.asc())
+        ).all()
+    )
 
 
 @router.get("/service/runs/{run_id}", response_model=AgentRunRead)

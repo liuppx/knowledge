@@ -13,6 +13,7 @@ from knowledge.models import ImportTask, WorkerStatus
 from knowledge.services.ingestion import IngestionService
 from knowledge.services.memory import MemoryService
 from knowledge.services.task_queue import TaskQueueService
+from knowledge.services.spreadsheet_analysis import SpreadsheetAnalysisQueue, SpreadsheetAnalysisService
 from knowledge.utils.time import utc_now
 
 
@@ -74,11 +75,33 @@ class Worker:
                         future.result()
                         processed += 1
                         self._heartbeat(status="running", last_error="")
+            processed += self._process_spreadsheet_runs(max_workers)
             self._heartbeat(status="idle", processed_count=processed, last_error="")
             return processed
         except Exception as exc:  # noqa: BLE001
             self._heartbeat(status="error", last_error=str(exc))
             raise
+
+    def _process_spreadsheet_runs(self, limit: int) -> int:
+        run_ids: list[str] = []
+        with session_scope() as db:
+            for _ in range(limit):
+                run_id = SpreadsheetAnalysisQueue.claim_next(db)
+                if run_id is None:
+                    break
+                run_ids.append(run_id)
+        if not run_ids:
+            return 0
+        with ThreadPoolExecutor(max_workers=min(limit, len(run_ids))) as executor:
+            futures = [executor.submit(self._process_spreadsheet_run, run_id) for run_id in run_ids]
+            for future in as_completed(futures):
+                future.result()
+        return len(run_ids)
+
+    @staticmethod
+    def _process_spreadsheet_run(run_id: str) -> None:
+        with session_scope() as db:
+            SpreadsheetAnalysisService().process(db, run_id)
 
     def run_forever(self) -> None:
         while True:

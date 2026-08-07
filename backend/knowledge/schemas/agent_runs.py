@@ -1,8 +1,44 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
+
+
+class SpreadsheetFilterRequest(BaseModel):
+    column: str
+    operator: Literal["eq", "ne", "gt", "gte", "lt", "lte", "contains", "in", "is_null", "not_null"] = "eq"
+    value: Any = None
+
+
+class SpreadsheetAggregationRequest(BaseModel):
+    column: str
+    op: Literal["count", "sum", "avg", "min", "max"]
+    alias: str | None = None
+
+
+class SpreadsheetSortRequest(BaseModel):
+    column: str
+    direction: Literal["asc", "desc"] = "asc"
+
+
+class SpreadsheetAnalysisPlanRequest(BaseModel):
+    select: list[str] = Field(default_factory=list)
+    filters: list[SpreadsheetFilterRequest] = Field(default_factory=list)
+    group_by: list[str] = Field(default_factory=list)
+    aggregations: list[SpreadsheetAggregationRequest] = Field(default_factory=list)
+    sort: list[SpreadsheetSortRequest] = Field(default_factory=list)
+    limit: int = Field(default=1000, ge=1, le=10000)
+
+
+class SpreadsheetAnalysisConstraints(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    max_rows: int | None = Field(default=None, ge=1)
+    allow_sampling: bool = True
+    output_formats: list[Literal["markdown", "csv", "xlsx", "png"]] = Field(default_factory=list)
+    analysis_plan: SpreadsheetAnalysisPlanRequest | None = None
 
 
 class AgentRunCreateRequest(BaseModel):
@@ -10,6 +46,8 @@ class AgentRunCreateRequest(BaseModel):
     external_id: str | None = None
     run_type: str = "research"
     inputs: list[dict] = Field(default_factory=list)
+    intent: str = ""
+    constraints: SpreadsheetAnalysisConstraints = Field(default_factory=SpreadsheetAnalysisConstraints)
     metadata: dict = Field(default_factory=dict)
 
 
@@ -61,5 +99,48 @@ class AgentRunArtifactRead(BaseModel):
     metadata_json: dict = Field(default_factory=dict)
     created_at: datetime
     updated_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class AgentRunInputRead(BaseModel):
+    id: int
+    input_key: str
+    kind: str
+    role: str
+    warehouse_path: str
+    version_id: str
+    etag: str
+    sha256: str
+    size: int
+    content_type: str
+    metadata_json: dict = Field(default_factory=dict)
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class AgentRunStepRead(BaseModel):
+    id: int
+    sequence: int
+    step_type: str
+    status: str
+    metrics_json: dict = Field(default_factory=dict)
+    error_summary: str
+    started_at: datetime
+    finished_at: datetime | None = None
+
+    model_config = {"from_attributes": True}
+
+
+class AgentRunEventRead(BaseModel):
+    sequence: int
+    event_type: str
+    stage: str
+    progress: int
+    message: str
+    retryable: bool
+    payload_json: dict = Field(default_factory=dict)
+    created_at: datetime
 
     model_config = {"from_attributes": True}
