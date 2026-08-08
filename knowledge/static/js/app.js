@@ -43,6 +43,7 @@ const state = {
   revealedCredentialSecrets: {},
   kbs: [],
   bindings: [],
+  sources: [],
   documents: [],
   knowledgeItems: [],
   knowledgeItemDetails: [],
@@ -2247,6 +2248,7 @@ async function createKB() {
 
 function clearSelectedWorkspaceData() {
   state.bindings = [];
+  state.sources = [];
   state.documents = [];
   state.knowledgeItems = [];
   state.knowledgeItemDetails = [];
@@ -2362,6 +2364,80 @@ function renderBindings() {
     return;
   }
   list.innerHTML = `<div class="code">${escapeHtml(JSON.stringify(state.bindings, null, 2))}</div>`;
+}
+
+async function refreshSources() {
+  if (!state.selectedKB) {
+    state.sources = [];
+    renderSources();
+    return;
+  }
+  state.sources = await api(`/kbs/${state.selectedKB.id}/sources`);
+  renderSources();
+}
+
+function renderSources() {
+  const list = el("source-list");
+  if (!list) return;
+  if (!state.selectedKB) {
+    list.innerHTML = `<div class="empty">先选中一个知识库。</div>`;
+    return;
+  }
+  if (!state.sources.length) {
+    list.innerHTML = `<div class="empty">还没有外部来源。添加来源后先扫描资产，再构建 Evidence。</div>`;
+    return;
+  }
+  list.innerHTML = state.sources
+    .map(
+      (source) => `
+        <div class="list-item">
+          <div class="list-title">${escapeHtml(source.source_path)}</div>
+          <div class="list-subtitle">${escapeHtml(source.source_type)} · ${escapeHtml(source.scope_type)} · ${source.enabled ? "enabled" : "disabled"}</div>
+          <div class="helper">状态：${escapeHtml(source.sync_status || "pending_sync")} · 最近扫描：${formatDate(source.last_synced_at)}</div>
+          <div class="list-actions">
+            <button class="secondary" data-action="scan-source" data-source-id="${source.id}">扫描</button>
+            <button data-action="build-source-evidence" data-source-id="${source.id}">构建 Evidence</button>
+            <button class="ghost" data-action="show-source-evidence" data-source-id="${source.id}">查看 Evidence</button>
+          </div>
+        </div>
+      `,
+    )
+    .join("");
+}
+
+async function createSource() {
+  const kbId = currentKBOrThrow();
+  const sourceType = String(el("source-type")?.value || "").trim();
+  const sourcePath = String(el("source-path")?.value || "").trim();
+  const scopeType = String(el("source-scope-type")?.value || "directory").trim();
+  if (!sourceType || !sourcePath) throw new Error("请选择来源类型并填写来源路径");
+  const source = await api(`/kbs/${kbId}/sources`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ source_type: sourceType, source_path: sourcePath, scope_type: scopeType }),
+  });
+  el("source-path").value = "";
+  setOutput(source);
+  await refreshSources();
+}
+
+async function scanSource(sourceId) {
+  const result = await api(`/kbs/${currentKBOrThrow()}/sources/${sourceId}/scan`, { method: "POST" });
+  setOutput(result);
+  await refreshSources();
+  return result;
+}
+
+async function buildSourceEvidence(sourceId) {
+  const result = await api(`/kbs/${currentKBOrThrow()}/sources/${sourceId}/build-evidence`, { method: "POST" });
+  setOutput(result);
+  await refreshSources();
+  return result;
+}
+
+async function showSourceEvidence(sourceId) {
+  const evidence = await api(`/kbs/${currentKBOrThrow()}/evidence?source_id=${sourceId}`);
+  openDrawer(`来源 #${sourceId} 的 Evidence`, evidence);
 }
 
 function warehouseBrowseQuery(path, credentialId = currentBrowseCredentialId(), useWriteCredential = isBrowseUsingWriteCredential()) {
@@ -3391,6 +3467,7 @@ function renderSourceGovernance() {
 async function refreshSelectedData() {
   await Promise.all([
     refreshBindings(),
+    refreshSources(),
     refreshDocuments(),
     refreshCurrentKBStats(),
     refreshCurrentRelease(),
@@ -3427,6 +3504,7 @@ function renderAll() {
   renderWriteCredential();
   renderWarehouseBootstrapStatus();
   renderBindings();
+  renderSources();
   renderKBWorkbench();
   renderWarehouseEntries();
   renderWarehousePreview();
@@ -3487,6 +3565,8 @@ function attachStaticEvents() {
   bindEvent("update-kb", "click", () => withFeedback(updateKB, "知识库配置已更新")().catch(() => {}));
   bindEvent("delete-kb", "click", () => withFeedback(() => deleteKB(), "知识库已删除")().catch(() => {}));
   bindEvent("refresh-bindings", "click", () => withFeedback(refreshBindings, "绑定源已刷新")().catch(() => {}));
+  bindEvent("refresh-sources", "click", () => withFeedback(refreshSources, "外部来源已刷新")().catch(() => {}));
+  bindEvent("create-source", "click", () => withFeedback(createSource, "外部来源已添加")().catch(() => {}));
   bindEvent("binding-credential-id", "change", () => {
     const credential = bindingCredential();
     if (!credential) return;
@@ -3700,6 +3780,18 @@ function attachStaticEvents() {
     }
     if (action === "delete-binding") {
       withFeedback(() => deleteBinding(Number(target.dataset.bindingId)), "绑定源已解绑")().catch(() => {});
+      return;
+    }
+    if (action === "scan-source") {
+      withFeedback(() => scanSource(Number(target.dataset.sourceId)), "来源扫描完成")().catch(() => {});
+      return;
+    }
+    if (action === "build-source-evidence") {
+      withFeedback(() => buildSourceEvidence(Number(target.dataset.sourceId)), "Evidence 构建完成")().catch(() => {});
+      return;
+    }
+    if (action === "show-source-evidence") {
+      withFeedback(() => showSourceEvidence(Number(target.dataset.sourceId)))().catch(() => {});
       return;
     }
     if (action === "reveal-read-credential") {

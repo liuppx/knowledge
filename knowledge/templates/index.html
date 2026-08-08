@@ -277,6 +277,30 @@
 
           <div class="card">
             <div class="section-header">
+              <div>
+                <h2>外部来源</h2>
+                <div class="helper">接入本地目录或 GitHub 仓库后，依次扫描资产并构建 Evidence。Warehouse 来源仍使用上方的绑定源流程。</div>
+              </div>
+              <div class="toolbar"><button class="secondary" id="refresh-sources">刷新</button></div>
+            </div>
+            <div class="form-grid">
+              <select id="source-type">
+                <option value="local_file">本地目录</option>
+                <option value="github_repository">GitHub 仓库</option>
+              </select>
+              <input id="source-path" placeholder="本地目录：docs；GitHub：owner/repository@main:docs" />
+              <select id="source-scope-type">
+                <option value="directory">目录</option>
+                <option value="file">单个文件</option>
+              </select>
+              <div class="toolbar"><button id="create-source">添加来源</button></div>
+            </div>
+            <div class="helper">本地目录相对于 `LOCAL_FILE_CONNECTOR_ROOT`；GitHub 支持 `owner/repository`、`owner/repository@branch` 与 `owner/repository@branch:path/prefix`。</div>
+            <div class="list" id="source-list"></div>
+          </div>
+
+          <div class="card">
+            <div class="section-header">
               <h2>知识库工作台</h2>
             </div>
             <div id="kb-workbench" class="empty">请选择知识库后查看绑定状态、最近任务和同步建议。</div>
