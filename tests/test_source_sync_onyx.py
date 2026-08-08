@@ -1,14 +1,15 @@
 from __future__ import annotations
 
+import pytest
 from sqlalchemy import select
 
 from knowledge.core.settings import get_settings
 from knowledge.db.base import Base
 from knowledge.db.schema import ensure_runtime_schema
 from knowledge.db.session import engine, session_scope
-from knowledge.models import KnowledgeBase, SourceAsset, WalletUser
+from knowledge.models import EvidenceUnit, KnowledgeBase, SourceAsset, WalletUser
 from knowledge.services.asset_inventory import AssetInventoryService
-from knowledge.services.warehouse_scope import warehouse_app_path
+from knowledge.services.evidence_pipeline import EvidencePipelineService
 from knowledge.services.source_registry import SourceRegistryService
 from knowledge.services.source_sync import SourceSyncService
 
@@ -73,6 +74,21 @@ def test_source_sync_discovers_onyx_local_file_assets(monkeypatch, tmp_path) -> 
             assert [asset.asset_name for asset in assets] == ["a.txt", "b.md"]
             assert all(asset.source_version for asset in assets)
             assert all(asset.availability_status == "discovered" for asset in assets)
+
+            evidence_stats = EvidencePipelineService().build_for_source(db, wallet_address, kb.id, source.id)
+            assert evidence_stats.processed_asset_count == 2
+            assert evidence_stats.built_evidence_count == 2
+
+            evidence_units = list(
+                db.scalars(
+                    select(EvidenceUnit)
+                    .join(SourceAsset, SourceAsset.id == EvidenceUnit.asset_id)
+                    .where(SourceAsset.source_id == source.id)
+                    .order_by(EvidenceUnit.id.asc())
+                ).all()
+            )
+            assert [unit.text for unit in evidence_units] == ["alpha", "beta"]
+            assert all(unit.vector_status == "indexed" for unit in evidence_units)
     finally:
         get_settings.cache_clear()
 
@@ -87,6 +103,7 @@ def test_warehouse_source_type_does_not_use_onyx_connector(monkeypatch, tmp_path
 
         assert inventory._connector_for_source_type("warehouse") is None
         assert inventory._connector_for_source_type("onyx_local_file") is not None
-        assert inventory._connector_for_source_type(warehouse_app_path("library")) is None
+        with pytest.raises(ValueError, match="unsupported source_type"):
+            inventory._connector_for_source_type("unknown")
     finally:
         get_settings.cache_clear()

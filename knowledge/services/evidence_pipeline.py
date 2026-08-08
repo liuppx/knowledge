@@ -7,10 +7,11 @@ from sqlalchemy.orm import Session
 
 from knowledge.core.settings import get_settings
 from knowledge.models import EvidenceUnit, KnowledgeBase, Source, SourceAsset
-from knowledge.ports import DocumentChunkerPort, DocumentParserPort
+from knowledge.ports import DocumentChunkerPort, DocumentParserPort, SourceAssetRef
 from knowledge.services.document_chunking import build_document_chunker
 from knowledge.services.document_parsing import build_document_parser
 from knowledge.services.filetypes import infer_file_type
+from knowledge.services.source_connectors import build_source_connector_for_type
 from knowledge.services.source_registry import SourceRegistryService
 from knowledge.services.warehouse import WarehouseGateway, build_warehouse_gateway
 from knowledge.services.warehouse_access import WarehouseAccessService
@@ -129,20 +130,7 @@ class EvidencePipelineService:
         return stats
 
     def _build_for_single_asset(self, db: Session, wallet_address: str, kb: KnowledgeBase, asset: SourceAsset) -> int:
-        resolved = self.warehouse_access_service.resolve_path_read_access(
-            db,
-            wallet_address,
-            kb.id,
-            asset.asset_path,
-            allow_write_fallback=True,
-        )
-        try:
-            raw_content = self.warehouse_gateway.read_file(wallet_address, asset.asset_path, auth=resolved.auth)
-            self.warehouse_access_service.mark_access_success(resolved)
-        except Exception as exc:
-            if self.warehouse_access_service.is_auth_error(exc):
-                self.warehouse_access_service.mark_access_invalid(resolved)
-            raise
+        raw_content = self._read_asset_content(db, wallet_address, kb, asset)
         parsed_text = self.parser.parse(asset.asset_name, raw_content)
         if not parsed_text.strip():
             self._delete_existing_evidence(db, asset)
@@ -178,6 +166,37 @@ class EvidencePipelineService:
         asset.availability_status = "available"
         db.flush()
         return len(evidence_units)
+
+    def _read_asset_content(self, db: Session, wallet_address: str, kb: KnowledgeBase, asset: SourceAsset) -> bytes:
+        source = db.get(Source, asset.source_id)
+        if source is None or source.kb_id != kb.id:
+            raise LookupError("source not found for asset")
+        connector = build_source_connector_for_type(source.source_type, settings=self.settings)
+        if connector is not None:
+            return connector.read_asset(
+                SourceAssetRef(
+                    path=asset.asset_path,
+                    name=asset.asset_name,
+                    entry_type="file",
+                    version=asset.source_version,
+                )
+            )
+
+        resolved = self.warehouse_access_service.resolve_path_read_access(
+            db,
+            wallet_address,
+            kb.id,
+            asset.asset_path,
+            allow_write_fallback=True,
+        )
+        try:
+            raw_content = self.warehouse_gateway.read_file(wallet_address, asset.asset_path, auth=resolved.auth)
+            self.warehouse_access_service.mark_access_success(resolved)
+        except Exception as exc:
+            if self.warehouse_access_service.is_auth_error(exc):
+                self.warehouse_access_service.mark_access_invalid(resolved)
+            raise
+        return raw_content
 
     def _delete_existing_evidence(self, db: Session, asset: SourceAsset) -> None:
         existing = list(

@@ -7,10 +7,9 @@ import logging
 from sqlalchemy.orm import Session
 
 from knowledge.core.settings import get_settings
-from knowledge.adapters.onyx import OnyxLocalFileConnector
 from knowledge.ports import SourceAssetRef, SourceConnectorPort
 from knowledge.services.filetypes import infer_file_type
-from knowledge.services.source_connectors import build_source_connector
+from knowledge.services.source_connectors import build_source_connector, build_source_connector_for_type
 from knowledge.services.warehouse import WarehouseFileEntry, WarehouseGateway, build_warehouse_gateway
 from knowledge.services.warehouse_access import ResolvedWarehouseAccess, WarehouseAccessService
 from knowledge.services.warehouse_scope import ensure_current_app_path, normalize_warehouse_path, warehouse_app_root
@@ -205,11 +204,9 @@ class AssetInventoryService:
         normalized_source_type = str(source_type or "warehouse").strip().lower()
         if normalized_source_type == "warehouse":
             return None
-        if normalized_source_type == "onyx_local_file":
-            if isinstance(self.source_connector, OnyxLocalFileConnector):
-                return self.source_connector
-            return OnyxLocalFileConnector(self.settings.onyx_local_file_root)
-        return None
+        if normalized_source_type == str(self.settings.source_connector_mode or "warehouse").strip().lower():
+            return self.source_connector
+        return build_source_connector_for_type(normalized_source_type, settings=self.settings)
 
     def _list_connector_asset_snapshots(
         self,
