@@ -13,7 +13,7 @@
 后端增加、删除或修改接口后，在仓库根目录执行：
 
 ```bash
-backend/.venv312/bin/python backend/scripts/export_openapi.py
+.venv/bin/python scripts/export_openapi.py
 ```
 
 提交接口代码时，应同时提交更新后的 `docs/openapi/knowledge.openapi.yaml`。

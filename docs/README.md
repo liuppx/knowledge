@@ -5,7 +5,7 @@
 ## 架构基线
 
 - [知识库架构 V1](知识库架构V1.md)：当前已经实现的知识库架构和能力边界。
-- [知识库架构 V2](知识库架构V2.md)：尚未实现或尚未完整实现的目标架构。
+- [知识库架构 V2](知识库架构V2.md)：以 Warehouse 深度集成和面向 Chat 的 CSV/Excel Agent 分析为首要研发重点，并记录后续治理目标。
 - [社区产品关系与开发边界](社区产品关系与开发边界.md)：Knowledge 与 Chat、Warehouse、Router、Node、Wallet、Project、Agent 的关系。
 
 社区关系文档的上游来源：
@@ -23,6 +23,7 @@
 
 - [控制台操作手册](控制台操作手册.md)
 - [Warehouse 凭证使用说明](Warehouse凭证使用说明.md)
+- [Warehouse 集成要求](Warehouse集成要求.md)：Knowledge V2 对 Warehouse 的契约、阻塞项和联调探针。
 - [Warehouse 鉴权与绑定重构说明](Warehouse鉴权与绑定重构说明.md)
 - [Worker 部署与扩缩容建议](Worker部署与扩缩容建议.md)
 
@@ -31,6 +32,7 @@
 - [产品验证知识库](产品验证知识库.md)
 - [Bot 与 Chat 知识库重构 PRD](Bot与Chat知识库重构PRD.md)
 - [Agent 运行与上下文资产设计](Agent运行与上下文资产设计.md)
+- [CSV 与 Excel 分析 Agent 开发说明](CSV与Excel分析Agent开发说明.md)：M1 当前接口、Worker 行为、限制和下一批实现范围。
 
 ## 历史与待办
 

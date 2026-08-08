@@ -53,8 +53,8 @@
 
 实现位置：
 
-- `backend/knowledge/models/entities.py`
-- `backend/knowledge/services/warehouse_access.py`
+- `knowledge/models/entities.py`
+- `knowledge/services/warehouse_access.py`
 
 ### 读凭证
 
@@ -83,7 +83,7 @@
 
 实现位置：
 
-- `backend/knowledge/services/warehouse.py`
+- `knowledge/services/warehouse.py`
 
 ## 凭证导入与校验
 
@@ -267,8 +267,8 @@
 
 ## 相关代码
 
-- `backend/knowledge/api/routes_warehouse.py`
-- `backend/knowledge/api/routes_tasks.py`
-- `backend/knowledge/services/warehouse_access.py`
-- `backend/knowledge/services/warehouse.py`
-- `backend/knowledge/services/bindings.py`
+- `knowledge/api/routes_warehouse.py`
+- `knowledge/api/routes_tasks.py`
+- `knowledge/services/warehouse_access.py`
+- `knowledge/services/warehouse.py`
+- `knowledge/services/bindings.py`
