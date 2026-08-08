@@ -5,9 +5,10 @@ export class ApiError extends Error {
 }
 
 export async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const accessToken = localStorage.getItem("knowledge:access-token");
   const response = await fetch(path, {
     ...init,
-    headers: { Accept: "application/json", ...(init?.headers ?? {}) },
+    headers: { Accept: "application/json", ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}), ...(init?.headers ?? {}) },
   });
   const body = await response.text();
   const data = body ? JSON.parse(body) : null;
