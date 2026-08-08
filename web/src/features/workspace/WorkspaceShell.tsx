@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { SourcesWorkspace } from "../sources/SourcesWorkspace";
 import { sourcesApi, type KnowledgeBase } from "../sources/api";
 import { SearchPanel } from "../search/SearchPanel";
-import { KnowledgeItemsPanel } from "../knowledge-items/KnowledgeItemsPanel";
+import { KnowledgeItemsPanel } from "../knowledgeItems/audit/KnowledgeItemsPanel";
 import { CandidatesPanel } from "../knowledgeItems/CandidatesPanel";
 import { ReleasesPanel } from "../releases/ReleasesPanel";
 

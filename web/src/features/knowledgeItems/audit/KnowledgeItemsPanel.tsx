@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { request } from "../../api/client";
+import { request } from "../../../api/client";
 
 type Item = { id: number; item_type: string; origin_type: string; lifecycle_status: string; current_revision_id: number | null };
 type Detail = { item: Item; current_revision: { title: string; statement: string; revision_no: number; evidence_links: { evidence_unit_id: number; role: string; summary: string }[] } | null };
