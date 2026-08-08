@@ -22,7 +22,7 @@
 - 生产 / 测试环境优先使用 `PostgreSQL`
 - 如果仍使用 `sqlite`，只建议保留 **1 个** worker 常驻
 - API 与 worker 必须共享同一个 `DATABASE_URL`
-- API 与 worker 必须使用同一份 `backend/.env`
+- API 与 worker 必须使用同一份 `.env`
 
 原因：
 
@@ -60,11 +60,11 @@
 
 仓库已提供独立 worker 启动脚本：
 
-- `backend/scripts/run_worker.sh`
+- `scripts/run_worker.sh`
 
 作用：
 
-- 自动加载 `backend/.env`
+- 自动加载 `.env`
 - 为每个实例生成唯一 `WORKER_NAME`
 - 以 `python -m knowledge.workers.runner` 启动 worker
 
@@ -102,8 +102,8 @@ sudo systemctl daemon-reload
 注意：模板中的默认路径是：
 
 - 工作目录：`/srv/knowledge/backend`
-- 启动脚本：`/srv/knowledge/backend/scripts/run_worker.sh`
-- 环境文件：`/srv/knowledge/backend/.env`
+- 启动脚本：`/srv/knowledge/scripts/run_worker.sh`
+- 环境文件：`/srv/knowledge/.env`
 
 如果你的部署路径不同，请先修改模板中的路径。
 

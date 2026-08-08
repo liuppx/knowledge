@@ -7,11 +7,11 @@ Wants=network.target
 Type=simple
 User=knowledge
 Group=knowledge
-WorkingDirectory=/srv/knowledge/backend
+WorkingDirectory=/srv/knowledge
 Environment=PYTHONUNBUFFERED=1
-Environment=WORKER_ENV_FILE=/srv/knowledge/backend/.env
+Environment=WORKER_ENV_FILE=/srv/knowledge/.env
 Environment=WORKER_NAME_PREFIX=knowledge-worker
-ExecStart=/srv/knowledge/backend/scripts/run_worker.sh %i
+ExecStart=/srv/knowledge/scripts/run_worker.sh %i
 Restart=always
 RestartSec=5
 TimeoutStopSec=30

@@ -8,7 +8,7 @@ import sys
 import httpx
 
 
-SCRIPT_PATH = Path(__file__).resolve().parents[1] / "backend" / "scripts" / "verify_warehouse_contract.py"
+SCRIPT_PATH = Path(__file__).resolve().parents[1] / "scripts" / "verify_warehouse_contract.py"
 SPEC = importlib.util.spec_from_file_location("verify_warehouse_contract", SCRIPT_PATH)
 assert SPEC is not None and SPEC.loader is not None
 MODULE = importlib.util.module_from_spec(SPEC)

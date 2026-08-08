@@ -2,11 +2,11 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-BACKEND_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+PROJECT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 INSTANCE_ID="${1:-${WORKER_INSTANCE_ID:-1}}"
-ENV_FILE="${WORKER_ENV_FILE:-${BACKEND_DIR}/.env}"
-PYTHON_BIN="${WORKER_PYTHON_BIN:-${BACKEND_DIR}/.venv/bin/python}"
+ENV_FILE="${WORKER_ENV_FILE:-${PROJECT_DIR}/.env}"
+PYTHON_BIN="${WORKER_PYTHON_BIN:-${PROJECT_DIR}/.venv/bin/python}"
 WORKER_NAME_PREFIX="${WORKER_NAME_PREFIX:-knowledge-worker}"
 WORKER_NAME_OVERRIDE="${WORKER_NAME_OVERRIDE:-}"
 
@@ -29,5 +29,5 @@ else
   export WORKER_NAME="${WORKER_NAME_PREFIX}-${INSTANCE_ID}"
 fi
 
-cd "${BACKEND_DIR}"
+cd "${PROJECT_DIR}"
 exec "${PYTHON_BIN}" -m knowledge.workers.runner

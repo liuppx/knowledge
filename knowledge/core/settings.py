@@ -37,7 +37,7 @@ class Settings(BaseSettings):
     warehouse_webdav_prefix: str = "/dav"
     warehouse_app_id: str = "knowledge.yeying.pub"
     warehouse_apps_prefix: str = "/apps"
-    warehouse_mock_root: str = str(Path(__file__).resolve().parents[3] / ".mock_warehouse")
+    warehouse_mock_root: str = str(Path(__file__).resolve().parents[2] / ".mock_warehouse")
     token_encryption_secret: str = ""
 
     vector_store_mode: str = "db"

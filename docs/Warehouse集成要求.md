@@ -73,7 +73,6 @@ Warehouse 需要在 replication outbox 之外提供面向外部服务的稳定�
 Knowledge 提供只依赖 Warehouse 公开 HTTP API 的探针：
 
 ```bash
-cd backend
 python scripts/verify_warehouse_contract.py \
   --base-url http://127.0.0.1:6065 \
   --asset-path /apps/knowledge.yeying.pub/contract-fixtures/10mb.csv \

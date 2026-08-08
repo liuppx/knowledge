@@ -106,7 +106,6 @@ Knowledge 只向 Router 发送：
 ## 4. 运行 Worker
 
 ```bash
-cd backend
 scripts/run_worker.sh 1
 ```
 
