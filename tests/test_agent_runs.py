@@ -233,6 +233,27 @@ def test_spreadsheet_analysis_run_is_processed_by_worker():
             "run.completed",
         ]
         assert [item["sequence"] for item in events] == list(range(1, len(events) + 1))
+        streamed = client.get(
+            f"/service/runs/{run['id']}/events",
+            headers={**service_headers, "Accept": "text/event-stream"},
+        )
+        assert streamed.status_code == 200
+        assert streamed.headers["content-type"].startswith("text/event-stream")
+        assert [f"id: {item['sequence']}" for item in events] == [
+            line for line in streamed.text.splitlines() if line.startswith("id: ")
+        ]
+        resumed = client.get(
+            f"/service/runs/{run['id']}/events",
+            headers={
+                **service_headers,
+                "Accept": "text/event-stream",
+                "Last-Event-ID": str(events[2]["sequence"]),
+            },
+        )
+        assert resumed.status_code == 200
+        assert [f"id: {item['sequence']}" for item in events[3:]] == [
+            line for line in resumed.text.splitlines() if line.startswith("id: ")
+        ]
         steps = client.get(f"/service/runs/{run['id']}/steps", headers=service_headers).json()
         assert [item["step_type"] for item in steps] == ["resolve", "profile", "plan", "execute", "publish"]
         assert all(item["status"] == "completed" for item in steps)

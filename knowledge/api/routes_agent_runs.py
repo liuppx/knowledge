@@ -1,13 +1,15 @@
 from __future__ import annotations
 
 import json
+import time
 
-from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, Request, UploadFile
+from fastapi.responses import StreamingResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from knowledge.api.deps import get_current_wallet
-from knowledge.db.session import get_db
+from knowledge.db.session import SessionLocal, get_db
 from knowledge.models import AgentRun, AgentRunArtifact, AgentRunEvent, AgentRunInput, AgentRunStep
 from knowledge.schemas.agent_runs import (
     AgentRunArtifactRead,
@@ -102,19 +104,64 @@ def list_agent_run_steps(
 @router.get("/service/runs/{run_id}/events", response_model=list[AgentRunEventRead])
 def list_agent_run_events(
     run_id: str,
+    request: Request,
     after: int = 0,
+    last_event_id: str | None = Header(default=None, alias="Last-Event-ID"),
     principal=Depends(get_service_principal),
     db: Session = Depends(get_db),
-) -> list[AgentRunEventRead]:
-    agent_run_service.get_run(db, principal, run_id)
+) -> list[AgentRunEventRead] | StreamingResponse:
+    run = agent_run_service.get_run(db, principal, run_id)
+    cursor = max(after, _event_cursor(last_event_id))
+    accepts_sse = "text/event-stream" in request.headers.get("accept", "")
+    if accepts_sse:
+        return StreamingResponse(
+            _stream_agent_run_events(run.id, principal.id, cursor),
+            media_type="text/event-stream",
+            headers={"Cache-Control": "no-cache", "Connection": "keep-alive", "X-Accel-Buffering": "no"},
+        )
     return list(
         db.scalars(
             select(AgentRunEvent)
             .where(AgentRunEvent.run_id == run_id)
-            .where(AgentRunEvent.sequence > max(0, after))
+            .where(AgentRunEvent.sequence > cursor)
             .order_by(AgentRunEvent.sequence.asc())
         ).all()
     )
+
+
+def _event_cursor(value: str | None) -> int:
+    try:
+        return max(0, int(value or 0))
+    except ValueError:
+        return 0
+
+
+def _stream_agent_run_events(run_id: str, principal_id: int, cursor: int):
+    terminal = {"completed", "failed", "cancelled"}
+    while True:
+        db = SessionLocal()
+        try:
+            run = db.get(AgentRun, run_id)
+            if run is None or run.service_principal_id != principal_id:
+                return
+            events = list(
+                db.scalars(
+                    select(AgentRunEvent)
+                    .where(AgentRunEvent.run_id == run_id)
+                    .where(AgentRunEvent.sequence > cursor)
+                    .order_by(AgentRunEvent.sequence.asc())
+                ).all()
+            )
+            for event in events:
+                cursor = event.sequence
+                payload = AgentRunEventRead.model_validate(event).model_dump(mode="json")
+                yield f"id: {event.sequence}\nevent: {event.event_type}\ndata: {json.dumps(payload, ensure_ascii=False)}\n\n"
+            if run.status in terminal:
+                return
+        finally:
+            db.close()
+        yield ": keep-alive\n\n"
+        time.sleep(1)
 
 
 @router.get("/service/runs/{run_id}/artifacts", response_model=list[AgentRunArtifactRead])

@@ -69,7 +69,7 @@ GET /service/runs/{run_id}/events?after=<sequence>
 GET /service/runs/{run_id}/artifacts
 ```
 
-`events` 当前是 JSON 增量查询。SSE 和 `Last-Event-ID` 续传属于 M2，Chat 当前应轮询并携带最后收到的 sequence。
+`events` 同时支持 JSON 增量查询和 SSE。Chat 发送 `Accept: text/event-stream`，并使用 `Last-Event-ID` 传递上一个 sequence，即可在断线后续传；未启用流式连接时继续传 `?after=<sequence>` 轮询。Run 到达终态且已发送全部事件后，SSE 自动关闭。
 
 ## 2. 自然语言计划生成
 
