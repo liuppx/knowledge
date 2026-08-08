@@ -19,11 +19,11 @@ will be adapted behind Knowledge ports over time.
 Initial intent: reuse and adapt document parsing, chunking, tokenizer, and text
 normalization code for Knowledge ingestion.
 
-## Onyx
+## Connector source snapshot
 
 - Source: `https://github.com/onyx-dot-app/onyx.git`
 - Snapshot: `5200dade0709f926f15309dbe48b1e43e680c202`
-- License: MIT for copied non-`ee` content, copied in `knowledge/third_party/onyx/LICENSE`
+- License: MIT for copied non-`ee` content, copied in `knowledge/third_party/connectors/LICENSE`
 - Copied paths:
   - `backend/onyx/connectors` without old Salesforce shelf test helpers
 
@@ -32,7 +32,7 @@ ACL utilities, and source discovery behavior for Knowledge sources.
 
 ## Rules
 
-- Do not copy Onyx `ee` directories into this repository.
+- Do not copy upstream `ee` directories into this repository.
 - Keep third-party code under `knowledge/third_party` until it is adapted into
   Knowledge-owned modules.
 - Prefer thin Knowledge adapters over direct imports from domain services.

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from knowledge.adapters.onyx import OnyxLocalFileConnector
+from knowledge.adapters.connectors import GitHubRepositoryConnector, LocalFileConnector
 from knowledge.core.settings import Settings, get_settings
 from knowledge.ports import SourceConnectorPort
 
@@ -21,6 +21,11 @@ def build_source_connector_for_type(
     mode = str(source_type or "warehouse").strip().lower() or "warehouse"
     if mode == "warehouse":
         return None
-    if mode == "onyx_local_file":
-        return OnyxLocalFileConnector(current_settings.onyx_local_file_root)
+    if mode == "local_file":
+        return LocalFileConnector(current_settings.local_file_connector_root)
+    if mode == "github_repository":
+        return GitHubRepositoryConnector(
+            access_token=current_settings.github_connector_access_token,
+            api_base_url=current_settings.github_connector_api_base_url,
+        )
     raise ValueError(f"unsupported {label}: {source_type}")

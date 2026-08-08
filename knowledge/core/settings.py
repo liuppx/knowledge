@@ -63,7 +63,9 @@ class Settings(BaseSettings):
     document_chunker_mode: str = "local"
     ragflow_chunker_delimiter: str = "\n。；！？"
     source_connector_mode: str = "warehouse"
-    onyx_local_file_root: str = str(Path(__file__).resolve().parents[2] / ".onyx_local_files")
+    local_file_connector_root: str = str(Path(__file__).resolve().parents[2] / ".local_source_files")
+    github_connector_access_token: str = ""
+    github_connector_api_base_url: str = "https://api.github.com"
 
     chunk_size: int = 800
     chunk_overlap: int = 120
