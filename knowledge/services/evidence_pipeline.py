@@ -7,9 +7,10 @@ from sqlalchemy.orm import Session
 
 from knowledge.core.settings import get_settings
 from knowledge.models import EvidenceUnit, KnowledgeBase, Source, SourceAsset
-from knowledge.services.chunking import DocumentChunker
+from knowledge.ports import DocumentChunkerPort, DocumentParserPort
+from knowledge.services.document_chunking import build_document_chunker
+from knowledge.services.document_parsing import build_document_parser
 from knowledge.services.filetypes import infer_file_type
-from knowledge.services.parser import DocumentParser
 from knowledge.services.source_registry import SourceRegistryService
 from knowledge.services.warehouse import WarehouseGateway, build_warehouse_gateway
 from knowledge.services.warehouse_access import WarehouseAccessService
@@ -37,14 +38,14 @@ class EvidencePipelineService:
         self,
         warehouse_gateway: WarehouseGateway | None = None,
         warehouse_access_service: WarehouseAccessService | None = None,
-        parser: DocumentParser | None = None,
-        chunker: DocumentChunker | None = None,
+        parser: DocumentParserPort | None = None,
+        chunker: DocumentChunkerPort | None = None,
     ) -> None:
         self.settings = get_settings()
         self.warehouse_gateway = warehouse_gateway or build_warehouse_gateway()
         self.warehouse_access_service = warehouse_access_service or WarehouseAccessService(warehouse_gateway=self.warehouse_gateway)
-        self.parser = parser or DocumentParser()
-        self.chunker = chunker or DocumentChunker()
+        self.parser = parser or build_document_parser()
+        self.chunker = chunker or build_document_chunker()
         self.vector_store = build_vector_store()
         self.source_registry_service = SourceRegistryService()
 

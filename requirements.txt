@@ -18,3 +18,10 @@ pytest==8.3.3
 PyYAML==6.0.3
 openpyxl==3.1.5
 Pillow==11.1.0
+beautifulsoup4==4.12.3
+chardet==5.2.0
+cn2an==0.5.23
+markdown==3.7
+roman-numbers==1.0.2
+tiktoken==0.8.0
+word2number==1.1

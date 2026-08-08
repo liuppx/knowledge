@@ -57,6 +57,14 @@ class Settings(BaseSettings):
     embedding_model: str = "text-embedding-3-small"
     embedding_dimensions: int = 32
 
+    document_parser_mode: str = "local"
+    ragflow_parser_chunk_token_num: int = 512
+    ragflow_parser_delimiter: str = "\n!?;。；！？"
+    document_chunker_mode: str = "local"
+    ragflow_chunker_delimiter: str = "\n。；！？"
+    source_connector_mode: str = "warehouse"
+    onyx_local_file_root: str = str(Path(__file__).resolve().parents[2] / ".onyx_local_files")
+
     chunk_size: int = 800
     chunk_overlap: int = 120
     retrieval_top_k: int = 6

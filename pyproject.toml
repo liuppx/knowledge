@@ -17,7 +17,17 @@ dependencies = {file = ["requirements.txt"]}
 include = ["knowledge*"]
 
 [tool.setuptools.package-data]
-knowledge = ["templates/*.html", "static/css/*.css", "static/js/*.js"]
+knowledge = [
+    "templates/*.html",
+    "static/css/*.css",
+    "static/js/*.js",
+    "third_party/SOURCES.md",
+    "third_party/onyx/LICENSE",
+    "third_party/onyx/connectors/README.md",
+    "third_party/ragflow/LICENSE",
+    "third_party/ragflow/deepdoc/parser/resume/entities/res/*.csv",
+    "third_party/ragflow/deepdoc/parser/resume/entities/res/*.json",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

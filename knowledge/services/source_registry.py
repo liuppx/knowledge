@@ -44,7 +44,13 @@ class SourceRegistryService:
         missing_policy: str,
     ) -> Source:
         kb = self.get_kb_or_404(db, wallet_address, kb_id)
-        normalized_path = ensure_current_app_path(source_path, "source_path")
+        normalized_source_type = str(source_type or "warehouse").strip() or "warehouse"
+        if normalized_source_type == "warehouse":
+            normalized_path = ensure_current_app_path(source_path, "source_path")
+        else:
+            normalized_path = str(source_path or "").strip()
+            if not normalized_path:
+                raise ValueError("source_path cannot be empty")
         normalized_missing_policy = self._validate_missing_policy(missing_policy)
         existing = db.scalar(
             select(Source)
@@ -55,7 +61,7 @@ class SourceRegistryService:
             return existing
         source = Source(
             kb_id=kb.id,
-            source_type=str(source_type or "warehouse").strip() or "warehouse",
+            source_type=normalized_source_type,
             source_path=normalized_path,
             scope_type=str(scope_type or "directory").strip() or "directory",
             enabled=bool(enabled),

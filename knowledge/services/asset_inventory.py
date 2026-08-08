@@ -7,7 +7,10 @@ import logging
 from sqlalchemy.orm import Session
 
 from knowledge.core.settings import get_settings
+from knowledge.adapters.onyx import OnyxLocalFileConnector
+from knowledge.ports import SourceAssetRef, SourceConnectorPort
 from knowledge.services.filetypes import infer_file_type
+from knowledge.services.source_connectors import build_source_connector
 from knowledge.services.warehouse import WarehouseFileEntry, WarehouseGateway, build_warehouse_gateway
 from knowledge.services.warehouse_access import ResolvedWarehouseAccess, WarehouseAccessService
 from knowledge.services.warehouse_scope import ensure_current_app_path, normalize_warehouse_path, warehouse_app_root
@@ -38,6 +41,7 @@ class AssetInventoryService:
         self.settings = get_settings()
         self.warehouse_gateway = warehouse_gateway or build_warehouse_gateway()
         self.warehouse_access_service = warehouse_access_service or WarehouseAccessService(warehouse_gateway=self.warehouse_gateway)
+        self.source_connector = build_source_connector()
         self.logger = logging.getLogger(__name__)
 
     def list_asset_snapshots(
@@ -47,7 +51,12 @@ class AssetInventoryService:
         source_path: str,
         scope_type: str,
         kb_id: int | None = None,
+        source_type: str = "warehouse",
     ) -> list[AssetSnapshot]:
+        connector = self._connector_for_source_type(source_type)
+        if connector is not None:
+            return self._list_connector_asset_snapshots(connector, source_path, scope_type)
+
         normalized_source_path = ensure_current_app_path(source_path, "source_path", self.settings)
         normalized_scope_type = str(scope_type or "directory").strip().lower() or "directory"
         exists, entry_type = self.path_exists(db, wallet_address, normalized_source_path, kb_id=kb_id)
@@ -67,7 +76,23 @@ class AssetInventoryService:
         entries = self._iter_files(db, wallet_address, normalized_source_path, kb_id=kb_id)
         return [self._snapshot_for_entry(entry) for entry in entries]
 
-    def path_exists(self, db: Session, wallet_address: str, path: str, kb_id: int | None = None) -> tuple[bool, str | None]:
+    def path_exists(
+        self,
+        db: Session,
+        wallet_address: str,
+        path: str,
+        kb_id: int | None = None,
+        source_type: str = "warehouse",
+    ) -> tuple[bool, str | None]:
+        connector = self._connector_for_source_type(source_type)
+        if connector is not None:
+            assets = connector.list_assets(path)
+            if not assets:
+                return False, None
+            if len(assets) == 1 and assets[0].path == path:
+                return True, assets[0].entry_type
+            return True, "directory"
+
         normalized_path = ensure_current_app_path(path, "path", self.settings)
         app_root = warehouse_app_root(self.settings)
         if kb_id is None:
@@ -174,6 +199,41 @@ class AssetInventoryService:
             asset_name=entry.name,
             asset_type=infer_file_type(entry.name),
             source_version=entry.modified_at.isoformat() if entry.modified_at else "",
+        )
+
+    def _connector_for_source_type(self, source_type: str) -> SourceConnectorPort | None:
+        normalized_source_type = str(source_type or "warehouse").strip().lower()
+        if normalized_source_type == "warehouse":
+            return None
+        if normalized_source_type == "onyx_local_file":
+            if isinstance(self.source_connector, OnyxLocalFileConnector):
+                return self.source_connector
+            return OnyxLocalFileConnector(self.settings.onyx_local_file_root)
+        return None
+
+    def _list_connector_asset_snapshots(
+        self,
+        connector: SourceConnectorPort,
+        source_path: str,
+        scope_type: str,
+    ) -> list[AssetSnapshot]:
+        normalized_scope_type = str(scope_type or "directory").strip().lower() or "directory"
+        assets = list(connector.list_assets(source_path))
+        if not assets:
+            raise SourcePathMissingError(source_path)
+        if normalized_scope_type == "file" and len(assets) != 1:
+            raise SourceScopeMismatchError(f"source path {source_path} is not a file")
+        if normalized_scope_type == "directory" and len(assets) == 1 and assets[0].path == source_path and assets[0].entry_type != "directory":
+            raise SourceScopeMismatchError(f"source path {source_path} is not a directory")
+        return [self._snapshot_for_asset_ref(asset) for asset in assets if asset.entry_type == "file"]
+
+    @staticmethod
+    def _snapshot_for_asset_ref(asset: SourceAssetRef) -> AssetSnapshot:
+        return AssetSnapshot(
+            asset_path=asset.path,
+            asset_name=asset.name,
+            asset_type=infer_file_type(asset.name),
+            source_version=asset.version or asset.checksum or (asset.modified_at.isoformat() if asset.modified_at else ""),
         )
 
     @staticmethod
