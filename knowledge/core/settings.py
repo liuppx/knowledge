@@ -31,6 +31,10 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 60
     refresh_token_expire_minutes: int = 60 * 24 * 7
     challenge_ttl_seconds: int = 300
+    passport_node_url: str = ""
+    passport_app_id: str = ""
+    passport_redirect_uri: str = ""
+    passport_session_ttl_seconds: int = 300
 
     warehouse_gateway_mode: str = "mock"
     warehouse_base_url: str = "https://webdav.yeying.pub"

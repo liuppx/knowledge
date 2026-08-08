@@ -2,6 +2,15 @@
 * { box-sizing: border-box; }
 body { margin: 0; min-width: 320px; }
 button { font: inherit; }
+.auth-page, .workspace-placeholder { min-height: 100vh; display: grid; place-items: center; padding: 24px; }
+.auth-panel { width: min(100%, 460px); border: 1px solid #dbe3e7; background: #fff; padding: 36px; box-shadow: 0 16px 44px rgb(20 33 43 / 10%); }
+.auth-panel h1, .workspace-placeholder h1 { margin: 0 0 12px; font-size: 28px; }
+.auth-panel .brand-mark { margin-bottom: 32px; }
+.primary-button { border: 1px solid #b7d84a; background: #d5f15f; color: #14212b; padding: 11px 16px; cursor: pointer; font-weight: 700; border-radius: 5px; margin-top: 16px; }
+.primary-button:hover { background: #c7e950; }
+.text-link { display: block; margin-top: 18px; color: #286079; font-size: 14px; }
+.auth-status { margin: 22px 0 0; color: #566b76; font-size: 14px; line-height: 1.5; }
+.workspace-placeholder > div { width: min(100%, 640px); background: #fff; border: 1px solid #dbe3e7; padding: 36px; }
 .app-shell { display: flex; min-height: 100vh; }
 .sidebar { width: 248px; background: #14212b; color: #eaf0f3; padding: 28px 18px 20px; display: flex; flex-direction: column; }
 .brand-mark { width: 34px; height: 34px; display: grid; place-items: center; background: #d5f15f; color: #14212b; font-weight: 800; border-radius: 8px; }

@@ -1627,58 +1627,24 @@ function renderDocumentDetail(detail = null) {
 }
 
 async function loginWithWallet() {
-  const helper = walletHelper();
-  if (!helper) {
-    throw new Error("钱包适配层未加载");
-  }
-  try {
-    setLoginProgress("正在检测钱包环境");
-    const provider = (await helper.discoverProvider?.({ timeoutMs: 1200 })) || helper.getWalletProvider?.();
-    if (!provider) {
-      throw new Error("未检测到钱包，请安装 MetaMask 或夜莺钱包");
-    }
-
-    const providerName = helper.getWalletName?.(provider) || "Web3 钱包";
-    setLoginProgress("正在请求钱包账户", { wallet_provider: providerName });
-    const [wallet] = await helper.requestAccounts(provider, { timeoutMs: 15000 });
-    if (!wallet) {
-      throw new Error("未获取到账户");
-    }
-
-    setLoginProgress("钱包账户已连接，正在获取 challenge", {
-      wallet_provider: providerName,
-      wallet_address: wallet,
-    });
-    const challenge = await api("/auth/challenge", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ wallet_address: wallet }),
-    });
-
-    setLoginProgress("challenge 已获取，正在请求钱包签名", {
-      wallet_provider: providerName,
-      wallet_address: wallet,
-    });
-    const signature = await helper.signChallenge(provider, wallet, challenge.message, { timeoutMs: 20000 });
-
-    setLoginProgress("签名完成，正在校验登录", {
-      wallet_provider: providerName,
-      wallet_address: wallet,
-    });
-    const token = await api("/auth/verify", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ wallet_address: wallet, signature }),
-    });
-    state.token = token.access_token;
-    localStorage.setItem("knowledge_token", token.access_token);
-    setLoggedIn(token.wallet_address);
+  setLoginProgress("正在创建夜莺通行证登录会话");
+  const session = await api("/auth/passport/sessions", { method: "POST" });
+  if (!session.verify_url) throw new Error("通行证未返回验证地址");
+  window.open(session.verify_url, "knowledge-passport-login", "noopener,noreferrer");
+  setLoginProgress("请在夜莺通行证中确认登录");
+  const deadline = new Date(session.expires_at).getTime();
+  while (Date.now() < deadline) {
+    await new Promise((resolve) => window.setTimeout(resolve, 1500));
+    const status = await api(`/auth/passport/sessions/${encodeURIComponent(session.session_id)}`);
+    if (status.status !== "completed" || !status.token) continue;
+    state.token = status.token.access_token;
+    localStorage.setItem("knowledge_token", status.token.access_token);
+    setLoggedIn(status.token.wallet_address);
     await refreshAll();
-    setOutput(token);
-  } catch (error) {
-    const message = helper.formatWalletLoginError?.(error, "knowledge 登录失败，请稍后重试。") || String(error);
-    throw new Error(message);
+    setOutput(status.token);
+    return;
   }
+  throw new Error("通行证登录已过期，请重新发起登录");
 }
 
 async function ensureDemoKnowledgeBase() {

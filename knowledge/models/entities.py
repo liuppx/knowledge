@@ -58,6 +58,31 @@ class AuthChallenge(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, nullable=False)
 
 
+class PassportLoginSession(Base):
+    __tablename__ = "passport_login_sessions"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    request_id: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
+    code_verifier: Mapped[str] = mapped_column(String(255), nullable=False)
+    redirect_uri: Mapped[str] = mapped_column(String(1024), nullable=False)
+    status: Mapped[str] = mapped_column(String(32), default="pending", nullable=False)
+    authorization_code: Mapped[str | None] = mapped_column(String(2048), nullable=True)
+    subject_id: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
+    wallet_address: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, onupdate=utcnow, nullable=False)
+
+
+class PassportSubject(Base):
+    __tablename__ = "passport_subjects"
+
+    subject_id: Mapped[str] = mapped_column(String(255), primary_key=True)
+    wallet_address: Mapped[str] = mapped_column(ForeignKey("wallet_users.wallet_address"), index=True, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, onupdate=utcnow, nullable=False)
+
+
 class KnowledgeBase(Base):
     __tablename__ = "knowledge_bases"
 

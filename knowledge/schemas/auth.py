@@ -30,3 +30,15 @@ class TokenResponse(BaseModel):
 
 class RefreshRequest(BaseModel):
     refresh_token: str
+
+
+class PassportSessionResponse(BaseModel):
+    session_id: str
+    verify_url: str
+    status: str
+    expires_at: datetime
+
+
+class PassportStatusResponse(BaseModel):
+    status: str
+    token: TokenResponse | None = None

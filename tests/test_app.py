@@ -40,19 +40,24 @@ def _login(client: TestClient, account) -> str:
     return data["access_token"]
 
 
-def test_console_loads_wallet_adapter_before_app():
+def test_web_console_is_primary_and_legacy_console_remains_available():
     wallet_ref = f"/static/js/wallet.js?v={CONSOLE_ASSET_VERSION}"
     bridge_ref = f"/static/js/warehouse_bridge.js?v={CONSOLE_ASSET_VERSION}"
     app_ref = f"/static/js/app.js?v={CONSOLE_ASSET_VERSION}"
     with TestClient(app) as client:
         response = client.get("/")
         assert response.status_code == 200
-        assert 'id="connect-wallet"' in response.text
-        assert "warehouse_base_url:" in response.text
-        assert "warehouse_webdav_prefix:" in response.text
-        wallet_index = response.text.index(wallet_ref)
-        bridge_index = response.text.index(bridge_ref)
-        app_index = response.text.index(app_ref)
+        assert 'id="root"' in response.text
+        assert "/assets/" in response.text
+
+        legacy = client.get("/legacy-console")
+        assert legacy.status_code == 200
+        assert 'id="connect-wallet"' in legacy.text
+        assert "warehouse_base_url:" in legacy.text
+        assert "warehouse_webdav_prefix:" in legacy.text
+        wallet_index = legacy.text.index(wallet_ref)
+        bridge_index = legacy.text.index(bridge_ref)
+        app_index = legacy.text.index(app_ref)
         assert wallet_index < app_index
         assert bridge_index < app_index
 

@@ -45,6 +45,9 @@ app = FastAPI(title=settings.app_name, debug=settings.debug, lifespan=lifespan)
 
 static_dir = Path(__file__).resolve().parent / "static"
 app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
+web_dist_dir = Path(__file__).resolve().parents[1] / "web" / "dist"
+if web_dist_dir.is_dir():
+    app.mount("/assets", StaticFiles(directory=str(web_dist_dir / "assets")), name="web-assets")
 
 
 @app.get("/health")

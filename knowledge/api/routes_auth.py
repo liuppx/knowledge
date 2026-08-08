@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 
 from knowledge.core.settings import get_settings
@@ -19,13 +20,15 @@ from knowledge.models import (
     SourceAsset,
     WalletUser,
 )
-from knowledge.schemas.auth import ChallengeRequest, ChallengeResponse, RefreshRequest, TokenResponse, VerifyRequest
+from knowledge.schemas.auth import ChallengeRequest, ChallengeResponse, PassportSessionResponse, PassportStatusResponse, RefreshRequest, TokenResponse, VerifyRequest
 from knowledge.services.auth import AuthService
+from knowledge.services.passport_auth import PassportAuthService
 from knowledge.utils.time import utc_now
 
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 service = AuthService()
+passport_service = PassportAuthService()
 settings = get_settings()
 DEMO_WALLET_ADDRESS = "0x000000000000000000000000000000000000de00"
 DEMO_KB_NAME = "Demo Knowledge Workspace"
@@ -326,6 +329,44 @@ def verify_signature(payload: VerifyRequest, db: Session = Depends(get_db)) -> T
         wallet_address=user.wallet_address,
         expires_at=access[1],
         refresh_expires_at=refresh[1],
+    )
+
+
+@router.post("/passport/sessions", response_model=PassportSessionResponse)
+def create_passport_session(db: Session = Depends(get_db)) -> PassportSessionResponse:
+    try:
+        session = passport_service.create_session(db)
+    except ValueError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    return PassportSessionResponse(session_id=session.id, verify_url=session.verify_url, status=session.status, expires_at=session.expires_at)
+
+
+@router.get("/passport/callback", response_class=HTMLResponse)
+def passport_callback(code: str = Query(min_length=1), state: str = Query(min_length=1), db: Session = Depends(get_db)) -> HTMLResponse:
+    try:
+        passport_service.receive_callback(db, state, code)
+    except LookupError as exc:
+        raise HTTPException(status_code=410, detail=str(exc)) from exc
+    return HTMLResponse("<html><body><p>夜莺通行证登录已确认，请回到 Knowledge 继续使用。</p></body></html>")
+
+
+@router.get("/passport/sessions/{session_id}", response_model=PassportStatusResponse)
+def get_passport_session(session_id: str, db: Session = Depends(get_db)) -> PassportStatusResponse:
+    try:
+        session = passport_service.complete_session(db, session_id)
+    except LookupError as exc:
+        raise HTTPException(status_code=410, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    if session.status != "completed" or not session.wallet_address:
+        return PassportStatusResponse(status=session.status)
+    access, refresh = service.create_token_pair(session.wallet_address)
+    return PassportStatusResponse(
+        status="completed",
+        token=TokenResponse(
+            access_token=access[0], refresh_token=refresh[0], wallet_address=session.wallet_address,
+            expires_at=access[1], refresh_expires_at=refresh[1],
+        ),
     )
 
 
