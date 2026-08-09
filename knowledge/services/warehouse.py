@@ -9,6 +9,9 @@ from urllib.parse import quote
 from xml.etree import ElementTree
 
 import httpx
+import boto3
+from botocore.config import Config
+from botocore.exceptions import ClientError
 
 from knowledge.core.settings import get_settings
 from knowledge.services.warehouse_scope import ensure_current_app_path, warehouse_app_directories, warehouse_app_root, warehouse_default_upload_dir, warehouse_path_chain
@@ -285,8 +288,90 @@ class BoundTokenWarehouseGateway(WarehouseGateway):
         return entries
 
 
+class S3WarehouseGateway(WarehouseGateway):
+    """Warehouse's S3-compatible API, mapped to its personal/apps/services paths."""
+
+    BUCKETS = {"personal", "apps", "services"}
+
+    def __init__(self, endpoint_url: str, region: str) -> None:
+        self.endpoint_url = endpoint_url.rstrip("/")
+        self.region = region
+        self.settings = get_settings()
+
+    def _client(self, auth: WarehouseRequestAuth | None):
+        if auth is None or auth.kind != "basic" or not auth.username or auth.password is None:
+            raise ValueError("Warehouse S3 access key credentials are required")
+        return boto3.client(
+            "s3",
+            endpoint_url=self.endpoint_url,
+            region_name=self.region,
+            aws_access_key_id=auth.username,
+            aws_secret_access_key=auth.password,
+            config=Config(s3={"addressing_style": "path"}),
+        )
+
+    @classmethod
+    def _location(cls, path: str) -> tuple[str, str]:
+        normalized = "/" + str(path or "").strip().lstrip("/")
+        parts = normalized.strip("/").split("/", 1)
+        bucket = parts[0]
+        if bucket not in cls.BUCKETS:
+            raise ValueError("Warehouse S3 path must start with /personal, /apps, or /services")
+        return bucket, parts[1] if len(parts) == 2 else ""
+
+    @staticmethod
+    def _http_error(exc: ClientError) -> httpx.HTTPStatusError:
+        metadata = exc.response.get("ResponseMetadata", {})
+        status = int(metadata.get("HTTPStatusCode") or 500)
+        request = httpx.Request("S3", "http://warehouse-s3.invalid")
+        response = httpx.Response(status, request=request, text=str(exc))
+        return httpx.HTTPStatusError(str(exc), request=request, response=response)
+
+    def browse(self, wallet_address: str, path: str, auth: WarehouseRequestAuth | None = None) -> list[WarehouseFileEntry]:
+        bucket, key = self._location(path)
+        prefix = f"{key.rstrip('/')}/" if key else ""
+        try:
+            response = self._client(auth).list_objects_v2(Bucket=bucket, Prefix=prefix, Delimiter="/")
+        except ClientError as exc:
+            raise self._http_error(exc) from exc
+        entries: list[WarehouseFileEntry] = []
+        for item in response.get("CommonPrefixes", []):
+            child_key = str(item.get("Prefix") or "").rstrip("/")
+            if child_key:
+                entries.append(WarehouseFileEntry(path=f"/{bucket}/{child_key}", name=child_key.rsplit("/", 1)[-1], entry_type="directory"))
+        for item in response.get("Contents", []):
+            object_key = str(item.get("Key") or "")
+            if not object_key or object_key == prefix:
+                continue
+            entries.append(WarehouseFileEntry(path=f"/{bucket}/{object_key}", name=object_key.rsplit("/", 1)[-1], entry_type="file", size=int(item.get("Size") or 0), modified_at=item.get("LastModified")))
+        return entries
+
+    def ensure_app_space(self, wallet_address: str, auth: WarehouseRequestAuth | None = None, *, base_path: str | None = None, target_path: str | None = None) -> None:
+        self._location(target_path or warehouse_app_root(self.settings))
+        self._client(auth)
+
+    def upload_file(self, wallet_address: str, target_dir: str, file_name: str, content: bytes, auth: WarehouseRequestAuth | None = None) -> str:
+        normalized_target_dir = ensure_current_app_path(target_dir or warehouse_default_upload_dir(self.settings), "target_dir", self.settings)
+        target_path = f"{normalized_target_dir.rstrip('/')}/{file_name}"
+        bucket, key = self._location(target_path)
+        try:
+            self._client(auth).put_object(Bucket=bucket, Key=key, Body=content)
+        except ClientError as exc:
+            raise self._http_error(exc) from exc
+        return target_path
+
+    def read_file(self, wallet_address: str, path: str, auth: WarehouseRequestAuth | None = None) -> bytes:
+        bucket, key = self._location(path)
+        try:
+            return self._client(auth).get_object(Bucket=bucket, Key=key)["Body"].read()
+        except ClientError as exc:
+            raise self._http_error(exc) from exc
+
+
 def build_warehouse_gateway() -> WarehouseGateway:
     settings = get_settings()
+    if settings.warehouse_gateway_mode == "s3":
+        return S3WarehouseGateway(endpoint_url=settings.warehouse_s3_endpoint_url, region=settings.warehouse_s3_region)
     if settings.warehouse_gateway_mode == "bound_token":
         return BoundTokenWarehouseGateway(
             base_url=settings.warehouse_base_url,

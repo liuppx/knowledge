@@ -39,9 +39,11 @@ class Settings(BaseSettings):
     passport_redirect_uri: str = ""
     passport_session_ttl_seconds: int = 300
 
-    warehouse_gateway_mode: str = "mock"
+    warehouse_gateway_mode: str = "s3"
     warehouse_base_url: str = "https://webdav.yeying.pub"
     warehouse_webdav_prefix: str = "/dav"
+    warehouse_s3_endpoint_url: str = "http://127.0.0.1:6066"
+    warehouse_s3_region: str = "us-east-1"
     warehouse_app_id: str = "knowledge.yeying.pub"
     warehouse_apps_prefix: str = "/apps"
     warehouse_mock_root: str = str(Path(__file__).resolve().parents[2] / ".mock_warehouse")

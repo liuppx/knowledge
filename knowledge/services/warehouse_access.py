@@ -425,6 +425,10 @@ class WarehouseAccessService:
         key_secret = str(key_secret or "").strip()
         if not key_id or not key_secret:
             raise ValueError("warehouse key_id and key_secret are required")
+        if get_settings().warehouse_gateway_mode == "s3":
+            if not key_id.startswith("AK"):
+                raise ValueError("Warehouse S3 access key must start with AK")
+            return
         if not key_id.startswith("ak_"):
             raise ValueError("warehouse key_id must start with ak_")
         if not key_secret.startswith("sk_"):
