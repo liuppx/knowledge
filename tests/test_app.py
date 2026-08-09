@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from datetime import timedelta
-from sqlalchemy.exc import OperationalError
 from eth_account import Account
 from eth_account.messages import encode_defunct
 from fastapi.testclient import TestClient
@@ -17,7 +16,7 @@ from knowledge.services.warehouse import BoundTokenWarehouseGateway, WarehouseFi
 from knowledge.services.warehouse_access import WarehouseAccessService
 from knowledge.services.warehouse_scope import warehouse_app_path, warehouse_app_root, warehouse_default_upload_dir
 from knowledge.utils.time import utc_now
-from knowledge.workers.runner import TaskHeartbeat, Worker
+from knowledge.workers.runner import Worker
 
 
 APP_ROOT = warehouse_app_root()
@@ -622,16 +621,9 @@ def test_memory_ingestion_and_failure_ops():
         assert any(item["id"] == failed_task.json()["id"] for item in failures.json())
 
 
-def test_sqlite_engine_uses_busy_timeout_and_wal():
+def test_engine_uses_postgresql():
     with engine.connect() as conn:
-        if conn.dialect.name != "sqlite":
-            return
-        journal_mode = str(conn.exec_driver_sql("PRAGMA journal_mode").scalar() or "").lower()
-        busy_timeout = int(conn.exec_driver_sql("PRAGMA busy_timeout").scalar() or 0)
-        foreign_keys = int(conn.exec_driver_sql("PRAGMA foreign_keys").scalar() or 0)
-        assert journal_mode in {"wal", "memory"}
-        assert busy_timeout >= 15000
-        assert foreign_keys == 1
+        assert conn.dialect.name == "postgresql"
 
 
 def test_worker_processes_pending_tasks_without_global_run_lease():
@@ -700,18 +692,10 @@ def test_worker_reclaims_stale_running_task_and_reprocesses_it():
         assert task_after.json()["claimed_by"] is None
 
 
-def test_worker_disables_background_heartbeat_for_sqlite():
+def test_worker_uses_configured_concurrency_and_background_heartbeat():
     worker = Worker()
-    assert worker._use_background_heartbeat() is False
-
-
-def test_task_heartbeat_treats_sqlite_lock_as_transient():
-    exc = OperationalError(
-        statement="UPDATE import_tasks SET heartbeat_at=?",
-        params=(),
-        orig=Exception("database is locked"),
-    )
-    assert TaskHeartbeat._is_transient_lock_error(exc) is True
+    assert worker._task_concurrency() == worker.settings.worker_task_concurrency
+    assert worker._use_background_heartbeat() is True
 
 
 def test_cancel_pending_task_marks_canceled_without_processing():

@@ -6,6 +6,7 @@ import base64
 import hashlib
 from urllib.parse import urlparse
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -23,8 +24,7 @@ class Settings(BaseSettings):
     host: str = "0.0.0.0"
     port: int = 8000
 
-    database_url: str = "sqlite:///./knowledge.db"
-    sqlite_busy_timeout_ms: int = 15000
+    database_url: str = "postgresql://knowledge:knowledge@127.0.0.1:5432/knowledge"
 
     jwt_secret: str = "change-me-in-production"
     jwt_algorithm: str = "HS256"
@@ -90,6 +90,13 @@ class Settings(BaseSettings):
     worker_max_active_tasks_per_user: int = 1
     worker_task_heartbeat_interval_seconds: int = 15
     worker_name: str = "knowledge-worker-1"
+
+    @field_validator("database_url")
+    @classmethod
+    def validate_postgresql_database_url(cls, value: str) -> str:
+        if not value.startswith("postgresql://"):
+            raise ValueError("DATABASE_URL must use the postgresql:// scheme")
+        return value
 
 
 @lru_cache(maxsize=1)

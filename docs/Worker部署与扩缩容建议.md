@@ -19,15 +19,14 @@
 
 ## 1. 前提建议
 
-- 生产 / 测试环境优先使用 `PostgreSQL`
-- 如果仍使用 `sqlite`，只建议保留 **1 个** worker 常驻
+- 生产 / 测试环境使用 `PostgreSQL`
 - API 与 worker 必须共享同一个 `DATABASE_URL`
 - API 与 worker 必须使用同一份 `.env`
 
 原因：
 
 - 当前 worker 已支持任务级 claim/heartbeat，可安全多实例消费
-- 但 `sqlite` 更适合作为单实例、低并发测试数据库
+- PostgreSQL 是 API、worker 与测试环境唯一支持的关系型数据库
 - 多 worker 的吞吐上限不仅取决于 worker 数量，还取决于：
   - `warehouse` WebDAV 延迟
   - embedding / model gateway 吞吐

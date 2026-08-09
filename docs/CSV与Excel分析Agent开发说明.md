@@ -109,7 +109,7 @@ Knowledge 只向 Router 发送：
 scripts/run_worker.sh 1
 ```
 
-Worker 同时处理原有知识导入任务和排队的 spreadsheet analysis Run。开发和测试环境使用 SQLite 时并发固定为 1。
+Worker 同时处理原有知识导入任务和排队的 spreadsheet analysis Run，并按照 `WORKER_TASK_CONCURRENCY` 并发执行。
 
 ## 5. 错误语义
 
