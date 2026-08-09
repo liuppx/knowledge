@@ -21,7 +21,7 @@ docker compose up -d postgres
 默认连接串为：
 
 ```dotenv
-DATABASE_URL=postgresql://knowledge:knowledge@127.0.0.1:5432/knowledge
+DATABASE_URL=postgresql://knowledge:knowledge@127.0.0.1:5432/knowledge?gssencmode=disable
 ```
 
 如本机已有 PostgreSQL，请在 `.env` 中将 `DATABASE_URL` 改为其可用连接串。测试使用独立数据库 `knowledge_test`；可通过 `TEST_DATABASE_URL` 覆盖其连接串。

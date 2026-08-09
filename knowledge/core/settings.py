@@ -24,7 +24,7 @@ class Settings(BaseSettings):
     host: str = "0.0.0.0"
     port: int = 8000
 
-    database_url: str = "postgresql://knowledge:knowledge@127.0.0.1:5432/knowledge"
+    database_url: str = "postgresql://knowledge:knowledge@127.0.0.1:5432/knowledge?gssencmode=disable"
 
     jwt_secret: str = "change-me-in-production"
     jwt_algorithm: str = "HS256"

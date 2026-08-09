@@ -7,7 +7,7 @@ from sqlalchemy import text
 
 
 os.environ["DATABASE_URL"] = os.environ.get(
-    "TEST_DATABASE_URL", "postgresql://knowledge:knowledge@127.0.0.1:5432/knowledge_test"
+    "TEST_DATABASE_URL", "postgresql://knowledge:knowledge@127.0.0.1:5432/knowledge_test?gssencmode=disable"
 )
 os.environ.setdefault("WAREHOUSE_GATEWAY_MODE", "mock")
 os.environ.setdefault("WAREHOUSE_MOCK_ROOT", "/tmp/knowledge_test_runtime/mock_warehouse")

@@ -200,7 +200,7 @@ class ImportTask(Base):
     claimed_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     heartbeat_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     attempt: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
-    last_stage: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    last_stage: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
 
 class ImportTaskItem(Base):
