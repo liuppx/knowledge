@@ -1,14 +1,17 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import StreamingResponse
+import json
+import time
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from knowledge.api.deps import get_current_wallet
-from knowledge.db.session import get_db
-from knowledge.models import AgentRun, ServicePrincipal
-from knowledge.schemas.agent_runs import AgentRunRead
+from knowledge.db.session import SessionLocal, get_db
+from knowledge.models import AgentRun, AgentRunArtifact, AgentRunEvent, ServicePrincipal
+from knowledge.schemas.agent_runs import AgentRunArtifactRead, AgentRunEventRead, AgentRunRead
 from knowledge.services.agent_run_manifests import AgentRunManifestService
 from knowledge.services.agent_runs import AgentRunService
 from knowledge.services.service_principals import ServicePrincipalService
@@ -87,3 +90,47 @@ def get_my_analysis_run(
     if run is None or run.owner_wallet_address != wallet_address or run.run_type != "spreadsheet_analysis":
         raise HTTPException(status_code=404, detail="analysis run not found")
     return run
+
+
+def _owned_run_or_404(db: Session, wallet_address: str, run_id: str) -> AgentRun:
+    run = db.get(AgentRun, run_id)
+    if run is None or run.owner_wallet_address != wallet_address or run.run_type != "spreadsheet_analysis":
+        raise HTTPException(status_code=404, detail="analysis run not found")
+    return run
+
+
+@router.get("/{run_id}/events", response_model=list[AgentRunEventRead])
+def list_my_analysis_events(run_id: str, after: int = 0, wallet_address: str = Depends(get_current_wallet), db: Session = Depends(get_db)) -> list[AgentRunEventRead]:
+    _owned_run_or_404(db, wallet_address, run_id)
+    return list(db.scalars(select(AgentRunEvent).where(AgentRunEvent.run_id == run_id).where(AgentRunEvent.sequence > max(0, after)).order_by(AgentRunEvent.sequence.asc())).all())
+
+
+@router.get("/{run_id}/events/stream")
+def stream_my_analysis_events(run_id: str, after: int = 0, wallet_address: str = Depends(get_current_wallet), db: Session = Depends(get_db)) -> StreamingResponse:
+    _owned_run_or_404(db, wallet_address, run_id)
+    def generate():
+        cursor = max(0, after)
+        while True:
+            session = SessionLocal()
+            try:
+                run = session.get(AgentRun, run_id)
+                if run is None or run.owner_wallet_address != wallet_address:
+                    return
+                events = list(session.scalars(select(AgentRunEvent).where(AgentRunEvent.run_id == run_id).where(AgentRunEvent.sequence > cursor).order_by(AgentRunEvent.sequence.asc())).all())
+                for event in events:
+                    cursor = event.sequence
+                    payload = AgentRunEventRead.model_validate(event).model_dump(mode="json")
+                    yield f"id: {event.sequence}\nevent: {event.event_type}\ndata: {json.dumps(payload, ensure_ascii=False)}\n\n"
+                if run.status in {"completed", "failed", "cancelled"}:
+                    return
+            finally:
+                session.close()
+            yield ": keep-alive\n\n"
+            time.sleep(1)
+    return StreamingResponse(generate(), media_type="text/event-stream", headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
+
+@router.get("/{run_id}/artifacts", response_model=list[AgentRunArtifactRead])
+def list_my_analysis_artifacts(run_id: str, wallet_address: str = Depends(get_current_wallet), db: Session = Depends(get_db)) -> list[AgentRunArtifactRead]:
+    _owned_run_or_404(db, wallet_address, run_id)
+    return list(db.scalars(select(AgentRunArtifact).where(AgentRunArtifact.run_id == run_id).order_by(AgentRunArtifact.created_at.asc(), AgentRunArtifact.id.asc())).all())
