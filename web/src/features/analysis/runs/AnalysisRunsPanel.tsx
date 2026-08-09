@@ -25,6 +25,13 @@ type Artifact = {
   status: string;
 };
 
+type Upload = {
+  id: number;
+  warehouse_target_path: string;
+  file_name: string;
+  size: number;
+};
+
 async function downloadArtifact(runId: string, artifact: Artifact) {
   const accessToken = localStorage.getItem("knowledge:access-token");
   const response = await fetch(`/analysis-runs/${runId}/artifacts/${artifact.id}/download`, {
@@ -51,6 +58,8 @@ export function AnalysisRunsPanel() {
   const [maxRows, setMaxRows] = useState("");
   const [allowSampling, setAllowSampling] = useState(true);
   const [outputFormats, setOutputFormats] = useState<string[]>(["csv", "xlsx"]);
+  const [uploads, setUploads] = useState<Upload[]>([]);
+  const [isLoadingUploads, setIsLoadingUploads] = useState(false);
   const [selected, setSelected] = useState<Run | null>(null);
   const [events, setEvents] = useState<RunEvent[]>([]);
   const [artifacts, setArtifacts] = useState<Artifact[]>([]);
@@ -69,6 +78,18 @@ export function AnalysisRunsPanel() {
   const loadArtifacts = async (runId: string) => {
     const nextArtifacts = await request<Artifact[]>(`/analysis-runs/${runId}/artifacts`);
     setArtifacts(nextArtifacts);
+  };
+
+  const loadUploads = async () => {
+    setIsLoadingUploads(true);
+    try {
+      const nextUploads = await request<Upload[]>("/warehouse/uploads");
+      setUploads(nextUploads.filter((upload) => /\.(csv|xlsx)$/i.test(upload.file_name)));
+    } catch (cause) {
+      setError(messageFor(cause, "加载已上传文件失败"));
+    } finally {
+      setIsLoadingUploads(false);
+    }
   };
 
   useEffect(() => {
@@ -166,6 +187,13 @@ export function AnalysisRunsPanel() {
       <input value={path} onChange={(event) => setPath(event.target.value)} placeholder="Warehouse CSV 或 Excel 路径" />
       <input value={intent} onChange={(event) => setIntent(event.target.value)} placeholder="分析目标，例如按地区汇总销售额" />
       <button onClick={create}>创建分析任务</button>
+    </div>
+    <div className="analysis-options">
+      <button onClick={() => void loadUploads()} disabled={isLoadingUploads}>{isLoadingUploads ? "正在读取文件" : "选择已上传文件"}</button>
+      {uploads.length > 0 && <select aria-label="选择分析文件" value="" onChange={(event) => { if (event.target.value) setPath(event.target.value); }}>
+        <option value="">从已上传的 CSV 或 XLSX 中选择</option>
+        {uploads.map((upload) => <option key={upload.id} value={upload.warehouse_target_path}>{upload.file_name} · {upload.size} 字节</option>)}
+      </select>}
     </div>
     <div className="analysis-options">
       <input type="number" min="1" value={maxRows} onChange={(event) => setMaxRows(event.target.value)} placeholder="最大处理行数（可选）" />
