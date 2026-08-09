@@ -25,6 +25,20 @@ type Artifact = {
   status: string;
 };
 
+async function downloadArtifact(runId: string, artifact: Artifact) {
+  const accessToken = localStorage.getItem("knowledge:access-token");
+  const response = await fetch(`/analysis-runs/${runId}/artifacts/${artifact.id}/download`, {
+    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+  });
+  if (!response.ok) throw new Error(`下载产物失败: ${response.status} ${response.statusText}`);
+  const url = URL.createObjectURL(await response.blob());
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = artifact.file_name;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
 function messageFor(cause: unknown, fallback: string) {
   return cause instanceof Error ? cause.message : fallback;
 }
@@ -154,7 +168,7 @@ export function AnalysisRunsPanel() {
       <h3>任务事件</h3>
       {events.length ? events.map((event) => <p className="muted" key={event.sequence}>#{event.sequence} · {event.stage || event.event_type} · {event.progress}% · {event.message}</p>) : <p className="muted">尚未收到任务事件。</p>}
       <h3>产物</h3>
-      {artifacts.length ? artifacts.map((artifact) => <p className="muted" key={artifact.id}>{artifact.artifact_key} · {artifact.file_name} · {artifact.status}</p>) : <p className="muted">尚未生成可查看的产物。</p>}
+      {artifacts.length ? artifacts.map((artifact) => <p className="muted" key={artifact.id}>{artifact.artifact_key} · {artifact.file_name} · {artifact.status} <button onClick={() => void downloadArtifact(selected.id, artifact).catch((cause) => setError(messageFor(cause, "下载产物失败")))}>下载</button></p>) : <p className="muted">尚未生成可查看的产物。</p>}
     </div>}
   </section>;
 }

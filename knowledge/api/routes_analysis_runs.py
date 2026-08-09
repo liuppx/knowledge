@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+from urllib.parse import quote
+
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import StreamingResponse
+from fastapi.responses import Response, StreamingResponse
 import json
 import time
 from pydantic import BaseModel, Field
@@ -15,12 +17,14 @@ from knowledge.schemas.agent_runs import AgentRunArtifactRead, AgentRunEventRead
 from knowledge.services.agent_run_manifests import AgentRunManifestService
 from knowledge.services.agent_runs import AgentRunService
 from knowledge.services.service_principals import ServicePrincipalService
+from knowledge.services.warehouse_access import WarehouseAccessService
 
 
 router = APIRouter(prefix="/analysis-runs", tags=["analysis_runs"])
 agent_run_service = AgentRunService()
 manifest_service = AgentRunManifestService()
 principal_service = ServicePrincipalService()
+warehouse_access_service = WarehouseAccessService()
 
 
 class AnalysisRunCreateRequest(BaseModel):
@@ -134,3 +138,32 @@ def stream_my_analysis_events(run_id: str, after: int = 0, wallet_address: str =
 def list_my_analysis_artifacts(run_id: str, wallet_address: str = Depends(get_current_wallet), db: Session = Depends(get_db)) -> list[AgentRunArtifactRead]:
     _owned_run_or_404(db, wallet_address, run_id)
     return list(db.scalars(select(AgentRunArtifact).where(AgentRunArtifact.run_id == run_id).order_by(AgentRunArtifact.created_at.asc(), AgentRunArtifact.id.asc())).all())
+
+
+@router.get("/{run_id}/artifacts/{artifact_id}/download")
+def download_my_analysis_artifact(
+    run_id: str,
+    artifact_id: int,
+    wallet_address: str = Depends(get_current_wallet),
+    db: Session = Depends(get_db),
+) -> Response:
+    run = _owned_run_or_404(db, wallet_address, run_id)
+    artifact = db.get(AgentRunArtifact, artifact_id)
+    if artifact is None or artifact.run_id != run.id:
+        raise HTTPException(status_code=404, detail="analysis artifact not found")
+    try:
+        resolved = warehouse_access_service.resolve_write_access(db, wallet_address, artifact.warehouse_path)
+        content = warehouse_access_service.warehouse_gateway.read_file(wallet_address, artifact.warehouse_path, auth=resolved.auth)
+        warehouse_access_service.mark_access_success(resolved)
+        db.commit()
+    except Exception as exc:  # noqa: BLE001
+        if "resolved" in locals() and warehouse_access_service.is_auth_error(exc):
+            warehouse_access_service.mark_access_invalid(resolved)
+            db.commit()
+        raise HTTPException(status_code=400, detail=f"unable to download analysis artifact: {exc}") from exc
+    safe_name = quote(artifact.file_name, safe="")
+    return Response(
+        content=content,
+        media_type=artifact.content_type or "application/octet-stream",
+        headers={"Content-Disposition": f"attachment; filename*=UTF-8''{safe_name}"},
+    )

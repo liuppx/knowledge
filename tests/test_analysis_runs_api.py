@@ -5,14 +5,17 @@ from fastapi.testclient import TestClient
 from knowledge.db.session import session_scope
 from knowledge.main import app
 from knowledge.models import AgentRunArtifact, AgentRunEvent
+from knowledge.services.warehouse import build_warehouse_gateway
+from knowledge.services.warehouse_scope import warehouse_app_path
+from tests.helpers import configure_warehouse_credentials
 
 
-def _login(client: TestClient) -> tuple[object, dict[str, str]]:
+def _login(client: TestClient) -> tuple[str, dict[str, str]]:
     account = Account.create()
     challenge = client.post("/auth/challenge", json={"wallet_address": account.address}).json()
     signature = account.sign_message(encode_defunct(text=challenge["message"])).signature.hex()
     token = client.post("/auth/verify", json={"wallet_address": account.address, "signature": signature}).json()["access_token"]
-    return account, {"Authorization": f"Bearer {token}"}
+    return account.address, {"Authorization": f"Bearer {token}"}
 
 
 def test_user_can_create_and_list_own_analysis_runs_without_service_key() -> None:
@@ -29,8 +32,9 @@ def test_user_can_create_and_list_own_analysis_runs_without_service_key() -> Non
 
 def test_analysis_events_and_artifacts_are_limited_to_run_owner() -> None:
     with TestClient(app) as client:
-        _, owner_headers = _login(client)
+        owner_address, owner_headers = _login(client)
         _, other_headers = _login(client)
+        configure_warehouse_credentials(client, owner_headers)
         created = client.post(
             "/analysis-runs",
             headers=owner_headers,
@@ -38,6 +42,9 @@ def test_analysis_events_and_artifacts_are_limited_to_run_owner() -> None:
         )
         assert created.status_code == 200
         run_id = created.json()["id"]
+        artifact_path = warehouse_app_path(f"runs/{run_id}/artifacts/summary.md")
+        gateway = build_warehouse_gateway()
+        gateway.upload_file(owner_address, warehouse_app_path(f"runs/{run_id}/artifacts"), "summary.md", b"# Summary\n")
         with session_scope() as db:
             db.add(AgentRunEvent(run_id=run_id, sequence=2, event_type="progress", stage="load", progress=25, message="读取数据"))
             db.add(AgentRunArtifact(
@@ -46,7 +53,7 @@ def test_analysis_events_and_artifacts_are_limited_to_run_owner() -> None:
                 artifact_type="report",
                 role="output",
                 status="final",
-                warehouse_path="/apps/knowledge.yeying.pub/runs/summary.md",
+                warehouse_path=artifact_path,
                 file_name="summary.md",
                 content_type="text/markdown",
                 size=12,
@@ -60,5 +67,11 @@ def test_analysis_events_and_artifacts_are_limited_to_run_owner() -> None:
         assert artifacts.status_code == 200
         assert artifacts.json()[0]["file_name"] == "summary.md"
 
+        download = client.get(f"/analysis-runs/{run_id}/artifacts/{artifacts.json()[0]['id']}/download", headers=owner_headers)
+        assert download.status_code == 200
+        assert download.content == b"# Summary\n"
+        assert download.headers["content-type"].startswith("text/markdown")
+
         assert client.get(f"/analysis-runs/{run_id}/events", headers=other_headers).status_code == 404
         assert client.get(f"/analysis-runs/{run_id}/artifacts", headers=other_headers).status_code == 404
+        assert client.get(f"/analysis-runs/{run_id}/artifacts/{artifacts.json()[0]['id']}/download", headers=other_headers).status_code == 404
