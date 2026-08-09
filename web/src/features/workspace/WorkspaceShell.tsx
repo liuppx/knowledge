@@ -7,6 +7,7 @@ import { ReleasesPanel } from "../releases/ReleasesPanel";
 import { SearchPanel } from "../search/SearchPanel";
 import { SourcesWorkspace } from "../sources/SourcesWorkspace";
 import { sourcesApi, type KnowledgeBase } from "../sources/api";
+import { WarehousePanel } from "../warehouse/WarehousePanel";
 
 function errorMessage(cause: unknown, fallback: string) {
   return cause instanceof Error ? cause.message : fallback;
@@ -67,6 +68,7 @@ export function WorkspaceShell() {
       </form>
       {error && <p className="alert" role="alert">{error}</p>}
     </section>
+    <WarehousePanel />
     {kbId ? <>
       <SourcesWorkspace kbId={kbId} />
       <CandidatesPanel kbId={kbId} />
