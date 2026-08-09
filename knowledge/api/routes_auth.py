@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 
@@ -306,12 +306,26 @@ def _ensure_demo_content(db: Session) -> None:
 
 
 @router.post("/challenge", response_model=ChallengeResponse)
-def create_challenge(payload: ChallengeRequest, db: Session = Depends(get_db)) -> ChallengeResponse:
-    challenge = service.create_challenge(db, payload.wallet_address)
+def create_challenge(payload: ChallengeRequest, request: Request, db: Session = Depends(get_db)) -> ChallengeResponse:
+    configured_domain = service.settings.siwe_domain.strip()
+    configured_uri = service.settings.siwe_uri.strip()
+    if service.settings.app_env != "development" and (not configured_domain or not configured_uri):
+        raise HTTPException(status_code=503, detail="SIWE_DOMAIN and SIWE_URI must be configured outside development")
+    request_origin = f"{request.url.scheme}://{request.url.netloc}"
+    try:
+        challenge = service.create_challenge(
+            db,
+            payload.wallet_address,
+            domain=configured_domain or request.url.netloc,
+            uri=configured_uri or request_origin,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     return ChallengeResponse(
         wallet_address=challenge.wallet_address,
         nonce=challenge.nonce,
         message=challenge.message,
+        challenge=challenge.message,
         expires_at=challenge.expires_at,
     )
 
@@ -325,6 +339,7 @@ def verify_signature(payload: VerifyRequest, db: Session = Depends(get_db)) -> T
     access, refresh = service.create_token_pair(user.wallet_address)
     return TokenResponse(
         access_token=access[0],
+        token=access[0],
         refresh_token=refresh[0],
         wallet_address=user.wallet_address,
         expires_at=access[1],
@@ -364,7 +379,7 @@ def get_passport_session(session_id: str, db: Session = Depends(get_db)) -> Pass
     return PassportStatusResponse(
         status="completed",
         token=TokenResponse(
-            access_token=access[0], refresh_token=refresh[0], wallet_address=session.wallet_address,
+            access_token=access[0], token=access[0], refresh_token=refresh[0], wallet_address=session.wallet_address,
             expires_at=access[1], refresh_expires_at=refresh[1],
         ),
     )

@@ -31,6 +31,9 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 60
     refresh_token_expire_minutes: int = 60 * 24 * 7
     challenge_ttl_seconds: int = 300
+    siwe_domain: str = ""
+    siwe_uri: str = ""
+    siwe_chain_id: int = 1
     passport_node_url: str = ""
     passport_app_id: str = ""
     passport_redirect_uri: str = ""
