@@ -70,7 +70,7 @@ python -m knowledge.workers.runner
 
 - `Address already in use`：端口被占用。后端可改 `--port 8001`；前端可用 `npm run dev -- --port 5174`。
 - `unsupported operand type(s)` 或 `datetime | None` 类型注解错误：当前 `.venv` 使用了过低的 Python 版本，请用 Python 3.10+ 重建 `.venv`。
-- 只做本地体验时，不需要复制 `.env.example`。没有 `.env` 时会使用 SQLite、mock warehouse 和 mock model 默认配置。
+- 只做本地体验时，不需要复制 `.env.template`。没有 `.env` 时会使用 SQLite、本机 Warehouse S3 endpoint 和 mock model 默认配置。
 
 ## 更多文档
 
