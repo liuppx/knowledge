@@ -371,7 +371,7 @@ class S3WarehouseGateway(WarehouseGateway):
 def build_warehouse_gateway() -> WarehouseGateway:
     settings = get_settings()
     if settings.warehouse_gateway_mode == "s3":
-        return S3WarehouseGateway(endpoint_url=settings.warehouse_s3_endpoint_url, region=settings.warehouse_s3_region)
+        return S3WarehouseGateway(endpoint_url=settings.s3_endpoint_url, region=settings.s3_region)
     if settings.warehouse_gateway_mode == "bound_token":
         return BoundTokenWarehouseGateway(
             base_url=settings.warehouse_base_url,
