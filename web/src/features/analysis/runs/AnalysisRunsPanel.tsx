@@ -48,6 +48,9 @@ export function AnalysisRunsPanel() {
   const [error, setError] = useState("");
   const [path, setPath] = useState("");
   const [intent, setIntent] = useState("");
+  const [maxRows, setMaxRows] = useState("");
+  const [allowSampling, setAllowSampling] = useState(true);
+  const [outputFormats, setOutputFormats] = useState<string[]>(["csv", "xlsx"]);
   const [selected, setSelected] = useState<Run | null>(null);
   const [events, setEvents] = useState<RunEvent[]>([]);
   const [artifacts, setArtifacts] = useState<Artifact[]>([]);
@@ -132,10 +135,19 @@ export function AnalysisRunsPanel() {
     if (!path.trim() || !intent.trim()) return;
     try {
       setError("");
+      const normalizedMaxRows = Number(maxRows);
       const run = await request<Run>("/analysis-runs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ warehouse_path: path.trim(), intent: intent.trim(), constraints: { allow_sampling: true } }),
+        body: JSON.stringify({
+          warehouse_path: path.trim(),
+          intent: intent.trim(),
+          constraints: {
+            allow_sampling: allowSampling,
+            output_formats: outputFormats,
+            ...(normalizedMaxRows > 0 ? { max_rows: normalizedMaxRows } : {}),
+          },
+        }),
       });
       setPath("");
       setIntent("");
@@ -154,6 +166,17 @@ export function AnalysisRunsPanel() {
       <input value={path} onChange={(event) => setPath(event.target.value)} placeholder="Warehouse CSV 或 Excel 路径" />
       <input value={intent} onChange={(event) => setIntent(event.target.value)} placeholder="分析目标，例如按地区汇总销售额" />
       <button onClick={create}>创建分析任务</button>
+    </div>
+    <div className="analysis-options">
+      <input type="number" min="1" value={maxRows} onChange={(event) => setMaxRows(event.target.value)} placeholder="最大处理行数（可选）" />
+      <label><input type="checkbox" checked={allowSampling} onChange={(event) => setAllowSampling(event.target.checked)} /> 允许抽样</label>
+      {[["csv", "CSV"], ["xlsx", "XLSX"], ["png", "PNG 图表"]].map(([format, label]) => <label key={format}>
+        <input
+          type="checkbox"
+          checked={outputFormats.includes(format)}
+          onChange={(event) => setOutputFormats((current) => event.target.checked ? [...current, format] : current.filter((item) => item !== format))}
+        /> {label}
+      </label>)}
     </div>
     {error && <p className="alert">{error}</p>}
     {runs.length ? runs.map((run) => <article className="evidence" key={run.id}>

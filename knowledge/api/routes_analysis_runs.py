@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 from knowledge.api.deps import get_current_wallet
 from knowledge.db.session import SessionLocal, get_db
 from knowledge.models import AgentRun, AgentRunArtifact, AgentRunEvent, ServicePrincipal
-from knowledge.schemas.agent_runs import AgentRunArtifactRead, AgentRunEventRead, AgentRunRead
+from knowledge.schemas.agent_runs import AgentRunArtifactRead, AgentRunEventRead, AgentRunRead, SpreadsheetAnalysisConstraints
 from knowledge.services.agent_run_manifests import AgentRunManifestService
 from knowledge.services.agent_runs import AgentRunService
 from knowledge.services.service_principals import ServicePrincipalService
@@ -30,7 +30,7 @@ warehouse_access_service = WarehouseAccessService()
 class AnalysisRunCreateRequest(BaseModel):
     warehouse_path: str = Field(min_length=1, max_length=1024)
     intent: str = Field(min_length=1, max_length=4000)
-    constraints: dict = Field(default_factory=dict)
+    constraints: SpreadsheetAnalysisConstraints = Field(default_factory=SpreadsheetAnalysisConstraints)
 
 
 def _analysis_principal(db: Session, wallet_address: str) -> ServicePrincipal:
@@ -62,7 +62,7 @@ def create_my_analysis_run(
             _analysis_principal(db, wallet_address),
             run_type="spreadsheet_analysis",
             inputs=[{"kind": "warehouse_asset", "warehousePath": payload.warehouse_path, "role": "source"}],
-            metadata={"intent": payload.intent, "constraints": payload.constraints, "created_via": "analysis-runs"},
+            metadata={"intent": payload.intent, "constraints": payload.constraints.model_dump(exclude_none=True), "created_via": "analysis-runs"},
         )
         return manifest_service.sync(db, run)
     except (LookupError, ValueError) as exc:

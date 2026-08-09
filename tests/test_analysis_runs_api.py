@@ -21,10 +21,23 @@ def _login(client: TestClient) -> tuple[str, dict[str, str]]:
 def test_user_can_create_and_list_own_analysis_runs_without_service_key() -> None:
     with TestClient(app) as client:
         _, headers = _login(client)
-        created = client.post("/analysis-runs", headers=headers, json={"warehouse_path": "/apps/knowledge.yeying.pub/uploads/sales.csv", "intent": "汇总销售额"})
+        created = client.post(
+            "/analysis-runs",
+            headers=headers,
+            json={
+                "warehouse_path": "/apps/knowledge.yeying.pub/uploads/sales.csv",
+                "intent": "汇总销售额",
+                "constraints": {"max_rows": 500, "allow_sampling": False, "output_formats": ["markdown", "csv"]},
+            },
+        )
         assert created.status_code == 200
         assert created.json()["run_type"] == "spreadsheet_analysis"
         assert "api_key" not in created.json()
+        assert created.json()["metadata_json"]["constraints"] == {
+            "max_rows": 500,
+            "allow_sampling": False,
+            "output_formats": ["markdown", "csv"],
+        }
         listed = client.get("/analysis-runs", headers=headers)
         assert listed.status_code == 200
         assert [run["id"] for run in listed.json()] == [created.json()["id"]]
