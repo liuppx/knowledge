@@ -9,6 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from knowledge.api.routes_auth import router as auth_router
 from knowledge.api.routes_assets import router as assets_router
 from knowledge.api.routes_agent_runs import router as agent_runs_router
+from knowledge.api.routes_analysis_runs import router as analysis_runs_router
 from knowledge.api.routes_console import router as console_router
 from knowledge.api.routes_documents import router as documents_router
 from knowledge.api.routes_evidence import router as evidence_router
@@ -45,6 +46,9 @@ app = FastAPI(title=settings.app_name, debug=settings.debug, lifespan=lifespan)
 
 static_dir = Path(__file__).resolve().parent / "static"
 app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
+web_dist_dir = Path(__file__).resolve().parents[1] / "web" / "dist"
+if web_dist_dir.is_dir():
+    app.mount("/assets", StaticFiles(directory=str(web_dist_dir / "assets")), name="web-assets")
 
 
 @app.get("/health")
@@ -58,6 +62,7 @@ app.include_router(kbs_router)
 app.include_router(sources_router)
 app.include_router(assets_router)
 app.include_router(agent_runs_router)
+app.include_router(analysis_runs_router)
 app.include_router(warehouse_router)
 app.include_router(tasks_router)
 app.include_router(documents_router)

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from knowledge.ports import DocumentParserPort, IndexBackendPort, SourceAssetRef
+from knowledge.ports import DocumentChunkerPort, DocumentParserPort, IndexBackendPort, SourceAssetRef
+from knowledge.services.chunking import DocumentChunker
 from knowledge.services.parser import DocumentParser
 from knowledge.services.vector_store import DBVectorStore
 
@@ -8,6 +9,11 @@ from knowledge.services.vector_store import DBVectorStore
 def test_default_parser_implements_document_parser_port() -> None:
     parser = DocumentParser()
     assert isinstance(parser, DocumentParserPort)
+
+
+def test_default_chunker_implements_document_chunker_port() -> None:
+    chunker = DocumentChunker()
+    assert isinstance(chunker, DocumentChunkerPort)
 
 
 def test_default_index_implements_index_backend_port() -> None:

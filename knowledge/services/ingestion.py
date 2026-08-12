@@ -7,10 +7,10 @@ from sqlalchemy.orm import Session
 
 from knowledge.core.settings import get_settings
 from knowledge.models import EmbeddingRecord, ImportedChunk, ImportedDocument, ImportTask, ImportTaskItem, KnowledgeBase, SourceBinding
-from knowledge.services.chunking import DocumentChunker
+from knowledge.services.document_chunking import build_document_chunker
+from knowledge.services.document_parsing import build_document_parser
 from knowledge.services.embedding import EmbeddingProvider, build_embedding_provider
 from knowledge.services.filetypes import infer_file_type
-from knowledge.services.parser import DocumentParser
 from knowledge.services.vector_store import build_vector_store
 from knowledge.services.warehouse import WarehouseGateway, WarehouseFileEntry, build_warehouse_gateway
 from knowledge.services.warehouse_access import WarehouseAccessService
@@ -34,8 +34,8 @@ class IngestionService:
         self.settings = get_settings()
         self.warehouse_gateway = warehouse_gateway or build_warehouse_gateway()
         self.embedding_provider = embedding_provider or build_embedding_provider()
-        self.parser = DocumentParser()
-        self.chunker = DocumentChunker()
+        self.parser = build_document_parser()
+        self.chunker = build_document_chunker()
         self.vector_store = build_vector_store()
         self.warehouse_access_service = WarehouseAccessService(warehouse_gateway=self.warehouse_gateway)
 

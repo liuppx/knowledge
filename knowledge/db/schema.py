@@ -8,7 +8,7 @@ TASK_COLUMNS: dict[str, str] = {
     "claimed_at": "DATETIME",
     "heartbeat_at": "DATETIME",
     "attempt": "INTEGER",
-    "last_stage": "VARCHAR(64)",
+    "last_stage": "TEXT",
 }
 
 TASK_ITEM_COLUMNS: dict[str, str] = {
@@ -38,6 +38,7 @@ def ensure_runtime_schema(engine: Engine) -> None:
         _ensure_columns(connection, inspector, "import_task_items", TASK_ITEM_COLUMNS)
         _ensure_columns(connection, inspector, "source_bindings", SOURCE_BINDING_COLUMNS)
         _ensure_columns(connection, inspector, "retrieval_logs", RETRIEVAL_LOG_COLUMNS)
+        _ensure_import_task_column_types(connection, inspector)
         inspector = inspect(connection)
         _ensure_indexes(connection, inspector)
 
@@ -50,6 +51,15 @@ def _ensure_columns(connection, inspector, table_name: str, columns: dict[str, s
         if column_name in existing:
             continue
         connection.execute(text(f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_type}"))
+
+
+def _ensure_import_task_column_types(connection, inspector) -> None:
+    if not inspector.has_table("import_tasks"):
+        return
+    columns = {column["name"]: column["type"] for column in inspector.get_columns("import_tasks")}
+    last_stage_type = columns.get("last_stage")
+    if last_stage_type is not None and getattr(last_stage_type, "length", None) is not None:
+        connection.execute(text("ALTER TABLE import_tasks ALTER COLUMN last_stage TYPE TEXT"))
 
 
 def _ensure_indexes(connection, inspector) -> None:

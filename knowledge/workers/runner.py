@@ -5,8 +5,6 @@ from datetime import timedelta
 import time
 from threading import Event, Thread
 
-from sqlalchemy.exc import OperationalError
-
 from knowledge.core.settings import get_settings
 from knowledge.db.session import session_scope
 from knowledge.models import ImportTask, WorkerStatus
@@ -35,19 +33,10 @@ class TaskHeartbeat:
 
     def _run(self) -> None:
         while not self._stop.wait(self.interval_seconds):
-            try:
-                with session_scope() as db:
-                    alive = self.task_queue.touch_task_heartbeat(db, self.task_id, self.worker_name)
-            except OperationalError as exc:
-                if self._is_transient_lock_error(exc):
-                    continue
-                raise
+            with session_scope() as db:
+                alive = self.task_queue.touch_task_heartbeat(db, self.task_id, self.worker_name)
             if not alive:
                 return
-
-    @staticmethod
-    def _is_transient_lock_error(exc: OperationalError) -> bool:
-        return "database is locked" in str(exc).lower()
 
 
 class Worker:
@@ -180,12 +169,10 @@ class Worker:
         self._last_housekeeping_at = now
 
     def _task_concurrency(self) -> int:
-        if self.settings.database_url.startswith("sqlite"):
-            return 1
         return max(1, int(self.settings.worker_task_concurrency))
 
     def _use_background_heartbeat(self) -> bool:
-        return not self.settings.database_url.startswith("sqlite")
+        return True
 
 
 if __name__ == "__main__":

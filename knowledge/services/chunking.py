@@ -3,18 +3,11 @@ from __future__ import annotations
 import csv
 import io
 import json
-from dataclasses import dataclass
-from pathlib import Path
 
 from langchain_text_splitters import MarkdownHeaderTextSplitter, RecursiveCharacterTextSplitter
 
+from knowledge.ports import ChunkResult
 from knowledge.services.filetypes import infer_file_type
-
-
-@dataclass
-class ChunkResult:
-    text: str
-    metadata: dict
 
 
 class DocumentChunker:

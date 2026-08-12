@@ -44,6 +44,7 @@ class WarehouseBootstrapService:
         self.warehouse_gateway = warehouse_gateway or build_warehouse_gateway()
 
     def request_challenge(self, wallet_address: str) -> dict[str, object]:
+        self._require_webdav_mode()
         warehouse_address = self._warehouse_wallet_address(wallet_address)
         payload = self._request_json(
             "POST",
@@ -71,6 +72,7 @@ class WarehouseBootstrapService:
         mode: WarehouseBootstrapMode,
         warehouse_access_service: WarehouseAccessService,
     ) -> dict[str, object]:
+        self._require_webdav_mode()
         plan = self._build_plan(mode)
         token = self._verify_signature(wallet_address, signature)
 
@@ -116,6 +118,12 @@ class WarehouseBootstrapService:
             result["read_credential"] = warehouse_access_service.summarize(read_credential)
 
         return result
+
+    def _require_webdav_mode(self) -> None:
+        if self.settings.warehouse_gateway_mode == "s3":
+            raise WarehouseBootstrapError(
+                "Knowledge 当前使用 Warehouse S3。请在 Warehouse 创建 rootPath 覆盖 /apps/knowledge.yeying.pub 的 S3 凭据，并在 Knowledge 保存该 AK/Secret。"
+            )
 
     def _build_plan(self, mode: WarehouseBootstrapMode) -> WarehouseBootstrapPlan:
         nonce = format(int(time() * 1000), "x")

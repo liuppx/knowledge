@@ -43,6 +43,7 @@ const state = {
   revealedCredentialSecrets: {},
   kbs: [],
   bindings: [],
+  sources: [],
   documents: [],
   knowledgeItems: [],
   knowledgeItemDetails: [],
@@ -1626,58 +1627,24 @@ function renderDocumentDetail(detail = null) {
 }
 
 async function loginWithWallet() {
-  const helper = walletHelper();
-  if (!helper) {
-    throw new Error("钱包适配层未加载");
-  }
-  try {
-    setLoginProgress("正在检测钱包环境");
-    const provider = (await helper.discoverProvider?.({ timeoutMs: 1200 })) || helper.getWalletProvider?.();
-    if (!provider) {
-      throw new Error("未检测到钱包，请安装 MetaMask 或夜莺钱包");
-    }
-
-    const providerName = helper.getWalletName?.(provider) || "Web3 钱包";
-    setLoginProgress("正在请求钱包账户", { wallet_provider: providerName });
-    const [wallet] = await helper.requestAccounts(provider, { timeoutMs: 15000 });
-    if (!wallet) {
-      throw new Error("未获取到账户");
-    }
-
-    setLoginProgress("钱包账户已连接，正在获取 challenge", {
-      wallet_provider: providerName,
-      wallet_address: wallet,
-    });
-    const challenge = await api("/auth/challenge", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ wallet_address: wallet }),
-    });
-
-    setLoginProgress("challenge 已获取，正在请求钱包签名", {
-      wallet_provider: providerName,
-      wallet_address: wallet,
-    });
-    const signature = await helper.signChallenge(provider, wallet, challenge.message, { timeoutMs: 20000 });
-
-    setLoginProgress("签名完成，正在校验登录", {
-      wallet_provider: providerName,
-      wallet_address: wallet,
-    });
-    const token = await api("/auth/verify", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ wallet_address: wallet, signature }),
-    });
-    state.token = token.access_token;
-    localStorage.setItem("knowledge_token", token.access_token);
-    setLoggedIn(token.wallet_address);
+  setLoginProgress("正在创建夜莺通行证登录会话");
+  const session = await api("/auth/passport/sessions", { method: "POST" });
+  if (!session.verify_url) throw new Error("通行证未返回验证地址");
+  window.open(session.verify_url, "knowledge-passport-login", "noopener,noreferrer");
+  setLoginProgress("请在夜莺通行证中确认登录");
+  const deadline = new Date(session.expires_at).getTime();
+  while (Date.now() < deadline) {
+    await new Promise((resolve) => window.setTimeout(resolve, 1500));
+    const status = await api(`/auth/passport/sessions/${encodeURIComponent(session.session_id)}`);
+    if (status.status !== "completed" || !status.token) continue;
+    state.token = status.token.access_token;
+    localStorage.setItem("knowledge_token", status.token.access_token);
+    setLoggedIn(status.token.wallet_address);
     await refreshAll();
-    setOutput(token);
-  } catch (error) {
-    const message = helper.formatWalletLoginError?.(error, "knowledge 登录失败，请稍后重试。") || String(error);
-    throw new Error(message);
+    setOutput(status.token);
+    return;
   }
+  throw new Error("通行证登录已过期，请重新发起登录");
 }
 
 async function ensureDemoKnowledgeBase() {
@@ -2247,6 +2214,7 @@ async function createKB() {
 
 function clearSelectedWorkspaceData() {
   state.bindings = [];
+  state.sources = [];
   state.documents = [];
   state.knowledgeItems = [];
   state.knowledgeItemDetails = [];
@@ -2362,6 +2330,80 @@ function renderBindings() {
     return;
   }
   list.innerHTML = `<div class="code">${escapeHtml(JSON.stringify(state.bindings, null, 2))}</div>`;
+}
+
+async function refreshSources() {
+  if (!state.selectedKB) {
+    state.sources = [];
+    renderSources();
+    return;
+  }
+  state.sources = await api(`/kbs/${state.selectedKB.id}/sources`);
+  renderSources();
+}
+
+function renderSources() {
+  const list = el("source-list");
+  if (!list) return;
+  if (!state.selectedKB) {
+    list.innerHTML = `<div class="empty">先选中一个知识库。</div>`;
+    return;
+  }
+  if (!state.sources.length) {
+    list.innerHTML = `<div class="empty">还没有外部来源。添加来源后先扫描资产，再构建 Evidence。</div>`;
+    return;
+  }
+  list.innerHTML = state.sources
+    .map(
+      (source) => `
+        <div class="list-item">
+          <div class="list-title">${escapeHtml(source.source_path)}</div>
+          <div class="list-subtitle">${escapeHtml(source.source_type)} · ${escapeHtml(source.scope_type)} · ${source.enabled ? "enabled" : "disabled"}</div>
+          <div class="helper">状态：${escapeHtml(source.sync_status || "pending_sync")} · 最近扫描：${formatDate(source.last_synced_at)}</div>
+          <div class="list-actions">
+            <button class="secondary" data-action="scan-source" data-source-id="${source.id}">扫描</button>
+            <button data-action="build-source-evidence" data-source-id="${source.id}">构建 Evidence</button>
+            <button class="ghost" data-action="show-source-evidence" data-source-id="${source.id}">查看 Evidence</button>
+          </div>
+        </div>
+      `,
+    )
+    .join("");
+}
+
+async function createSource() {
+  const kbId = currentKBOrThrow();
+  const sourceType = String(el("source-type")?.value || "").trim();
+  const sourcePath = String(el("source-path")?.value || "").trim();
+  const scopeType = String(el("source-scope-type")?.value || "directory").trim();
+  if (!sourceType || !sourcePath) throw new Error("请选择来源类型并填写来源路径");
+  const source = await api(`/kbs/${kbId}/sources`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ source_type: sourceType, source_path: sourcePath, scope_type: scopeType }),
+  });
+  el("source-path").value = "";
+  setOutput(source);
+  await refreshSources();
+}
+
+async function scanSource(sourceId) {
+  const result = await api(`/kbs/${currentKBOrThrow()}/sources/${sourceId}/scan`, { method: "POST" });
+  setOutput(result);
+  await refreshSources();
+  return result;
+}
+
+async function buildSourceEvidence(sourceId) {
+  const result = await api(`/kbs/${currentKBOrThrow()}/sources/${sourceId}/build-evidence`, { method: "POST" });
+  setOutput(result);
+  await refreshSources();
+  return result;
+}
+
+async function showSourceEvidence(sourceId) {
+  const evidence = await api(`/kbs/${currentKBOrThrow()}/evidence?source_id=${sourceId}`);
+  openDrawer(`来源 #${sourceId} 的 Evidence`, evidence);
 }
 
 function warehouseBrowseQuery(path, credentialId = currentBrowseCredentialId(), useWriteCredential = isBrowseUsingWriteCredential()) {
@@ -3391,6 +3433,7 @@ function renderSourceGovernance() {
 async function refreshSelectedData() {
   await Promise.all([
     refreshBindings(),
+    refreshSources(),
     refreshDocuments(),
     refreshCurrentKBStats(),
     refreshCurrentRelease(),
@@ -3427,6 +3470,7 @@ function renderAll() {
   renderWriteCredential();
   renderWarehouseBootstrapStatus();
   renderBindings();
+  renderSources();
   renderKBWorkbench();
   renderWarehouseEntries();
   renderWarehousePreview();
@@ -3487,6 +3531,8 @@ function attachStaticEvents() {
   bindEvent("update-kb", "click", () => withFeedback(updateKB, "知识库配置已更新")().catch(() => {}));
   bindEvent("delete-kb", "click", () => withFeedback(() => deleteKB(), "知识库已删除")().catch(() => {}));
   bindEvent("refresh-bindings", "click", () => withFeedback(refreshBindings, "绑定源已刷新")().catch(() => {}));
+  bindEvent("refresh-sources", "click", () => withFeedback(refreshSources, "外部来源已刷新")().catch(() => {}));
+  bindEvent("create-source", "click", () => withFeedback(createSource, "外部来源已添加")().catch(() => {}));
   bindEvent("binding-credential-id", "change", () => {
     const credential = bindingCredential();
     if (!credential) return;
@@ -3700,6 +3746,18 @@ function attachStaticEvents() {
     }
     if (action === "delete-binding") {
       withFeedback(() => deleteBinding(Number(target.dataset.bindingId)), "绑定源已解绑")().catch(() => {});
+      return;
+    }
+    if (action === "scan-source") {
+      withFeedback(() => scanSource(Number(target.dataset.sourceId)), "来源扫描完成")().catch(() => {});
+      return;
+    }
+    if (action === "build-source-evidence") {
+      withFeedback(() => buildSourceEvidence(Number(target.dataset.sourceId)), "Evidence 构建完成")().catch(() => {});
+      return;
+    }
+    if (action === "show-source-evidence") {
+      withFeedback(() => showSourceEvidence(Number(target.dataset.sourceId)))().catch(() => {});
       return;
     }
     if (action === "reveal-read-credential") {

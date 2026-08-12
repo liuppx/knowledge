@@ -43,6 +43,7 @@ class SourceSyncService:
                 source.source_path,
                 source.scope_type,
                 kb_id=source.kb_id,
+                source_type=source.source_type,
             )
         except SourcePathMissingError:
             return self._mark_source_missing(db, source)

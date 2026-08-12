@@ -29,8 +29,8 @@ from knowledge.schemas.warehouse import (
     WarehouseWriteCredentialResponse,
 )
 from knowledge.services.bindings import BindingService
+from knowledge.services.document_parsing import build_document_parser
 from knowledge.services.filetypes import infer_file_type
-from knowledge.services.parser import DocumentParser
 from knowledge.services.warehouse import build_warehouse_gateway
 from knowledge.services.warehouse_access import WarehouseAccessService
 from knowledge.services.warehouse_bootstrap import WarehouseBootstrapError, WarehouseBootstrapService
@@ -42,7 +42,7 @@ logger = logging.getLogger(__name__)
 gateway = build_warehouse_gateway()
 warehouse_access_service = WarehouseAccessService(warehouse_gateway=gateway)
 warehouse_bootstrap_service = WarehouseBootstrapService(warehouse_gateway=gateway)
-parser = DocumentParser()
+parser = build_document_parser()
 binding_service = BindingService()
 settings = get_settings()
 

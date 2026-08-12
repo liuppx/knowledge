@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import secrets
 from datetime import datetime, timedelta
+from urllib.parse import urlparse
 
 import jwt
 from eth_account import Account
@@ -22,15 +23,29 @@ class AuthService:
     def normalize_wallet(wallet_address: str) -> str:
         return wallet_address.strip().lower()
 
-    def create_challenge(self, db: Session, wallet_address: str) -> AuthChallenge:
+    def create_challenge(self, db: Session, wallet_address: str, *, domain: str, uri: str) -> AuthChallenge:
         wallet_address = self.normalize_wallet(wallet_address)
+        domain = str(domain or "").strip()
+        uri = str(uri or "").strip()
+        if not domain or not uri:
+            raise ValueError("SIWE domain and URI are required")
+        parsed_uri = urlparse(uri)
+        if parsed_uri.scheme not in {"http", "https"} or parsed_uri.netloc != domain:
+            raise ValueError("SIWE URI must be an HTTP(S) URI for the configured domain")
+        if self.settings.siwe_chain_id < 1:
+            raise ValueError("SIWE chain ID must be positive")
         nonce = secrets.token_urlsafe(24)
         expires_at = utc_now() + timedelta(seconds=self.settings.challenge_ttl_seconds)
         message = (
-            "Sign this message to log in to knowledge.\n"
-            f"Wallet: {wallet_address}\n"
+            f"{domain} wants you to sign in with your Ethereum account:\n"
+            f"{wallet_address}\n\n"
+            "Sign in to Knowledge.\n\n"
+            f"URI: {uri}\n"
+            "Version: 1\n"
+            f"Chain ID: {self.settings.siwe_chain_id}\n"
             f"Nonce: {nonce}\n"
-            f"Expires At: {expires_at.isoformat()}Z"
+            f"Issued At: {utc_now().isoformat()}Z\n"
+            f"Expiration Time: {expires_at.isoformat()}Z"
         )
         challenge = AuthChallenge(
             wallet_address=wallet_address,

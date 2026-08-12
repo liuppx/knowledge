@@ -1,5 +1,7 @@
 from knowledge.models.entities import (
     AuthChallenge,
+    PassportLoginSession,
+    PassportSubject,
     AgentRun,
     AgentRunArtifact,
     AgentRunEvent,
@@ -35,6 +37,8 @@ from knowledge.models.entities import (
 
 __all__ = [
     "AuthChallenge",
+    "PassportLoginSession",
+    "PassportSubject",
     "AgentRun",
     "AgentRunArtifact",
     "AgentRunEvent",

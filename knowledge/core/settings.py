@@ -6,6 +6,7 @@ import base64
 import hashlib
 from urllib.parse import urlparse
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -23,18 +24,26 @@ class Settings(BaseSettings):
     host: str = "0.0.0.0"
     port: int = 8000
 
-    database_url: str = "sqlite:///./knowledge.db"
-    sqlite_busy_timeout_ms: int = 15000
+    database_url: str = "postgresql://knowledge:knowledge@127.0.0.1:5432/knowledge?gssencmode=disable"
 
     jwt_secret: str = "change-me-in-production"
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 60
     refresh_token_expire_minutes: int = 60 * 24 * 7
     challenge_ttl_seconds: int = 300
+    siwe_domain: str = ""
+    siwe_uri: str = ""
+    siwe_chain_id: int = 1
+    passport_node_url: str = ""
+    passport_app_id: str = ""
+    passport_redirect_uri: str = ""
+    passport_session_ttl_seconds: int = 300
 
-    warehouse_gateway_mode: str = "mock"
+    warehouse_gateway_mode: str = "s3"
     warehouse_base_url: str = "https://webdav.yeying.pub"
     warehouse_webdav_prefix: str = "/dav"
+    s3_endpoint_url: str = "http://127.0.0.1:6066"
+    s3_region: str = "us-east-1"
     warehouse_app_id: str = "knowledge.yeying.pub"
     warehouse_apps_prefix: str = "/apps"
     warehouse_mock_root: str = str(Path(__file__).resolve().parents[2] / ".mock_warehouse")
@@ -57,6 +66,16 @@ class Settings(BaseSettings):
     embedding_model: str = "text-embedding-3-small"
     embedding_dimensions: int = 32
 
+    document_parser_mode: str = "local"
+    ragflow_parser_chunk_token_num: int = 512
+    ragflow_parser_delimiter: str = "\n!?;。；！？"
+    document_chunker_mode: str = "local"
+    ragflow_chunker_delimiter: str = "\n。；！？"
+    source_connector_mode: str = "warehouse"
+    local_file_connector_root: str = str(Path(__file__).resolve().parents[2] / ".local_source_files")
+    github_connector_access_token: str = ""
+    github_connector_api_base_url: str = "https://api.github.com"
+
     chunk_size: int = 800
     chunk_overlap: int = 120
     retrieval_top_k: int = 6
@@ -71,6 +90,13 @@ class Settings(BaseSettings):
     worker_max_active_tasks_per_user: int = 1
     worker_task_heartbeat_interval_seconds: int = 15
     worker_name: str = "knowledge-worker-1"
+
+    @field_validator("database_url")
+    @classmethod
+    def validate_postgresql_database_url(cls, value: str) -> str:
+        if not value.startswith("postgresql://"):
+            raise ValueError("DATABASE_URL must use the postgresql:// scheme")
+        return value
 
 
 @lru_cache(maxsize=1)

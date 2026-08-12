@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Iterable, Protocol
+from typing import Iterable, Protocol, runtime_checkable
 
 
 @dataclass(frozen=True)
@@ -19,6 +19,7 @@ class SourceAssetRef:
     content_type: str | None = None
 
 
+@runtime_checkable
 class SourceConnectorPort(Protocol):
     """Discover source assets without exposing a third-party data model."""
 
