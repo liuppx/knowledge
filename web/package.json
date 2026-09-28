@@ -10,7 +10,8 @@
   },
   "dependencies": {
     "@vitejs/plugin-react": "latest",
-    "@yeying-community/web3-bs": "^1.0.17",
+    "@yeying-community/web3-bs": "^1.0.27",
+    "lucide-react": "^1.37.0",
     "react": "latest",
     "react-dom": "latest",
     "typescript": "latest",
