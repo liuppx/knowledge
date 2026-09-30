@@ -55,11 +55,14 @@ class OpenAICompatibleRerankProvider(RerankProvider):
 
     provider_name = "openai_compatible"
 
-    def __init__(self, base_url: str, api_key: str, model: str, timeout_seconds: float) -> None:
+    def __init__(
+        self, base_url: str, api_key: str, model: str, timeout_seconds: float, max_retries: int = 0
+    ) -> None:
         self.base_url = base_url.rstrip("/")
         self.api_key = api_key
         self.model = model
         self.timeout_seconds = timeout_seconds
+        self.max_retries = max(0, int(max_retries))
 
     def rerank(self, query: str, documents: list[str]) -> list[float]:
         if not documents:
@@ -67,18 +70,27 @@ class OpenAICompatibleRerankProvider(RerankProvider):
         headers = {"Content-Type": "application/json"}
         if self.api_key:
             headers["Authorization"] = f"Bearer {self.api_key}"
-        response = httpx.post(
-            f"{self.base_url}/rerank",
-            headers=headers,
-            json={
-                "model": self.model,
-                "query": query,
-                "documents": documents,
-                "top_n": len(documents),
-            },
-            timeout=self.timeout_seconds,
-        )
-        response.raise_for_status()
+        body = {
+            "model": self.model,
+            "query": query,
+            "documents": documents,
+            "top_n": len(documents),
+        }
+        # Retry transport errors and 5xx only; a 4xx means bad config/request and
+        # would fail the same way again. The caller degrades to RRF on final failure.
+        attempt = 0
+        while True:
+            try:
+                response = httpx.post(f"{self.base_url}/rerank", headers=headers, json=body, timeout=self.timeout_seconds)
+                response.raise_for_status()
+                break
+            except httpx.HTTPStatusError as exc:
+                if exc.response.status_code < 500 or attempt >= self.max_retries:
+                    raise
+            except httpx.TransportError:
+                if attempt >= self.max_retries:
+                    raise
+            attempt += 1
         payload = response.json()
         # Map results back to input order; unranked documents default to 0.0.
         scores = [0.0] * len(documents)
@@ -94,6 +106,8 @@ class OpenAICompatibleRerankProvider(RerankProvider):
             "configured_mode": self.provider_name,
             "base_url": self.base_url,
             "model": self.model,
+            "timeout_seconds": self.timeout_seconds,
+            "max_retries": self.max_retries,
             "fallback_reason": "",
         }
 
@@ -106,6 +120,7 @@ def build_rerank_provider() -> RerankProvider:
             api_key=settings.model_gateway_api_key,
             model=settings.rerank_model,
             timeout_seconds=settings.rerank_timeout_seconds,
+            max_retries=settings.rerank_max_retries,
         )
     fallback_reason = ""
     if settings.model_provider_mode == "openai_compatible" and not settings.model_gateway_base_url:

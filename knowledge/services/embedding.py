@@ -54,10 +54,24 @@ class MockEmbeddingProvider(EmbeddingProvider):
 class OpenAICompatibleEmbeddingProvider(EmbeddingProvider):
     provider_name = "openai_compatible"
 
-    def __init__(self, base_url: str, api_key: str, model: str) -> None:
+    def __init__(
+        self,
+        base_url: str,
+        api_key: str,
+        model: str,
+        timeout_seconds: float | None = None,
+        max_retries: int | None = None,
+    ) -> None:
         self.base_url = base_url
         self.model = model
-        self.client = OpenAIEmbeddings(base_url=base_url, api_key=api_key or "dummy", model=model)
+        self.timeout_seconds = timeout_seconds
+        self.max_retries = max_retries
+        client_kwargs: dict = {}
+        if timeout_seconds is not None:
+            client_kwargs["request_timeout"] = timeout_seconds
+        if max_retries is not None:
+            client_kwargs["max_retries"] = max_retries
+        self.client = OpenAIEmbeddings(base_url=base_url, api_key=api_key or "dummy", model=model, **client_kwargs)
 
     def embed_texts(self, texts: list[str]) -> list[list[float]]:
         return self.client.embed_documents(texts)
@@ -71,6 +85,8 @@ class OpenAICompatibleEmbeddingProvider(EmbeddingProvider):
             "configured_mode": self.provider_name,
             "base_url": self.base_url,
             "model": self.model,
+            "timeout_seconds": self.timeout_seconds,
+            "max_retries": self.max_retries,
             "fallback_reason": "",
         }
 
@@ -93,6 +109,8 @@ def build_embedding_provider() -> EmbeddingProvider:
             base_url=settings.model_gateway_base_url,
             api_key=settings.model_gateway_api_key,
             model=settings.embedding_model,
+            timeout_seconds=settings.embedding_timeout_seconds,
+            max_retries=settings.embedding_max_retries,
         )
     fallback_reason = ""
     if settings.model_provider_mode == "openai_compatible" and not settings.model_gateway_base_url:

@@ -85,6 +85,11 @@ class Settings(BaseSettings):
     analysis_planner_timeout_seconds: int = 30
     embedding_model: str = "text-embedding-3-small"
     embedding_dimensions: int = 32
+    # Cost/stability policy for real embedding calls: bounded latency and a small
+    # retry budget (exponential backoff inside the client). Query-time failures
+    # still degrade to lexical retrieval; these keep that path from hanging.
+    embedding_timeout_seconds: int = 30
+    embedding_max_retries: int = 2
 
     document_parser_mode: str = "local"
     ragflow_parser_chunk_token_num: int = 512
@@ -115,6 +120,8 @@ class Settings(BaseSettings):
     rerank_model: str = "rerank-english-v3.0"
     rerank_top_m: int = 20
     rerank_timeout_seconds: int = 10
+    # Retries only transport errors and 5xx; 4xx is a configuration problem.
+    rerank_max_retries: int = 1
     memory_top_k: int = 4
     auto_memory_short_term_ttl_hours: int = 72
     auto_memory_max_long_terms: int = 3

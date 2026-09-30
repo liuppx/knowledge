@@ -147,6 +147,8 @@ def test_build_embedding_provider_selects_provider_mode(monkeypatch):
             model_gateway_api_key="secret",
             embedding_model="text-embedding-3-small",
             embedding_dimensions=16,
+            embedding_timeout_seconds=30,
+            embedding_max_retries=2,
         ),
     )
     provider = embedding_module.build_embedding_provider()
