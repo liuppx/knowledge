@@ -611,7 +611,16 @@ class ServiceSearchService:
 
     @staticmethod
     def _tokenize(text: str) -> set[str]:
-        return {token for token in re.findall(r"[A-Za-z0-9_]+", str(text or "").lower()) if token}
+        lowered = str(text or "").lower()
+        tokens = {token for token in re.findall(r"[A-Za-z0-9_]+", lowered) if token}
+        # CJK text has no whitespace word boundaries, so ASCII-only tokenization left
+        # Chinese queries with zero lexical tokens. Character bigrams are the standard
+        # segmentation-free unit; a lone CJK character is kept as-is.
+        for run in re.findall(r"[一-鿿]+", lowered):
+            if len(run) == 1:
+                tokens.add(run)
+            tokens.update(run[index : index + 2] for index in range(len(run) - 1))
+        return tokens
 
     def _formal_score(self, query: str, title: str, statement: str, is_hotfix: bool, health: str) -> float:
         base = self._text_score(query, f"{title} {statement}")

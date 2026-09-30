@@ -14,17 +14,20 @@ PYTEST_EXTRA=()
 
 usage() {
   cat <<'EOF'
-Usage: scripts/test.sh [--suite {unit|integration|smoke|all}] [--quiet] [--help]
+Usage: scripts/test.sh [--suite {unit|integration|smoke|eval|all}] [--quiet] [--help]
 
 Suites:
   unit         pytest test suite (default). Requires PostgreSQL.
   integration  Alembic drift check + full pytest suite.
   smoke        Fast subset: config guard + OpenAPI contract gates.
+  eval         Q01–Q12 retrieval quality report (tests/eval, writes .eval/).
   all          integration suite (Alembic drift + full pytest).
 
 Environment:
   TEST_DATABASE_URL  DB for pytest      (default: knowledge_test on localhost)
   DATABASE_URL       DB for alembic check (default: TEST_DATABASE_URL)
+  KNOWLEDGE_EVAL_PROVIDER    eval providers: offline (default) | live (real gateway)
+  KNOWLEDGE_EVAL_REPORT_DIR  eval report output dir (default: .eval)
 EOF
 }
 
@@ -64,12 +67,25 @@ run_alembic_drift() {
   "${PY}" -m alembic check
 }
 
+run_eval() {
+  local report_dir="${KNOWLEDGE_EVAL_REPORT_DIR:-.eval}"
+  echo ">> retrieval eval Q01–Q12 (provider=${KNOWLEDGE_EVAL_PROVIDER:-offline}, report=${report_dir})"
+  # `-m eval` overrides the default `-m 'not eval'` from pyproject addopts.
+  "${PY}" -m pytest -m eval ${PYTEST_EXTRA[@]+"${PYTEST_EXTRA[@]}"} tests/eval
+  if [[ -f "${report_dir}/retrieval_report.md" ]]; then
+    cat "${report_dir}/retrieval_report.md"
+  fi
+}
+
 case "${SUITE}" in
   unit)
     run_pytest
     ;;
   smoke)
     run_pytest tests/test_settings_guard.py tests/test_openapi_contract.py
+    ;;
+  eval)
+    run_eval
     ;;
   integration|all)
     run_alembic_drift
