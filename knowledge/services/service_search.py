@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import math
 import re
 from dataclasses import dataclass
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
+from knowledge.core.settings import get_settings
 from knowledge.models import (
     EvidenceUnit,
     KBRelease,
@@ -26,7 +28,10 @@ from knowledge.schemas.service_search import (
     ServiceSearchResponse,
     ServiceSearchSourceHealthDetail,
 )
+from knowledge.services.embedding import EmbeddingProvider, build_embedding_provider
+from knowledge.services.rerank import RerankProvider, build_rerank_provider
 from knowledge.services.release_management import ReleaseManagementService
+from knowledge.services.unit_retrieval import build_unit_vector_index
 from knowledge.services.service_grants import ServiceGrantService
 from knowledge.services.service_principals import ServicePrincipalService
 
@@ -34,6 +39,13 @@ from knowledge.services.service_principals import ServicePrincipalService
 ALLOWED_MODES = {"formal_first", "formal_only", "evidence_only"}
 ALLOWED_RESULT_VIEWS = set(RESULT_VIEWS)
 ALLOWED_AVAILABILITY_MODES = {"allow_all", "healthy_only", "exclude_source_missing"}
+
+
+def _cosine_similarity(left: list[float], right: list[float]) -> float:
+    numerator = sum(a * b for a, b in zip(left, right))
+    left_norm = math.sqrt(sum(a * a for a in left)) or 1.0
+    right_norm = math.sqrt(sum(b * b for b in right)) or 1.0
+    return numerator / (left_norm * right_norm)
 
 
 @dataclass
@@ -58,6 +70,8 @@ class ServiceSearchService:
         principal_service: ServicePrincipalService | None = None,
         grant_service: ServiceGrantService | None = None,
         release_management_service: ReleaseManagementService | None = None,
+        embedding_provider: EmbeddingProvider | None = None,
+        rerank_provider: RerankProvider | None = None,
     ) -> None:
         self.principal_service = principal_service or ServicePrincipalService()
         self.release_management_service = release_management_service or ReleaseManagementService()
@@ -65,6 +79,8 @@ class ServiceSearchService:
             principal_service=self.principal_service,
             release_management_service=self.release_management_service,
         )
+        self._embedding_provider = embedding_provider
+        self._rerank_provider = rerank_provider
 
     def search(
         self,
@@ -88,6 +104,7 @@ class ServiceSearchService:
         formal_hits: list[ServiceSearchHit] = []
         evidence_hits: list[ServiceSearchHit] = []
         used_evidence_ids: set[int] = set()
+        retrieval_trace: dict = {}
         if normalized_mode in {"formal_first", "formal_only"} and release is not None:
             formal_hits = self._search_formal(
                 db,
@@ -97,6 +114,7 @@ class ServiceSearchService:
                 normalized_availability,
                 top_k,
                 used_evidence_ids=used_evidence_ids,
+                trace=retrieval_trace,
             )
         if normalized_mode == "evidence_only":
             evidence_hits = self._search_evidence(
@@ -107,6 +125,7 @@ class ServiceSearchService:
                 availability_mode=normalized_availability,
                 top_k=top_k,
                 exclude_evidence_ids=set(),
+                trace=retrieval_trace,
             )
         elif normalized_mode == "formal_first":
             remaining = max(0, top_k - len(formal_hits))
@@ -119,6 +138,7 @@ class ServiceSearchService:
                     availability_mode=normalized_availability,
                     top_k=remaining,
                     exclude_evidence_ids=used_evidence_ids,
+                    trace=retrieval_trace,
                 )
         hits = formal_hits if normalized_mode == "formal_only" else evidence_hits if normalized_mode == "evidence_only" else [*formal_hits, *evidence_hits]
         if normalized_mode == "formal_only" and release is None:
@@ -145,6 +165,7 @@ class ServiceSearchService:
             query_mode=normalized_mode,
             release_id=release.id if release is not None else None,
             response=response,
+            retrieval_trace=retrieval_trace,
         )
         return response
 
@@ -158,6 +179,7 @@ class ServiceSearchService:
         top_k: int,
         include_zero_scores: bool = False,
         used_evidence_ids: set[int] | None = None,
+        trace: dict | None = None,
     ) -> list[ServiceSearchHit]:
         rows = db.execute(
             select(KBReleaseItem, KnowledgeItem, KnowledgeItemRevision)
@@ -166,7 +188,7 @@ class ServiceSearchService:
             .where(KBReleaseItem.release_id == release.id)
             .order_by(KBReleaseItem.knowledge_item_id.asc(), KBReleaseItem.id.asc())
         ).all()
-        candidates: list[tuple[float, ServiceSearchHit]] = []
+        entries: list[dict] = []
         for release_item, item, revision in rows:
             evidence_links = list(
                 db.scalars(
@@ -189,10 +211,11 @@ class ServiceSearchService:
                 continue
             if used_evidence_ids is not None:
                 used_evidence_ids.update(evidence.id for evidence in evidence_units)
-            candidates.append(
-                (
-                    max(score, 0.0),
-                    self._formal_hit(
+            entries.append(
+                {
+                    "keyword_score": max(score, 0.0),
+                    "text": f"{revision.title} {revision.statement}",
+                    "hit": self._formal_hit(
                         score=max(score, 0.0),
                         release_item=release_item,
                         item=item,
@@ -202,10 +225,9 @@ class ServiceSearchService:
                         result_view=result_view,
                         health=health,
                     ),
-                )
+                }
             )
-        candidates.sort(key=lambda pair: pair[0], reverse=True)
-        return [hit for _, hit in candidates[:top_k]]
+        return self._rank_entries(query, entries, trace)[:top_k]
 
     def _search_evidence(
         self,
@@ -218,6 +240,7 @@ class ServiceSearchService:
         top_k: int,
         exclude_evidence_ids: set[int],
         include_zero_scores: bool = False,
+        trace: dict | None = None,
     ) -> list[ServiceSearchHit]:
         rows = db.execute(
             select(EvidenceUnit, SourceAsset)
@@ -225,30 +248,225 @@ class ServiceSearchService:
             .where(EvidenceUnit.kb_id == kb_id)
             .order_by(EvidenceUnit.asset_id.asc(), EvidenceUnit.id.asc())
         ).all()
-        candidates: list[tuple[float, ServiceSearchHit]] = []
+        # Availability-passing, non-excluded rows form the pool: lexical hits plus the
+        # units that vector recall may pull in (widening beyond token overlap).
+        pool: dict[int, tuple[EvidenceUnit, SourceAsset, str]] = {}
+        entries: list[dict] = []
+        present_ids: set[int] = set()
         for evidence, asset in rows:
             if evidence.id in exclude_evidence_ids:
                 continue
             health = self._content_health_for_assets([asset])
             if not self._availability_allowed(health, availability_mode):
                 continue
+            pool[evidence.id] = (evidence, asset, health)
             score = self._evidence_score(query, evidence.text)
             if score <= 0 and not include_zero_scores:
                 continue
-            candidates.append(
-                (
-                    max(score, 0.0),
-                    self._evidence_hit(
-                        score=max(score, 0.0),
-                        evidence=evidence,
-                        asset=asset,
-                        result_view=result_view,
-                        health=health,
-                    ),
-                )
+            entries.append(self._evidence_entry(evidence.id, evidence, asset, result_view, health, score))
+            present_ids.add(evidence.id)
+
+        settings = get_settings()
+        active, note = self._hybrid_status(settings)
+        if trace is not None:
+            trace["hybrid_enabled"] = settings.retrieval_hybrid_enabled
+            if trace.get("vector_signal") in (None, "active"):
+                trace["vector_signal"] = note
+        if not active:
+            entries.sort(key=lambda entry: entry["keyword_score"], reverse=True)
+            return self._emit(query, entries, trace)[:top_k]
+
+        try:
+            query_vector = self._embedding().embed_query(query)
+        except Exception as exc:  # noqa: BLE001 - retrieval must not fail on model errors
+            if trace is not None:
+                trace["vector_signal"] = f"degraded:{type(exc).__name__}"
+            entries.sort(key=lambda entry: entry["keyword_score"], reverse=True)
+            return self._emit(query, entries, trace)[:top_k]
+
+        try:
+            score_map = build_unit_vector_index().score_map(
+                db, kb_id=kb_id, kind="evidence", query_vector=query_vector, embedding_model=settings.embedding_model
             )
-        candidates.sort(key=lambda pair: pair[0], reverse=True)
-        return [hit for _, hit in candidates[:top_k]]
+        except Exception as exc:  # noqa: BLE001 - a vector-backend outage must not fail search
+            if trace is not None:
+                trace["vector_signal"] = f"degraded:{type(exc).__name__}"
+            entries.sort(key=lambda entry: entry["keyword_score"], reverse=True)
+            return self._emit(query, entries, trace)[:top_k]
+        if not score_map:
+            # Nothing backfilled yet: degrade to lexical rather than fuse a meaningless signal.
+            if trace is not None:
+                trace["vector_signal"] = "active_no_index"
+            entries.sort(key=lambda entry: entry["keyword_score"], reverse=True)
+            return self._emit(query, entries, trace)[:top_k]
+
+        widened = 0
+        for unit_id, _score in sorted(score_map.items(), key=lambda kv: kv[1], reverse=True)[: settings.retrieval_vector_top_k]:
+            if unit_id in present_ids:
+                continue
+            row = pool.get(unit_id)
+            if row is None:  # excluded or availability-filtered
+                continue
+            evidence, asset, health = row
+            entries.append(self._evidence_entry(unit_id, evidence, asset, result_view, health, 0.0))
+            present_ids.add(unit_id)
+            widened += 1
+        if trace is not None:
+            trace["vector_signal"] = "active"
+            trace["vector_widened"] = widened
+        vector_scores = [score_map.get(entry["evidence_id"], -1.0) for entry in entries]
+        return self._emit(query, self._fuse(entries, vector_scores), trace)[:top_k]
+
+    def _evidence_entry(
+        self,
+        evidence_id: int,
+        evidence: EvidenceUnit,
+        asset: SourceAsset,
+        result_view: str,
+        health: str,
+        keyword_score: float,
+    ) -> dict:
+        return {
+            "evidence_id": evidence_id,
+            "keyword_score": max(keyword_score, 0.0),
+            "text": evidence.text,
+            "hit": self._evidence_hit(
+                score=max(keyword_score, 0.0),
+                evidence=evidence,
+                asset=asset,
+                result_view=result_view,
+                health=health,
+            ),
+        }
+
+    def _rank_entries(self, query: str, entries: list[dict], trace: dict | None) -> list[ServiceSearchHit]:
+        """Order candidate hits, fusing lexical and semantic signals when hybrid is active.
+
+        Hybrid retrieval re-ranks the lexical recall set with Reciprocal Rank Fusion
+        (RRF): each candidate gets a lexical rank (token-overlap score) and a semantic
+        rank (query/candidate embedding cosine), and the fused score is
+        ``sum(1 / (k + rank))``. RRF depends only on ranks, so the incomparable scales
+        of the two signals never need normalizing. Only active with a real embedding
+        provider; the mock provider is skipped so lexical ordering stays deterministic.
+        Any embedding failure degrades gracefully to lexical-only.
+        """
+        if not entries:
+            return []
+        settings = get_settings()
+        active, note = self._hybrid_status(settings)
+        if trace is not None:
+            trace["hybrid_enabled"] = settings.retrieval_hybrid_enabled
+            # Surface a skip/degrade note over a plain "active" when both branches run.
+            if trace.get("vector_signal") in (None, "active"):
+                trace["vector_signal"] = note
+
+        if not active:
+            entries.sort(key=lambda entry: entry["keyword_score"], reverse=True)
+            return self._emit(query, entries, trace)
+
+        try:
+            vectors = self._embedding().embed_texts([query, *[entry["text"] for entry in entries]])
+        except Exception as exc:  # noqa: BLE001 - retrieval must not fail on model errors
+            if trace is not None:
+                trace["vector_signal"] = f"degraded:{type(exc).__name__}"
+            entries.sort(key=lambda entry: entry["keyword_score"], reverse=True)
+            return self._emit(query, entries, trace)
+
+        query_vector = vectors[0]
+        candidate_vectors = vectors[1:]
+        vector_scores = [_cosine_similarity(query_vector, vector) for vector in candidate_vectors]
+        if trace is not None:
+            trace["vector_signal"] = "active"
+        return self._emit(query, self._fuse(entries, vector_scores), trace)
+
+    def _fuse(self, entries: list[dict], vector_scores: list[float]) -> list[dict]:
+        """Reciprocal Rank Fusion of lexical and semantic ranks; sets each hit's fused
+        score and returns the entries in fused order (rerank may reorder them next)."""
+        keyword_ranks = self._rank_positions([entry["keyword_score"] for entry in entries])
+        vector_ranks = self._rank_positions(vector_scores)
+        k = get_settings().retrieval_rrf_k
+        for index, entry in enumerate(entries):
+            fused = 1.0 / (k + keyword_ranks[index]) + 1.0 / (k + vector_ranks[index])
+            entry["fused"] = fused
+            entry["hit"].score = round(fused, 6)
+        order = sorted(range(len(entries)), key=lambda index: (-entries[index]["fused"], index))
+        return [entries[index] for index in order]
+
+    def _emit(self, query: str, entries: list[dict], trace: dict | None) -> list[ServiceSearchHit]:
+        """Final stage over ranked entries: optional rerank, then materialize hits."""
+        return [entry["hit"] for entry in self._rerank_entries(query, entries, trace)]
+
+    def _rerank_entries(self, query: str, entries: list[dict], trace: dict | None) -> list[dict]:
+        """Re-score the top ``rerank_top_m`` fused candidates with a cross-encoder and
+        reorder them; the tail keeps its fused order. Active only with a real rerank
+        provider (mock is skipped for determinism). Any failure degrades to fused order.
+        """
+        if len(entries) < 2:
+            return entries
+        settings = get_settings()
+        active, note = self._rerank_status(settings)
+        if trace is not None:
+            trace["rerank_enabled"] = settings.retrieval_rerank_enabled
+            trace["rerank_signal"] = note
+        if not active:
+            return entries
+
+        top_m = max(1, settings.rerank_top_m)
+        head = entries[:top_m]
+        tail = entries[top_m:]
+        try:
+            scores = self._rerank().rerank(query, [entry["text"] for entry in head])
+        except Exception as exc:  # noqa: BLE001 - rerank must not fail the search
+            if trace is not None:
+                trace["rerank_signal"] = f"degraded:{type(exc).__name__}"
+            return entries
+        if len(scores) != len(head):
+            if trace is not None:
+                trace["rerank_signal"] = "degraded:bad_response"
+            return entries
+
+        for entry, score in zip(head, scores):
+            entry["hit"].score = round(float(score), 6)
+        order = sorted(range(len(head)), key=lambda index: (-scores[index], index))
+        if trace is not None:
+            trace["rerank_signal"] = "active"
+            trace["rerank_count"] = len(head)
+        return [head[index] for index in order] + tail
+
+    def _hybrid_status(self, settings) -> tuple[bool, str]:
+        if not settings.retrieval_hybrid_enabled:
+            return False, "disabled"
+        provider = self._embedding()
+        if getattr(provider, "provider_name", "mock") == "mock":
+            return False, "mock_skipped"
+        return True, "active"
+
+    def _rerank_status(self, settings) -> tuple[bool, str]:
+        if not settings.retrieval_rerank_enabled:
+            return False, "disabled"
+        provider = self._rerank()
+        if getattr(provider, "provider_name", "mock") == "mock":
+            return False, "mock_skipped"
+        return True, "active"
+
+    def _rerank(self) -> RerankProvider:
+        if self._rerank_provider is None:
+            self._rerank_provider = build_rerank_provider()
+        return self._rerank_provider
+
+    def _embedding(self) -> EmbeddingProvider:
+        if self._embedding_provider is None:
+            self._embedding_provider = build_embedding_provider()
+        return self._embedding_provider
+
+    @staticmethod
+    def _rank_positions(scores: list[float]) -> list[int]:
+        """Return 1-based rank per index by descending score, ties broken by index."""
+        order = sorted(range(len(scores)), key=lambda index: (-scores[index], index))
+        ranks = [0] * len(scores)
+        for position, index in enumerate(order, start=1):
+            ranks[index] = position
+        return ranks
 
     def _formal_hit(
         self,
@@ -441,6 +659,7 @@ class ServiceSearchService:
         query_mode: str,
         release_id: int | None,
         response: ServiceSearchResponse,
+        retrieval_trace: dict | None = None,
     ) -> RetrievalLog:
         health_counts: dict[str, int] = {}
         for hit in response.hits:
@@ -473,6 +692,7 @@ class ServiceSearchService:
                 "result_view": response.result_view,
                 "availability_mode": response.availability_mode,
                 "release_selection_mode": response.grant.release_selection_mode if response.grant is not None else None,
+                "hybrid": retrieval_trace or {},
                 "hits": [
                     {
                         "result_kind": hit.result_kind,

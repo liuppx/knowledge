@@ -178,6 +178,40 @@ class EmbeddingRecord(Base):
     chunk: Mapped["ImportedChunk"] = relationship(back_populates="embedding")
 
 
+UNIT_EMBEDDING_KINDS = ("evidence", "formal")
+
+
+class UnitEmbeddingRecord(Base):
+    """Unit-level embedding for retrieval recall over governed units.
+
+    Unlike ``EmbeddingRecord`` (chunk-keyed, from raw documents), this stores a
+    vector per governed unit — an evidence unit (``unit_kind="evidence"``,
+    ``unit_id`` = ``evidence_units.id``) or a formal knowledge item revision
+    (``unit_kind="formal"``, ``unit_id`` = ``knowledge_item_revisions.id``). It
+    powers vector recall for the ``/service/search*`` endpoints, which return
+    those governed units rather than chunks. ``unit_id`` is polymorphic, so it is
+    a plain integer rather than a foreign key.
+    """
+
+    __tablename__ = "unit_embeddings"
+    __table_args__ = (
+        UniqueConstraint("unit_kind", "unit_id", "embedding_model", name="uq_unit_embeddings_kind_unit_model"),
+        Index("ix_unit_embeddings_kb_kind_model", "kb_id", "unit_kind", "embedding_model"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    kb_id: Mapped[int] = mapped_column(ForeignKey("knowledge_bases.id"), index=True, nullable=False)
+    owner_wallet_address: Mapped[str] = mapped_column(String(64), index=True, nullable=False)
+    unit_kind: Mapped[str] = mapped_column(String(32), nullable=False)
+    unit_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    text_hash: Mapped[str] = mapped_column(String(64), default="", nullable=False)
+    embedding_model: Mapped[str] = mapped_column(String(128), nullable=False)
+    index_status: Mapped[str] = mapped_column(String(32), default="indexed", nullable=False)
+    vector_json: Mapped[list[float]] = mapped_column(JSON, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, onupdate=utcnow, nullable=False)
+
+
 class ImportTask(Base):
     __tablename__ = "import_tasks"
     __table_args__ = (

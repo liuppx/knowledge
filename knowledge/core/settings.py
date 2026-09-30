@@ -69,6 +69,9 @@ class Settings(BaseSettings):
     vector_store_mode: str = "db"
     weaviate_url: str = "http://127.0.0.1:8080"
     weaviate_index_name: str = "KnowledgeChunk"
+    # Unit-level vectors (evidence/formal) live in their own class so they never
+    # collide with chunk vectors; Postgres unit_embeddings stays the source of truth.
+    weaviate_unit_index_name: str = "KnowledgeUnit"
     weaviate_scheme: str = "http"
     weaviate_host: str = ""
     weaviate_port: int = 8080
@@ -96,6 +99,22 @@ class Settings(BaseSettings):
     chunk_size: int = 800
     chunk_overlap: int = 120
     retrieval_top_k: int = 6
+    # Hybrid retrieval: fuse lexical (token-overlap) and semantic (embedding cosine)
+    # signals via Reciprocal Rank Fusion. Effective only with a real embedding
+    # provider; the mock provider is skipped so lexical ranking stays deterministic.
+    retrieval_hybrid_enabled: bool = True
+    retrieval_rrf_k: int = 60
+    # Number of unit-level vector candidates recalled (before fusion) to widen the
+    # lexical recall set with semantically-relevant units it missed.
+    retrieval_vector_top_k: int = 20
+    # Rerank: after RRF, re-score the top candidates with a cross-encoder rerank
+    # service for precision. Default on; effective only with a real provider, and
+    # any failure/timeout degrades to the RRF order. rerank_top_m bounds how many
+    # fused candidates are sent to the reranker.
+    retrieval_rerank_enabled: bool = True
+    rerank_model: str = "rerank-english-v3.0"
+    rerank_top_m: int = 20
+    rerank_timeout_seconds: int = 10
     memory_top_k: int = 4
     auto_memory_short_term_ttl_hours: int = 72
     auto_memory_max_long_terms: int = 3

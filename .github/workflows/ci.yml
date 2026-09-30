@@ -47,3 +47,69 @@ jobs:
       - name: Run test suite
         run: ./scripts/test.sh --suite all
 
+  weaviate-roundtrip:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: knowledge
+          POSTGRES_PASSWORD: knowledge
+          POSTGRES_DB: knowledge
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U knowledge"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      weaviate:
+        image: cr.weaviate.io/semitechnologies/weaviate:1.27.0
+        env:
+          QUERY_DEFAULTS_LIMIT: 25
+          AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: "true"
+          PERSISTENCE_DATA_PATH: /var/lib/weaviate
+          DEFAULT_VECTORIZER_MODULE: none
+          ENABLE_MODULES: ""
+        ports:
+          - 8080:8080
+          - 50051:50051
+
+    env:
+      TEST_DATABASE_URL: postgresql://knowledge:knowledge@127.0.0.1:5432/knowledge_test?gssencmode=disable
+      PGPASSWORD: knowledge
+      VECTOR_STORE_MODE: weaviate
+      WEAVIATE_HOST: 127.0.0.1
+      WEAVIATE_PORT: "8080"
+      WEAVIATE_GRPC_PORT: "50051"
+      WEAVIATE_SCHEME: http
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Create test database
+        run: psql -h 127.0.0.1 -U knowledge -d knowledge -c "CREATE DATABASE knowledge_test;"
+
+      - name: Wait for Weaviate readiness
+        run: |
+          for i in $(seq 1 30); do
+            if curl -sf http://127.0.0.1:8080/v1/.well-known/ready; then exit 0; fi
+            sleep 2
+          done
+          echo "Weaviate did not become ready" >&2
+          exit 1
+
+      - name: Weaviate unit-index round-trip
+        run: python -m pytest tests/test_weaviate_unit_index.py -v
+

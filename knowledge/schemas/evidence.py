@@ -17,3 +17,12 @@ class EvidenceBuildResponse(BaseModel):
 
 class EvidenceListResponse(BaseModel):
     items: list[EvidenceUnitRead]
+
+
+class UnitReindexResponse(BaseModel):
+    kb_id: int
+    kind: str
+    indexed: int = 0
+    skipped: int = 0
+    # Present only when a Weaviate accelerator is configured: the mirror-write outcome.
+    weaviate: dict | None = None

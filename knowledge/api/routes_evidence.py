@@ -5,13 +5,15 @@ from sqlalchemy.orm import Session
 
 from knowledge.api.deps import get_current_wallet
 from knowledge.db.session import get_db
-from knowledge.schemas.evidence import EvidenceBuildResponse
+from knowledge.schemas.evidence import EvidenceBuildResponse, UnitReindexResponse
 from knowledge.schemas.future_domain import EvidenceUnitRead
 from knowledge.services.evidence_pipeline import EvidencePipelineService
+from knowledge.services.unit_retrieval import UnitEmbeddingIndexer
 
 
 router = APIRouter(prefix="/kbs", tags=["evidence"])
 evidence_pipeline_service = EvidencePipelineService()
+unit_embedding_indexer = UnitEmbeddingIndexer()
 
 
 @router.post("/{kb_id}/assets/{asset_id}/build-evidence", response_model=EvidenceBuildResponse)
@@ -58,6 +60,26 @@ def build_evidence_for_source(
         skipped_asset_count=stats.skipped_asset_count,
         failed_asset_ids=stats.failed_asset_ids,
     )
+
+
+@router.post("/{kb_id}/reindex-units", response_model=UnitReindexResponse)
+def reindex_units(
+    kb_id: int,
+    wallet_address: str = Depends(get_current_wallet),
+    db: Session = Depends(get_db),
+) -> UnitReindexResponse:
+    """(Re)embed the KB's evidence units so hybrid retrieval can widen recall.
+
+    Idempotent: only units whose text changed since the last run are re-embedded.
+    A no-op under the mock provider, where hybrid retrieval stays lexical-only.
+    """
+    try:
+        stats = unit_embedding_indexer.reindex_kb(db, wallet_address=wallet_address, kb_id=kb_id)
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return UnitReindexResponse(**stats)
 
 
 @router.get("/{kb_id}/evidence", response_model=list[EvidenceUnitRead])

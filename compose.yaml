@@ -16,5 +16,28 @@ services:
       timeout: 5s
       retries: 10
 
+  # ANN accelerator for hybrid retrieval. Optional: the service falls back to the
+  # Postgres unit-vector backend when VECTOR_STORE_MODE is left at "db".
+  weaviate:
+    image: cr.weaviate.io/semitechnologies/weaviate:1.27.0
+    command: ["--host", "0.0.0.0", "--port", "8080", "--scheme", "http"]
+    environment:
+      QUERY_DEFAULTS_LIMIT: 25
+      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: "true"
+      PERSISTENCE_DATA_PATH: /var/lib/weaviate
+      DEFAULT_VECTORIZER_MODULE: none
+      ENABLE_MODULES: ""
+    ports:
+      - "8080:8080"
+      - "50051:50051"
+    volumes:
+      - knowledge-weaviate-data:/var/lib/weaviate
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/v1/.well-known/ready || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
 volumes:
   knowledge-postgres-data:
+  knowledge-weaviate-data:

@@ -27,6 +27,7 @@ from knowledge.api.routes_warehouse import router as warehouse_router
 from knowledge.core.settings import get_settings
 from knowledge.db.migrations import ensure_database_schema
 from knowledge.services.vector_store import close_vector_store
+from knowledge.services.unit_retrieval import close_unit_vector_index
 
 
 settings = get_settings()
@@ -37,6 +38,7 @@ async def lifespan(_: FastAPI):
     ensure_database_schema()
     yield
     close_vector_store()
+    close_unit_vector_index()
 
 
 app = FastAPI(title=settings.app_name, debug=settings.debug, lifespan=lifespan)
