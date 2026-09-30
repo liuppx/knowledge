@@ -66,6 +66,119 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /auth/passport/sessions:
+    post:
+      tags:
+      - auth
+      summary: Create Passport Session
+      operationId: create_passport_session_auth_passport_sessions_post
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PassportSessionResponse'
+  /auth/identity/login/session:
+    post:
+      tags:
+      - auth
+      summary: Create Identity Login Session
+      operationId: create_identity_login_session_auth_identity_login_session_post
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                title: Response Create Identity Login Session Auth Identity Login Session Post
+  /auth/identity/login/verify:
+    post:
+      tags:
+      - auth
+      summary: Verify Identity Login
+      operationId: verify_identity_login_auth_identity_login_verify_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              title: Payload
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /auth/passport/callback:
+    get:
+      tags:
+      - auth
+      summary: Passport Callback
+      operationId: passport_callback_auth_passport_callback_get
+      parameters:
+      - name: code
+        in: query
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          title: Code
+      - name: state
+        in: query
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          title: State
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            text/html:
+              schema:
+                type: string
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /auth/passport/sessions/{session_id}:
+    get:
+      tags:
+      - auth
+      summary: Get Passport Session
+      operationId: get_passport_session_auth_passport_sessions__session_id__get
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Session Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PassportStatusResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /auth/demo:
     post:
       tags:
@@ -692,6 +805,14 @@ paths:
           type: integer
           default: 0
           title: After
+      - name: Last-Event-ID
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Last-Event-Id
       - name: X-Service-Api-Key
         in: header
         required: true
@@ -992,6 +1113,214 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AgentRunRead'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /analysis-runs:
+    get:
+      tags:
+      - analysis_runs
+      summary: List My Analysis Runs
+      operationId: list_my_analysis_runs_analysis_runs_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/AgentRunRead'
+                type: array
+                title: Response List My Analysis Runs Analysis Runs Get
+      security:
+      - HTTPBearer: []
+    post:
+      tags:
+      - analysis_runs
+      summary: Create My Analysis Run
+      operationId: create_my_analysis_run_analysis_runs_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnalysisRunCreateRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentRunRead'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - HTTPBearer: []
+  /analysis-runs/{run_id}:
+    get:
+      tags:
+      - analysis_runs
+      summary: Get My Analysis Run
+      operationId: get_my_analysis_run_analysis_runs__run_id__get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: run_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Run Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentRunRead'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /analysis-runs/{run_id}/events:
+    get:
+      tags:
+      - analysis_runs
+      summary: List My Analysis Events
+      operationId: list_my_analysis_events_analysis_runs__run_id__events_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: run_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Run Id
+      - name: after
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 0
+          title: After
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AgentRunEventRead'
+                title: Response List My Analysis Events Analysis Runs  Run Id  Events Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /analysis-runs/{run_id}/events/stream:
+    get:
+      tags:
+      - analysis_runs
+      summary: Stream My Analysis Events
+      operationId: stream_my_analysis_events_analysis_runs__run_id__events_stream_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: run_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Run Id
+      - name: after
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 0
+          title: After
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /analysis-runs/{run_id}/artifacts:
+    get:
+      tags:
+      - analysis_runs
+      summary: List My Analysis Artifacts
+      operationId: list_my_analysis_artifacts_analysis_runs__run_id__artifacts_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: run_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Run Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AgentRunArtifactRead'
+                title: Response List My Analysis Artifacts Analysis Runs  Run Id  Artifacts Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /analysis-runs/{run_id}/artifacts/{artifact_id}/download:
+    get:
+      tags:
+      - analysis_runs
+      summary: Download My Analysis Artifact
+      operationId: download_my_analysis_artifact_analysis_runs__run_id__artifacts__artifact_id__download_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: run_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Run Id
+      - name: artifact_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Artifact Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
         '422':
           description: Validation Error
           content:
@@ -2013,6 +2342,40 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/EvidenceBuildResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /kbs/{kb_id}/reindex-units:
+    post:
+      tags:
+      - evidence
+      summary: Reindex Units
+      description: '(Re)embed the KB''s evidence units so hybrid retrieval can widen recall.
+
+
+        Idempotent: only units whose text changed since the last run are re-embedded.
+
+        A no-op under the mock provider, where hybrid retrieval stays lexical-only.'
+      operationId: reindex_units_kbs__kb_id__reindex_units_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnitReindexResponse'
         '422':
           description: Validation Error
           content:
@@ -3861,6 +4224,25 @@ components:
       - error_summary
       - started_at
       title: AgentRunStepRead
+    AnalysisRunCreateRequest:
+      properties:
+        warehouse_path:
+          type: string
+          maxLength: 1024
+          minLength: 1
+          title: Warehouse Path
+        intent:
+          type: string
+          maxLength: 4000
+          minLength: 1
+          title: Intent
+        constraints:
+          $ref: '#/components/schemas/SpreadsheetAnalysisConstraints'
+      type: object
+      required:
+      - warehouse_path
+      - intent
+      title: AnalysisRunCreateRequest
     BindingTaskCreateRequest:
       properties:
         binding_ids:
@@ -4033,6 +4415,9 @@ components:
         message:
           type: string
           title: Message
+        challenge:
+          type: string
+          title: Challenge
         expires_at:
           type: string
           format: date-time
@@ -4042,6 +4427,7 @@ components:
       - wallet_address
       - nonce
       - message
+      - challenge
       - expires_at
       title: ChallengeResponse
     EvidenceBuildResponse:
@@ -5050,6 +5436,41 @@ components:
       - skipped_long_term
       - event
       title: MemoryIngestionResponse
+    PassportSessionResponse:
+      properties:
+        session_id:
+          type: string
+          title: Session Id
+        verify_url:
+          type: string
+          title: Verify Url
+        status:
+          type: string
+          title: Status
+        expires_at:
+          type: string
+          format: date-time
+          title: Expires At
+      type: object
+      required:
+      - session_id
+      - verify_url
+      - status
+      - expires_at
+      title: PassportSessionResponse
+    PassportStatusResponse:
+      properties:
+        status:
+          type: string
+          title: Status
+        token:
+          anyOf:
+          - $ref: '#/components/schemas/TokenResponse'
+          - type: 'null'
+      type: object
+      required:
+      - status
+      title: PassportStatusResponse
     RefreshRequest:
       properties:
         refresh_token:
@@ -6508,6 +6929,9 @@ components:
         access_token:
           type: string
           title: Access Token
+        token:
+          type: string
+          title: Token
         refresh_token:
           type: string
           title: Refresh Token
@@ -6529,11 +6953,38 @@ components:
       type: object
       required:
       - access_token
+      - token
       - refresh_token
       - wallet_address
       - expires_at
       - refresh_expires_at
       title: TokenResponse
+    UnitReindexResponse:
+      properties:
+        kb_id:
+          type: integer
+          title: Kb Id
+        kind:
+          type: string
+          title: Kind
+        indexed:
+          type: integer
+          title: Indexed
+          default: 0
+        skipped:
+          type: integer
+          title: Skipped
+          default: 0
+        weaviate:
+          anyOf:
+          - type: object
+          - type: 'null'
+          title: Weaviate
+      type: object
+      required:
+      - kb_id
+      - kind
+      title: UnitReindexResponse
     UploadResponse:
       properties:
         warehouse_path:
