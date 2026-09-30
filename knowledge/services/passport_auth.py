@@ -27,8 +27,8 @@ class PassportAuthService:
             "POST",
             "/api/v1/public/auth/passport/authorize/request",
             {
-                "appId": self.settings.passport_app_id,
-                "redirectUri": self.settings.passport_redirect_uri,
+                "appId": self.settings.identity_app_id,
+                "redirectUri": self.settings.identity_redirect_uri,
                 "state": session_id,
                 "codeChallenge": challenge,
                 "codeChallengeMethod": "S256",
@@ -42,7 +42,7 @@ class PassportAuthService:
             id=session_id,
             request_id=request_id,
             code_verifier=verifier,
-            redirect_uri=self.settings.passport_redirect_uri,
+            redirect_uri=self.settings.identity_redirect_uri,
             status="pending",
             expires_at=expires_at,
         )
@@ -51,6 +51,44 @@ class PassportAuthService:
         db.refresh(session)
         session.verify_url = str(data.get("verifyUrl") or data.get("verify_url") or "")
         return session
+
+    def create_identity_session(self, db: Session) -> dict:
+        self._require_identity_configured()
+        session_id = secrets.token_urlsafe(32)
+        verifier = _base64url(secrets.token_bytes(64))
+        challenge = _base64url(hashlib.sha256(verifier.encode("ascii")).digest())
+        expires_at = utc_now() + timedelta(seconds=self.settings.passport_session_ttl_seconds)
+        data = self._node_request("POST", "/api/v1/public/identity/authorize/request", {
+            "appId": self.settings.identity_app_id, "redirectUri": self.settings.identity_redirect_uri,
+            "state": session_id, "codeChallenge": challenge, "codeChallengeMethod": "S256",
+            "scopes": ["identity.basic", "identity.wallet", "identity.username"],
+            "requestTtlMs": self.settings.passport_session_ttl_seconds * 1000,
+        })
+        request_id = str(data.get("requestId") or data.get("request_id") or "").strip()
+        if not request_id: raise ValueError("身份服务未返回授权请求 ID")
+        session = PassportLoginSession(id=session_id, request_id=request_id, code_verifier=verifier,
+            redirect_uri=self.settings.identity_redirect_uri, status="pending", expires_at=expires_at)
+        db.add(session); db.commit()
+        return {"session_id": session_id, "request_id": request_id,
+                "audience": data.get("audience"), "nonce": data.get("nonce"),
+                "scopes": data.get("scopes") or ["identity.basic", "identity.wallet", "identity.username"],
+                "issuerEndpoint": self.settings.identity_node_url,
+                "expires_at": expires_at.isoformat()}
+
+    def verify_identity(self, db: Session, session_id: str, presentation: dict) -> str:
+        session = db.get(PassportLoginSession, session_id)
+        if session is None or session.expires_at < utc_now(): raise ValueError("钱包身份登录会话已过期")
+        approved = self._node_request("POST", "/api/v1/public/identity/authorize/approve", {"requestId": session.request_id, "presentation": presentation})
+        code = str(approved.get("authorizationCode") or approved.get("authorization_code") or "").strip()
+        if not code: raise ValueError("钱包身份授权证明无效")
+        data = self._node_request("POST", "/api/v1/public/identity/authorize/exchange", {"code": code, "appId": self.settings.identity_app_id, "redirectUri": session.redirect_uri, "codeVerifier": session.code_verifier})
+        address = str(data.get("walletAddress") or data.get("wallet_address") or data.get("address") or "").strip().lower()
+        if not address.startswith("0x"): raise ValueError("钱包身份未返回有效账户")
+        user = db.get(WalletUser, address)
+        if user is None: user = WalletUser(wallet_address=address); db.add(user)
+        user.last_login_at = utc_now(); session.status = "completed"; session.wallet_address = address
+        db.commit()
+        return address
 
     def receive_callback(self, db: Session, state: str, code: str) -> PassportLoginSession:
         session = db.get(PassportLoginSession, state)
@@ -77,7 +115,7 @@ class PassportAuthService:
             "/api/v1/public/auth/passport/authorize/exchange",
             {
                 "code": session.authorization_code,
-                "appId": self.settings.passport_app_id,
+                "appId": self.settings.identity_app_id,
                 "redirectUri": session.redirect_uri,
                 "codeVerifier": session.code_verifier,
             },
@@ -105,17 +143,21 @@ class PassportAuthService:
         return session
 
     def _require_configured(self) -> None:
-        if not self.settings.passport_node_url or not self.settings.passport_app_id or not self.settings.passport_redirect_uri:
-            raise ValueError("夜莺通行证未配置，请设置 PASSPORT_NODE_URL、PASSPORT_APP_ID 和 PASSPORT_REDIRECT_URI")
+        if not self.settings.identity_node_url or not self.settings.identity_app_id or not self.settings.identity_redirect_uri:
+            raise ValueError("身份服务未配置，请设置 IDENTITY_NODE_URL、IDENTITY_APP_ID 和 IDENTITY_REDIRECT_URI")
+
+    def _require_identity_configured(self) -> None:
+        if not self.settings.identity_node_url or not self.settings.identity_app_id or not self.settings.identity_redirect_uri:
+            raise ValueError("Wallet Identity 未配置，请设置 IDENTITY_NODE_URL、IDENTITY_APP_ID 和 IDENTITY_REDIRECT_URI；其中 IDENTITY_REDIRECT_URI 必须是 Node 已登记的应用回调地址")
 
     def _node_request(self, method: str, path: str, payload: dict) -> dict:
         self._require_configured()
         try:
             response = httpx.request(
                 method,
-                f"{self.settings.passport_node_url.rstrip('/')}{path}",
+                f"{self.settings.identity_node_url.rstrip('/')}{path}",
                 json=payload,
-                headers={"Accept": "application/json", "X-YeYing-Client": self.settings.passport_app_id},
+                headers={"Accept": "application/json", "X-YeYing-Client": self.settings.identity_app_id},
                 timeout=15,
             )
             body = response.json()

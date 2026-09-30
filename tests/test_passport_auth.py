@@ -7,9 +7,9 @@ from knowledge.main import app
 
 
 def test_passport_login_exchanges_code_only_on_the_server(monkeypatch) -> None:
-    monkeypatch.setattr(routes_auth.passport_service.settings, "passport_node_url", "https://passport.example.test")
-    monkeypatch.setattr(routes_auth.passport_service.settings, "passport_app_id", "knowledge-local")
-    monkeypatch.setattr(routes_auth.passport_service.settings, "passport_redirect_uri", "http://testserver/auth/passport/callback")
+    monkeypatch.setattr(routes_auth.passport_service.settings, "identity_node_url", "https://passport.example.test")
+    monkeypatch.setattr(routes_auth.passport_service.settings, "identity_app_id", "knowledge-local")
+    monkeypatch.setattr(routes_auth.passport_service.settings, "identity_redirect_uri", "http://testserver/auth/passport/callback")
     calls: list[tuple[str, str, dict]] = []
 
     def node_request(method: str, path: str, payload: dict) -> dict:

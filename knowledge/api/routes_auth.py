@@ -355,6 +355,22 @@ def create_passport_session(db: Session = Depends(get_db)) -> PassportSessionRes
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     return PassportSessionResponse(session_id=session.id, verify_url=session.verify_url, status=session.status, expires_at=session.expires_at)
 
+@router.post("/identity/login/session")
+def create_identity_login_session(db: Session = Depends(get_db)) -> dict:
+    try:
+        return passport_service.create_identity_session(db)
+    except ValueError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+@router.post("/identity/login/verify", response_model=TokenResponse)
+def verify_identity_login(payload: dict, db: Session = Depends(get_db)) -> TokenResponse:
+    try:
+        address = passport_service.verify_identity(db, str(payload.get("session_id") or ""), payload.get("presentation") or {})
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    access, refresh = service.create_token_pair(address)
+    return TokenResponse(access_token=access[0], token=access[0], refresh_token=refresh[0], wallet_address=address, expires_at=access[1], refresh_expires_at=refresh[1])
+
 
 @router.get("/passport/callback", response_class=HTMLResponse)
 def passport_callback(code: str = Query(min_length=1), state: str = Query(min_length=1), db: Session = Depends(get_db)) -> HTMLResponse:

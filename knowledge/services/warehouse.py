@@ -370,8 +370,10 @@ class S3WarehouseGateway(WarehouseGateway):
 
 def build_warehouse_gateway() -> WarehouseGateway:
     settings = get_settings()
-    if settings.warehouse_gateway_mode == "s3":
-        return S3WarehouseGateway(endpoint_url=settings.s3_endpoint_url, region=settings.s3_region)
+    # Production depends only on the standard S3-compatible object-storage
+    # contract. Legacy mode switches remain for tests and migration only.
+    if settings.warehouse_gateway_mode in ("", "s3"):
+        return S3WarehouseGateway(endpoint_url=settings.object_storage_endpoint, region=settings.object_storage_region)
     if settings.warehouse_gateway_mode == "bound_token":
         return BoundTokenWarehouseGateway(
             base_url=settings.warehouse_base_url,

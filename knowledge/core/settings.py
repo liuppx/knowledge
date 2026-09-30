@@ -34,16 +34,21 @@ class Settings(BaseSettings):
     siwe_domain: str = ""
     siwe_uri: str = ""
     siwe_chain_id: int = 1
-    passport_node_url: str = ""
-    passport_app_id: str = ""
-    passport_redirect_uri: str = ""
+    identity_node_url: str = ""
+    identity_app_id: str = ""
+    identity_redirect_uri: str = ""
     passport_session_ttl_seconds: int = 300
 
-    warehouse_gateway_mode: str = "s3"
+    # Deprecated compatibility switch. Production uses the standard object
+    # storage gateway below; keep this only for legacy tests/transitional setups.
+    warehouse_gateway_mode: str = ""
     warehouse_base_url: str = "https://webdav.yeying.pub"
     warehouse_webdav_prefix: str = "/dav"
-    s3_endpoint_url: str = "http://127.0.0.1:6066"
-    s3_region: str = "us-east-1"
+    object_storage_endpoint: str = "http://127.0.0.1:6066"
+    object_storage_region: str = "us-east-1"
+    # Backward-compatible aliases for existing deployments.
+    s3_endpoint_url: str = ""
+    s3_region: str = ""
     warehouse_app_id: str = "knowledge.yeying.pub"
     warehouse_apps_prefix: str = "/apps"
     warehouse_mock_root: str = str(Path(__file__).resolve().parents[2] / ".mock_warehouse")
@@ -102,6 +107,10 @@ class Settings(BaseSettings):
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
     settings = Settings()
+    if settings.s3_endpoint_url:
+        settings.object_storage_endpoint = settings.s3_endpoint_url
+    if settings.s3_region:
+        settings.object_storage_region = settings.s3_region
     if not settings.token_encryption_secret:
         digest = hashlib.sha256(settings.jwt_secret.encode("utf-8")).digest()
         settings.token_encryption_secret = base64.urlsafe_b64encode(digest).decode("utf-8")

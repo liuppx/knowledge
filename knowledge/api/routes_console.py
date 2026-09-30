@@ -30,6 +30,8 @@ def legacy_console_home(request: Request):
             "warehouse_app_id": warehouse_app_id(),
             "warehouse_app_root": warehouse_app_root(),
             "warehouse_upload_dir": warehouse_default_upload_dir(),
+            "object_storage_endpoint": settings.object_storage_endpoint,
+            "object_storage_region": settings.object_storage_region,
             "warehouse_base_url": settings.warehouse_base_url,
             "warehouse_webdav_prefix": settings.warehouse_webdav_prefix,
             "console_asset_version": CONSOLE_ASSET_VERSION,

@@ -111,6 +111,9 @@ def stores_health(db: Session = Depends(get_db)) -> dict:
         "vector_store_status": vector_status,
         "model_provider_mode": settings.model_provider_mode,
         "model_provider_status": model_status,
+        "object_storage_endpoint": settings.object_storage_endpoint,
+        "object_storage_region": settings.object_storage_region,
+        # Deprecated response fields retained for old console clients.
         "warehouse_gateway_mode": settings.warehouse_gateway_mode,
         "warehouse_base_url": settings.warehouse_base_url,
     }
