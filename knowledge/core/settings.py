@@ -10,6 +10,18 @@ from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+DEFAULT_JWT_SECRET = "change-me-in-production"
+# Known placeholder secrets shipped in defaults and .env.template. None of these
+# may be used once the service runs outside a development environment.
+INSECURE_JWT_SECRETS = frozenset(
+    {DEFAULT_JWT_SECRET, "", "change-me", "replace-with-a-random-secret"}
+)
+
+
+class ProductionConfigError(RuntimeError):
+    """Raised when a non-development runtime still carries insecure defaults."""
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -26,7 +38,7 @@ class Settings(BaseSettings):
 
     database_url: str = "postgresql://knowledge:knowledge@127.0.0.1:5432/knowledge?gssencmode=disable"
 
-    jwt_secret: str = "change-me-in-production"
+    jwt_secret: str = DEFAULT_JWT_SECRET
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 60
     refresh_token_expire_minutes: int = 60 * 24 * 7
@@ -107,6 +119,7 @@ class Settings(BaseSettings):
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
     settings = Settings()
+    token_secret_explicit = bool(settings.token_encryption_secret)
     if settings.s3_endpoint_url:
         settings.object_storage_endpoint = settings.s3_endpoint_url
     if settings.s3_region:
@@ -122,4 +135,37 @@ def get_settings() -> Settings:
         settings.weaviate_host = parsed.hostname
         if parsed.port:
             settings.weaviate_port = parsed.port
+    validate_runtime_settings(settings, token_secret_explicit=token_secret_explicit)
     return settings
+
+
+def validate_runtime_settings(settings: Settings, *, token_secret_explicit: bool) -> None:
+    """Fail fast when a non-development runtime still uses insecure defaults.
+
+    Development is intentionally exempt so local runs and tests keep working with
+    mock providers and placeholder secrets. Every other environment must supply
+    real, rotatable secrets and real providers before the process starts.
+    """
+    if settings.app_env == "development":
+        return
+
+    problems: list[str] = []
+    if settings.jwt_secret in INSECURE_JWT_SECRETS:
+        problems.append("JWT_SECRET must be a long random value, not a default/placeholder")
+    if settings.debug:
+        problems.append("DEBUG must be false")
+    if settings.model_provider_mode == "mock":
+        problems.append("MODEL_PROVIDER_MODE must not be 'mock'; connect a real model gateway")
+    if settings.warehouse_gateway_mode == "mock":
+        problems.append("WAREHOUSE_GATEWAY_MODE must not be 'mock'; use real object storage")
+    if not token_secret_explicit:
+        problems.append(
+            "TOKEN_ENCRYPTION_SECRET must be set explicitly; "
+            "deriving it from JWT_SECRET is not allowed outside development"
+        )
+
+    if problems:
+        joined = "\n  - ".join(problems)
+        raise ProductionConfigError(
+            f"Insecure configuration for app_env='{settings.app_env}':\n  - {joined}"
+        )

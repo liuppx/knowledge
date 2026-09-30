@@ -18,6 +18,7 @@ os.environ.setdefault("MODEL_PROVIDER_MODE", "mock")
 def pytest_sessionstart(session: pytest.Session) -> None:
     import knowledge.models  # noqa: F401
     from knowledge.db.base import Base
+    from knowledge.db.migrations import stamp_head
     from knowledge.db.schema import ensure_runtime_schema
     from knowledge.db.session import engine
 
@@ -26,3 +27,6 @@ def pytest_sessionstart(session: pytest.Session) -> None:
         connection.execute(text("CREATE SCHEMA public"))
     Base.metadata.create_all(bind=engine)
     ensure_runtime_schema(engine)
+    # Build the schema directly from the models for speed, then mark it at head so
+    # the app lifespan's upgrade_to_head() is a no-op during tests.
+    stamp_head()
