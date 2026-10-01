@@ -126,6 +126,36 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--brand-soft)
 .detail-grid dt { color: var(--muted); font-size: 12px; }
 .detail-grid dd { margin: 2px 0 0; }
 
+/* Tabs, browser, misc workbench pieces ---------------------------------- */
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin-bottom: 16px; }
+.tab { border: 0; border-bottom: 2px solid transparent; border-radius: 0; background: transparent; color: var(--muted); padding: 8px 14px; min-height: 0; }
+.tab:hover { color: var(--text); border-color: transparent; }
+.tab.active { color: var(--brand); border-bottom-color: var(--brand); font-weight: 600; }
+.browser-toolbar { display: grid; grid-template-columns: minmax(220px, 1fr) minmax(0, 2fr); gap: 10px; margin-bottom: 10px; }
+.browser-path { display: flex; gap: 8px; }
+.browser-path input { flex: 1; }
+.breadcrumbs { display: flex; flex-wrap: wrap; gap: 2px; margin-bottom: 8px; font-size: 13px; }
+.crumb { border: 0; background: transparent; color: var(--brand); padding: 2px 6px; min-height: 0; }
+.crumb + .crumb::before { content: "/"; color: var(--muted); margin-right: 6px; }
+.entry-list { list-style: none; margin: 0; padding: 0; border: 1px solid var(--line); border-radius: var(--radius); max-height: 420px; overflow: auto; }
+.entry-list li { display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--line); padding: 0 8px 0 0; }
+.entry-list li:last-child { border-bottom: 0; }
+.entry { flex: 1; display: grid; grid-template-columns: 18px minmax(0, 1fr) 90px 160px; gap: 10px; align-items: center; text-align: left; border: 0; border-radius: 0; background: transparent; padding: 8px 10px; }
+.entry:hover { background: var(--panel-soft); }
+.preview, .pre-json { background: var(--panel-soft); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px; white-space: pre-wrap; word-break: break-word; font-family: var(--font-mono); font-size: 12.5px; max-height: 60vh; overflow: auto; }
+.pre-json { max-height: 240px; margin: 10px 0 0; }
+.mode-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 12px 0; }
+.mode-option { display: flex; gap: 10px; align-items: flex-start; border: 1px solid var(--line); border-radius: var(--radius); padding: 12px; cursor: pointer; }
+.mode-option.selected { border-color: var(--brand); background: var(--brand-soft); }
+.mode-option input { margin-top: 3px; }
+.mode-option p { margin: 4px 0 0; font-size: 12.5px; }
+.reveal-box { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 12px 0; padding: 10px 12px; border: 1px dashed var(--warning); border-radius: var(--radius); background: var(--warning-soft); }
+.metric strong.small { font-size: 14px; word-break: break-all; }
+.chunk-list { display: grid; gap: 10px; }
+.chunk { border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 12px; }
+.chunk header { display: flex; gap: 10px; align-items: center; margin-bottom: 6px; font-size: 12px; }
+.chunk p { margin: 0; white-space: pre-wrap; line-height: 1.55; }
+
 /* Legacy panel classes still used by P0 placeholder panels -------------- */
 .source-row { display: flex; justify-content: space-between; gap: 20px; padding: 12px 0; border-top: 1px solid var(--line); }
 .source-row strong, .source-row span { display: block; }
@@ -166,7 +196,9 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--brand-soft)
   .nav-secondary { border-top: 0; padding-top: 0; }
   .sidebar-footer { display: none; }
   .topbar, .content { padding-left: 16px; padding-right: 16px; }
-  .form-row, .warehouse-form, .warehouse-upload, .items-grid, .search-grid, .detail-grid, .two-column { grid-template-columns: 1fr; }
+  .form-row, .warehouse-form, .warehouse-upload, .items-grid, .search-grid, .detail-grid, .two-column, .mode-grid, .browser-toolbar { grid-template-columns: 1fr; }
+  .entry { grid-template-columns: 18px minmax(0, 1fr); }
+  .entry > :nth-child(n + 3) { display: none; }
   .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .source-row { display: block; }
   .source-row button { margin: 10px 8px 0 0; }
