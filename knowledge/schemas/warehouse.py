@@ -135,3 +135,23 @@ class UploadResponse(BaseModel):
     size: int
     uploaded_at: datetime
     can_import: bool = True
+
+
+class UploadRecordRead(BaseModel):
+    id: int
+    warehouse_target_path: str
+    file_name: str
+    size: int = 0
+    status: str
+    created_at: datetime
+
+
+class WarehousePreviewResponse(BaseModel):
+    path: str
+    file_name: str
+    file_type: str
+    size: int = 0
+    modified_at: datetime | None = None
+    credential_id: int
+    credential_kind: str
+    preview: str = ""

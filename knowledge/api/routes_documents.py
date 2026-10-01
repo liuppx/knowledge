@@ -7,6 +7,8 @@ from sqlalchemy.orm import Session, selectinload
 from knowledge.api.deps import get_current_wallet
 from knowledge.db.session import get_db
 from knowledge.models import ImportedChunk, ImportedDocument, KnowledgeBase
+from knowledge.schemas.common import OkResponse
+from knowledge.schemas.documents import DocumentDetailRead, DocumentRead
 from knowledge.services.filetypes import infer_file_type
 from knowledge.services.ingestion import IngestionService
 
@@ -15,7 +17,7 @@ router = APIRouter(tags=["documents"])
 document_index_service = IngestionService()
 
 
-@router.get("/kbs/{kb_id}/documents")
+@router.get("/kbs/{kb_id}/documents", response_model=list[DocumentRead])
 def list_documents(kb_id: int, wallet_address: str = Depends(get_current_wallet), db: Session = Depends(get_db)) -> list[dict]:
     kb = db.get(KnowledgeBase, kb_id)
     if kb is None or kb.owner_wallet_address != wallet_address:
@@ -36,7 +38,7 @@ def list_documents(kb_id: int, wallet_address: str = Depends(get_current_wallet)
     ]
 
 
-@router.get("/kbs/{kb_id}/documents/{doc_id}")
+@router.get("/kbs/{kb_id}/documents/{doc_id}", response_model=DocumentDetailRead)
 def get_document(kb_id: int, doc_id: int, wallet_address: str = Depends(get_current_wallet), db: Session = Depends(get_db)) -> dict:
     kb = db.get(KnowledgeBase, kb_id)
     if kb is None or kb.owner_wallet_address != wallet_address:
@@ -77,7 +79,7 @@ def get_document(kb_id: int, doc_id: int, wallet_address: str = Depends(get_curr
     }
 
 
-@router.delete("/kbs/{kb_id}/documents/{doc_id}")
+@router.delete("/kbs/{kb_id}/documents/{doc_id}", response_model=OkResponse)
 def delete_document(kb_id: int, doc_id: int, wallet_address: str = Depends(get_current_wallet), db: Session = Depends(get_db)) -> dict:
     kb = db.get(KnowledgeBase, kb_id)
     if kb is None or kb.owner_wallet_address != wallet_address:

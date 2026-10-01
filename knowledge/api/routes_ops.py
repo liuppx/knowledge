@@ -22,6 +22,7 @@ from knowledge.models import (
     WorkerStatus,
 )
 from knowledge.core.settings import get_settings
+from knowledge.schemas.ops import OpsOverviewResponse, StoresHealthResponse, TaskFailureRead, WorkerStatusRead
 from knowledge.services.vector_store import build_vector_store
 from knowledge.services.task_queue import TaskQueueService
 from knowledge.utils.time import utc_now
@@ -31,7 +32,7 @@ router = APIRouter(prefix="/ops", tags=["ops"], dependencies=[Depends(get_curren
 task_queue_service = TaskQueueService()
 
 
-@router.get("/overview")
+@router.get("/overview", response_model=OpsOverviewResponse)
 def overview(db: Session = Depends(get_db)) -> dict:
     settings = get_settings()
     stale_before = utc_now() - timedelta(seconds=max(15, int(settings.worker_run_lease_ttl_seconds)))
@@ -91,7 +92,7 @@ def overview(db: Session = Depends(get_db)) -> dict:
     }
 
 
-@router.get("/stores/health")
+@router.get("/stores/health", response_model=StoresHealthResponse)
 def stores_health(db: Session = Depends(get_db)) -> dict:
     settings = get_settings()
     try:
@@ -119,7 +120,7 @@ def stores_health(db: Session = Depends(get_db)) -> dict:
     }
 
 
-@router.get("/workers")
+@router.get("/workers", response_model=list[WorkerStatusRead])
 def workers(db: Session = Depends(get_db)) -> list[dict]:
     rows = list(db.scalars(select(WorkerStatus).order_by(WorkerStatus.worker_name.asc())).all())
     now = utc_now()
@@ -142,7 +143,7 @@ def workers(db: Session = Depends(get_db)) -> list[dict]:
     return results
 
 
-@router.get("/tasks/failures")
+@router.get("/tasks/failures", response_model=list[TaskFailureRead])
 def recent_task_failures(trace_id: str | None = None, limit: int = 10, db: Session = Depends(get_db)) -> list[dict]:
     query_limit = max(limit, 100) if trace_id else limit
     rows = list(

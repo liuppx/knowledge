@@ -10,7 +10,7 @@ from knowledge.api.routes_auth import router as auth_router
 from knowledge.api.routes_assets import router as assets_router
 from knowledge.api.routes_agent_runs import router as agent_runs_router
 from knowledge.api.routes_analysis_runs import router as analysis_runs_router
-from knowledge.api.routes_console import router as console_router
+from knowledge.api.routes_console import router as console_router, spa_router
 from knowledge.api.routes_documents import router as documents_router
 from knowledge.api.routes_evidence import router as evidence_router
 from knowledge.api.routes_grants import router as grants_router
@@ -73,3 +73,5 @@ app.include_router(service_search_router)
 app.include_router(search_lab_router)
 app.include_router(memory_router)
 app.include_router(ops_router)
+# SPA catch-all must come after every API router (see routes_console.spa_fallback).
+app.include_router(spa_router)

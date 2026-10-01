@@ -38,3 +38,17 @@ class TaskResponse(BaseModel):
     run_duration_ms: int | None = None
 
     model_config = {"from_attributes": True}
+
+
+class TaskItemRead(BaseModel):
+    id: int
+    source_path: str
+    file_name: str | None = None
+    status: str
+    message: str | None = None
+    processed_chunks: int | None = 0
+    source_version: str | None = None
+    stage: str | None = None
+    duration_ms: int | None = None
+    error_type: str | None = None
+    created_at: datetime

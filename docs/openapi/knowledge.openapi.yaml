@@ -1640,7 +1640,7 @@ paths:
             application/json:
               schema:
                 items:
-                  type: object
+                  $ref: '#/components/schemas/UploadRecordRead'
                 type: array
                 title: Response List Upload Records Warehouse Uploads Get
       security:
@@ -1681,8 +1681,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                title: Response Preview Warehouse File Warehouse Preview Get
+                $ref: '#/components/schemas/WarehousePreviewResponse'
         '422':
           description: Validation Error
           content:
@@ -2172,7 +2171,7 @@ paths:
               schema:
                 type: array
                 items:
-                  type: object
+                  $ref: '#/components/schemas/TaskItemRead'
                 title: Response Task Items Tasks  Task Id  Items Get
         '422':
           description: Validation Error
@@ -2203,7 +2202,7 @@ paths:
               schema:
                 type: array
                 items:
-                  type: object
+                  $ref: '#/components/schemas/DocumentRead'
                 title: Response List Documents Kbs  Kb Id  Documents Get
         '422':
           description: Validation Error
@@ -2238,8 +2237,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                title: Response Get Document Kbs  Kb Id  Documents  Doc Id  Get
+                $ref: '#/components/schemas/DocumentDetailRead'
         '422':
           description: Validation Error
           content:
@@ -2272,8 +2270,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                title: Response Delete Document Kbs  Kb Id  Documents  Doc Id  Delete
+                $ref: '#/components/schemas/OkResponse'
         '422':
           description: Validation Error
           content:
@@ -3814,8 +3811,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                title: Response Overview Ops Overview Get
+                $ref: '#/components/schemas/OpsOverviewResponse'
       security:
       - HTTPBearer: []
   /ops/stores/health:
@@ -3830,8 +3826,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                title: Response Stores Health Ops Stores Health Get
+                $ref: '#/components/schemas/StoresHealthResponse'
       security:
       - HTTPBearer: []
   /ops/workers:
@@ -3847,7 +3842,7 @@ paths:
             application/json:
               schema:
                 items:
-                  type: object
+                  $ref: '#/components/schemas/WorkerStatusRead'
                 type: array
                 title: Response Workers Ops Workers Get
       security:
@@ -3884,7 +3879,7 @@ paths:
               schema:
                 type: array
                 items:
-                  type: object
+                  $ref: '#/components/schemas/TaskFailureRead'
                 title: Response Recent Task Failures Ops Tasks Failures Get
         '422':
           description: Validation Error
@@ -4430,6 +4425,141 @@ components:
       - challenge
       - expires_at
       title: ChallengeResponse
+    DocumentChunkRead:
+      properties:
+        id:
+          type: integer
+          title: Id
+        chunk_index:
+          type: integer
+          title: Chunk Index
+        text:
+          type: string
+          title: Text
+        metadata:
+          anyOf:
+          - type: object
+          - type: 'null'
+          title: Metadata
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        embedding_model:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Embedding Model
+        index_status:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Index Status
+      type: object
+      required:
+      - id
+      - chunk_index
+      - text
+      - created_at
+      title: DocumentChunkRead
+    DocumentDetailRead:
+      properties:
+        id:
+          type: integer
+          title: Id
+        source_path:
+          type: string
+          title: Source Path
+        source_file_name:
+          type: string
+          title: Source File Name
+        file_type:
+          type: string
+          title: File Type
+        source_kind:
+          type: string
+          title: Source Kind
+        parse_status:
+          type: string
+          title: Parse Status
+        chunk_count:
+          type: integer
+          title: Chunk Count
+          default: 0
+        last_indexed_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Last Indexed At
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+        source_etag_or_mtime:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Source Etag Or Mtime
+        chunks:
+          items:
+            $ref: '#/components/schemas/DocumentChunkRead'
+          type: array
+          title: Chunks
+      type: object
+      required:
+      - id
+      - source_path
+      - source_file_name
+      - file_type
+      - source_kind
+      - parse_status
+      - created_at
+      - updated_at
+      title: DocumentDetailRead
+    DocumentRead:
+      properties:
+        id:
+          type: integer
+          title: Id
+        source_path:
+          type: string
+          title: Source Path
+        source_file_name:
+          type: string
+          title: Source File Name
+        file_type:
+          type: string
+          title: File Type
+        source_kind:
+          type: string
+          title: Source Kind
+        parse_status:
+          type: string
+          title: Parse Status
+        chunk_count:
+          type: integer
+          title: Chunk Count
+          default: 0
+        last_indexed_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Last Indexed At
+      type: object
+      required:
+      - id
+      - source_path
+      - source_file_name
+      - file_type
+      - source_kind
+      - parse_status
+      title: DocumentRead
     EvidenceBuildResponse:
       properties:
         kb_id:
@@ -5436,6 +5566,82 @@ components:
       - skipped_long_term
       - event
       title: MemoryIngestionResponse
+    OkResponse:
+      properties:
+        ok:
+          type: boolean
+          title: Ok
+          default: true
+      type: object
+      title: OkResponse
+    OpsOverviewResponse:
+      properties:
+        knowledge_bases:
+          type: integer
+          title: Knowledge Bases
+          default: 0
+        documents:
+          type: integer
+          title: Documents
+          default: 0
+        chunks:
+          type: integer
+          title: Chunks
+          default: 0
+        tasks_total:
+          type: integer
+          title: Tasks Total
+          default: 0
+        tasks_pending:
+          type: integer
+          title: Tasks Pending
+          default: 0
+        tasks_running:
+          type: integer
+          title: Tasks Running
+          default: 0
+        tasks_claimed_stale:
+          type: integer
+          title: Tasks Claimed Stale
+          default: 0
+        avg_task_wait_ms:
+          type: integer
+          title: Avg Task Wait Ms
+          default: 0
+        avg_task_run_ms:
+          type: integer
+          title: Avg Task Run Ms
+          default: 0
+        long_term_memories:
+          type: integer
+          title: Long Term Memories
+          default: 0
+        short_term_memories:
+          type: integer
+          title: Short Term Memories
+          default: 0
+        memory_ingestions:
+          type: integer
+          title: Memory Ingestions
+          default: 0
+        retrieval_logs:
+          type: integer
+          title: Retrieval Logs
+          default: 0
+        source_assets_missing:
+          type: integer
+          title: Source Assets Missing
+          default: 0
+        source_assets_stale:
+          type: integer
+          title: Source Assets Stale
+          default: 0
+        uploads:
+          type: integer
+          title: Uploads
+          default: 0
+      type: object
+      title: OpsOverviewResponse
     PassportSessionResponse:
       properties:
         session_id:
@@ -6802,6 +7008,46 @@ components:
       required:
       - column
       title: SpreadsheetSortRequest
+    StoresHealthResponse:
+      properties:
+        database:
+          type: string
+          title: Database
+        vector_store_mode:
+          type: string
+          title: Vector Store Mode
+        vector_store_status:
+          type: object
+          title: Vector Store Status
+        model_provider_mode:
+          type: string
+          title: Model Provider Mode
+        model_provider_status:
+          type: string
+          title: Model Provider Status
+        object_storage_endpoint:
+          type: string
+          title: Object Storage Endpoint
+        object_storage_region:
+          type: string
+          title: Object Storage Region
+        warehouse_gateway_mode:
+          type: string
+          title: Warehouse Gateway Mode
+          default: ''
+        warehouse_base_url:
+          type: string
+          title: Warehouse Base Url
+          default: ''
+      type: object
+      required:
+      - database
+      - vector_store_mode
+      - model_provider_mode
+      - model_provider_status
+      - object_storage_endpoint
+      - object_storage_region
+      title: StoresHealthResponse
     TaskCreateRequest:
       properties:
         source_paths:
@@ -6818,6 +7064,112 @@ components:
       required:
       - source_paths
       title: TaskCreateRequest
+    TaskFailureRead:
+      properties:
+        id:
+          type: integer
+          title: Id
+        kb_id:
+          type: integer
+          title: Kb Id
+        task_type:
+          type: string
+          title: Task Type
+        status:
+          type: string
+          title: Status
+        trace_id:
+          type: string
+          title: Trace Id
+          default: ''
+        source_paths:
+          items:
+            type: string
+          type: array
+          title: Source Paths
+        error_message:
+          type: string
+          title: Error Message
+          default: ''
+        stats_json:
+          type: object
+          title: Stats Json
+        finished_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Finished At
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+      type: object
+      required:
+      - id
+      - kb_id
+      - task_type
+      - status
+      - created_at
+      title: TaskFailureRead
+    TaskItemRead:
+      properties:
+        id:
+          type: integer
+          title: Id
+        source_path:
+          type: string
+          title: Source Path
+        file_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: File Name
+        status:
+          type: string
+          title: Status
+        message:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Message
+        processed_chunks:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Processed Chunks
+          default: 0
+        source_version:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Source Version
+        stage:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Stage
+        duration_ms:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Duration Ms
+        error_type:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Error Type
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+      type: object
+      required:
+      - id
+      - source_path
+      - status
+      - created_at
+      title: TaskItemRead
     TaskResponse:
       properties:
         id:
@@ -6985,6 +7337,36 @@ components:
       - kb_id
       - kind
       title: UnitReindexResponse
+    UploadRecordRead:
+      properties:
+        id:
+          type: integer
+          title: Id
+        warehouse_target_path:
+          type: string
+          title: Warehouse Target Path
+        file_name:
+          type: string
+          title: File Name
+        size:
+          type: integer
+          title: Size
+          default: 0
+        status:
+          type: string
+          title: Status
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+      type: object
+      required:
+      - id
+      - warehouse_target_path
+      - file_name
+      - status
+      - created_at
+      title: UploadRecordRead
     UploadResponse:
       properties:
         warehouse_path:
@@ -7283,6 +7665,45 @@ components:
       - name
       - entry_type
       title: WarehouseEntry
+    WarehousePreviewResponse:
+      properties:
+        path:
+          type: string
+          title: Path
+        file_name:
+          type: string
+          title: File Name
+        file_type:
+          type: string
+          title: File Type
+        size:
+          type: integer
+          title: Size
+          default: 0
+        modified_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Modified At
+        credential_id:
+          type: integer
+          title: Credential Id
+        credential_kind:
+          type: string
+          title: Credential Kind
+        preview:
+          type: string
+          title: Preview
+          default: ''
+      type: object
+      required:
+      - path
+      - file_name
+      - file_type
+      - credential_id
+      - credential_kind
+      title: WarehousePreviewResponse
     WarehouseStatusResponse:
       properties:
         wallet_address:
@@ -7348,6 +7769,43 @@ components:
       required:
       - configured
       title: WarehouseWriteCredentialResponse
+    WorkerStatusRead:
+      properties:
+        worker_name:
+          type: string
+          title: Worker Name
+        status:
+          type: string
+          title: Status
+        last_seen_at:
+          type: string
+          format: date-time
+          title: Last Seen At
+        last_processed_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Last Processed At
+        processed_count:
+          type: integer
+          title: Processed Count
+          default: 0
+        last_error:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Last Error
+        active_tasks_count:
+          type: integer
+          title: Active Tasks Count
+          default: 0
+      type: object
+      required:
+      - worker_name
+      - status
+      - last_seen_at
+      title: WorkerStatusRead
   securitySchemes:
     HTTPBearer:
       type: http

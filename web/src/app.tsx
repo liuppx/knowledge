@@ -1,10 +1,19 @@
-import { useState } from "react";
-import { PassportLoginPage } from "./features/auth/PassportLoginPage";
-import { clearSession, readSession } from "./features/auth/session";
-import { WorkspaceShell } from "./features/workspace/WorkspaceShell";
+import { useMemo } from "react";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { RouterProvider } from "react-router-dom";
+
+import { createQueryClient } from "./app/queryClient";
+import { createAppRouter } from "./app/router";
+import { ToastProvider } from "./ui";
 
 export function App() {
-  const [session, setSession] = useState(readSession());
-  if (!session) return <PassportLoginPage onAuthenticated={(walletAddress) => setSession({ accessToken: "active", walletAddress })} />;
-  return <><WorkspaceShell /><button className="logout-button" onClick={() => { clearSession(); setSession(null); }}>退出登录</button></>;
+  const queryClient = useMemo(createQueryClient, []);
+  const router = useMemo(createAppRouter, []);
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ToastProvider>
+        <RouterProvider router={router} />
+      </ToastProvider>
+    </QueryClientProvider>
+  );
 }

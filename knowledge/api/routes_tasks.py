@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from knowledge.api.deps import get_current_wallet
 from knowledge.db.session import get_db
 from knowledge.models import ImportTask, ImportTaskItem, KnowledgeBase, SourceBinding
-from knowledge.schemas.tasks import BindingTaskCreateRequest, TaskCreateRequest, TaskResponse
+from knowledge.schemas.tasks import BindingTaskCreateRequest, TaskCreateRequest, TaskItemRead, TaskResponse
 from knowledge.services.ingestion import IngestionService
 from knowledge.services.task_queue import TaskQueueService
 from knowledge.services.warehouse_scope import ensure_current_app_path
@@ -354,7 +354,7 @@ def cancel_task(task_id: int, wallet_address: str = Depends(get_current_wallet),
         return synthetic
 
 
-@router.get("/tasks/{task_id}/items")
+@router.get("/tasks/{task_id}/items", response_model=list[TaskItemRead])
 def task_items(task_id: int, wallet_address: str = Depends(get_current_wallet), db: Session = Depends(get_db)) -> list[dict]:
     task = db.get(ImportTask, task_id)
     if task is None or task.owner_wallet_address != wallet_address:

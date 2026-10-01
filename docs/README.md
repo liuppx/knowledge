@@ -33,6 +33,7 @@
 - [知识库能力规划与快速上线路线](知识库能力规划与快速上线路线.md)：对标 Obsidian/PandaWiki/WeKnora 的能力借鉴与 v1 快速上线范围。
 - [混合检索与真实模型落地设计](混合检索与真实模型落地设计.md)：v1.0 检索管线（关键词+向量+RRF+rerank）、Router 接入、再嵌入迁移与评测门禁。
 - [向量索引运维手册](向量索引运维手册.md)：单元级向量索引上线、再索引、切模型维度与故障降级（Weaviate + Postgres）。
+- [Web 前端开发说明](../web/README.md)：React SPA 工作台的开发、类型生成（OpenAPI → TS）、测试与部署。
 - [产品验证知识库](产品验证知识库.md)
 - [Bot 与 Chat 知识库重构 PRD](Bot与Chat知识库重构PRD.md)
 - [Agent 运行与上下文资产设计](Agent运行与上下文资产设计.md)

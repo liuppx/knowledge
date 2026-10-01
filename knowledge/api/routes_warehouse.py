@@ -13,6 +13,8 @@ from knowledge.core.settings import get_settings
 from knowledge.db.session import get_db
 from knowledge.models import KnowledgeBase, SourceBinding, UploadRecord
 from knowledge.schemas.warehouse import (
+    UploadRecordRead,
+    WarehousePreviewResponse,
     SourceBindingCreateRequest,
     SourceBindingResponse,
     SourceBindingUpdateRequest,
@@ -361,7 +363,7 @@ async def upload_to_app_dir(
     )
 
 
-@router.get("/warehouse/uploads")
+@router.get("/warehouse/uploads", response_model=list[UploadRecordRead])
 def list_upload_records(wallet_address: str = Depends(get_current_wallet), db: Session = Depends(get_db)) -> list[dict]:
     records = (
         db.query(UploadRecord)
@@ -383,7 +385,7 @@ def list_upload_records(wallet_address: str = Depends(get_current_wallet), db: S
     ]
 
 
-@router.get("/warehouse/preview")
+@router.get("/warehouse/preview", response_model=WarehousePreviewResponse)
 def preview_warehouse_file(
     path: str,
     credential_id: int | None = Query(default=None),
