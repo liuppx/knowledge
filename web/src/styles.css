@@ -68,8 +68,13 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--brand-soft)
 .metric { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 18px; min-height: 86px; display: flex; flex-direction: column; justify-content: space-between; gap: 6px; }
 .metric strong { font-size: 26px; font-weight: 650; }
 .metric span { color: var(--muted); font-size: 12px; }
-.chip-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
 .chip-row > span { background: var(--panel-soft); border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; font-size: 12px; color: var(--muted); }
+.two-column { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.actions { display: flex; align-items: center; gap: 8px; }
+.field-group { border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; margin: 0; }
+.field-group legend { padding: 0 6px; }
+.field-group .muted { margin: 10px 0 0; font-size: 12px; }
 
 /* Status badge ---------------------------------------------------------- */
 .badge { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; line-height: 1.6; }
@@ -161,7 +166,7 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--brand-soft)
   .nav-secondary { border-top: 0; padding-top: 0; }
   .sidebar-footer { display: none; }
   .topbar, .content { padding-left: 16px; padding-right: 16px; }
-  .form-row, .warehouse-form, .warehouse-upload, .items-grid, .search-grid, .detail-grid { grid-template-columns: 1fr; }
+  .form-row, .warehouse-form, .warehouse-upload, .items-grid, .search-grid, .detail-grid, .two-column { grid-template-columns: 1fr; }
   .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .source-row { display: block; }
   .source-row button { margin: 10px 8px 0 0; }

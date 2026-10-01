@@ -1,9 +1,11 @@
 import { FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import { messageFor } from "../../api/client";
+import type { KnowledgeBase } from "../../api/endpoints/kbs";
 import { useCreateKbMutation, useKbsQuery } from "../../api/queries/kbs";
 import { Badge, DataTable, EmptyState, ErrorState, LoadingState, formatDateTime, useToast } from "../../ui";
-import { messageFor } from "../../api/client";
+import { KbManageDialogs } from "./KbManageDialogs";
 
 export function KbIndexPage() {
   const navigate = useNavigate();
@@ -12,6 +14,8 @@ export function KbIndexPage() {
   const create = useCreateKbMutation();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [editing, setEditing] = useState<KnowledgeBase | null>(null);
+  const [deleting, setDeleting] = useState<KnowledgeBase | null>(null);
 
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -60,10 +64,34 @@ export function KbIndexPage() {
               { key: "description", header: "描述", render: (kb) => <span className="muted">{kb.description || "—"}</span> },
               { key: "status", header: "状态", render: (kb) => <Badge status={kb.status} />, width: "110px" },
               { key: "updated", header: "更新时间", render: (kb) => formatDateTime(kb.updated_at), width: "180px" },
+              {
+                key: "actions",
+                header: "",
+                width: "150px",
+                align: "right",
+                render: (kb) => (
+                  <div className="actions" onClick={(event) => event.stopPropagation()}>
+                    <button type="button" className="outline-button" onClick={() => setEditing(kb)} aria-label={`编辑 ${kb.name}`}>
+                      编辑
+                    </button>
+                    <button type="button" className="outline-button" onClick={() => setDeleting(kb)} aria-label={`删除 ${kb.name}`}>
+                      删除
+                    </button>
+                  </div>
+                ),
+              },
             ]}
           />
         ) : null}
       </section>
+      <KbManageDialogs
+        editing={editing}
+        deleting={deleting}
+        onClose={() => {
+          setEditing(null);
+          setDeleting(null);
+        }}
+      />
     </>
   );
 }
