@@ -243,6 +243,15 @@ def test_search_lab_compare_returns_formal_evidence_and_formal_first_views():
         assert payload["evidence_only"]["hits"][0]["result_kind"] == "evidence"
         assert payload["formal_first"]["hits"], "formal_first should return comparable results"
 
+        # The compare log keeps the per-mode retrieval traces so the console can
+        # explain hybrid / rerank behaviour for this run (mock providers => skipped).
+        log = client.get(f"/kbs/{kb_id}/retrieval-logs/{payload['retrieval_log_id']}", headers=headers).json()
+        trace = log["trace_json"]
+        assert trace["query"] == "evidence fallback"
+        for mode in ("formal", "evidence", "formal_first_evidence"):
+            assert trace[mode]["vector_signal"] == "mock_skipped", mode
+            assert trace[mode]["hybrid_enabled"] is True
+
 
 def test_source_governance_exposes_source_missing_and_service_search_keeps_audit_markers():
     account = Account.create()

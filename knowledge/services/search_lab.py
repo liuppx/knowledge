@@ -32,6 +32,11 @@ class SearchLabService:
         kb = self._get_kb_or_404(db, wallet_address, kb_id)
         release = self._current_release(db, wallet_address, kb.id)
         used_evidence_ids: set[int] = set()
+        # Per-mode retrieval traces (hybrid / rerank signals and degradations) are
+        # persisted with the log so the console can explain each comparison run.
+        formal_trace: dict = {}
+        evidence_trace: dict = {}
+        fallback_trace: dict = {}
 
         formal_hits = (
             self.service_search_service._search_formal(  # noqa: SLF001
@@ -43,6 +48,7 @@ class SearchLabService:
                 top_k=top_k,
                 include_zero_scores=True,
                 used_evidence_ids=used_evidence_ids,
+                trace=formal_trace,
             )
             if release is not None
             else []
@@ -56,6 +62,7 @@ class SearchLabService:
             top_k=top_k,
             exclude_evidence_ids=set(),
             include_zero_scores=True,
+            trace=evidence_trace,
         )
         fallback_evidence_hits = self.service_search_service._search_evidence(  # noqa: SLF001
             db,
@@ -66,6 +73,7 @@ class SearchLabService:
             top_k=max(0, top_k - len(formal_hits)),
             exclude_evidence_ids=used_evidence_ids,
             include_zero_scores=True,
+            trace=fallback_trace,
         )
         formal_only = ServiceSearchResponse(
             kb_id=kb.id,
@@ -118,6 +126,9 @@ class SearchLabService:
             "result_view": result_view,
             "availability_mode": availability_mode,
             "release_id": release.id if release is not None else None,
+            "formal": formal_trace,
+            "evidence": evidence_trace,
+            "formal_first_evidence": fallback_trace,
         }
         db.commit()
         db.refresh(log)
