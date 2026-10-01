@@ -1,4 +1,4 @@
-import { screen, waitFor } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { KB, WORKBENCH, json, mockFetch } from "../test/mockFetch";
@@ -30,9 +30,10 @@ describe("app routing", () => {
     mockApi();
     renderRoutes(routes, "/kbs/7/search");
 
-    const active = await screen.findByRole("link", { name: /检索台/ });
+    const nav = screen.getByRole("navigation", { name: "知识库工作台" });
+    const active = await within(nav).findByRole("link", { name: /检索台/ });
     expect(active).toHaveClass("active");
-    expect(screen.getByRole("link", { name: /资产与导入/ })).toHaveAttribute("href", "/kbs/7/assets");
+    expect(within(nav).getByRole("link", { name: /资产与导入/ })).toHaveAttribute("href", "/kbs/7/assets");
     await waitFor(() => expect(screen.getByLabelText("选择知识库")).toHaveValue("7"));
   });
 
