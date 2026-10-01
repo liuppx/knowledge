@@ -2581,6 +2581,52 @@ export interface components {
             /** Summary */
             summary: string;
         };
+        /**
+         * KnowledgeItemListRead
+         * @description List row: the item plus a summary of its current revision, so the console
+         *     can render titles without one detail request per item.
+         */
+        KnowledgeItemListRead: {
+            /** Id */
+            id: number;
+            /** Kb Id */
+            kb_id: number;
+            /** Item Type */
+            item_type: string;
+            /** Origin Type */
+            origin_type: string;
+            /** Lifecycle Status */
+            lifecycle_status: string;
+            /** Current Revision Id */
+            current_revision_id?: number | null;
+            /** Is Hotfix */
+            is_hotfix: boolean;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Title */
+            title?: string | null;
+            /** Statement */
+            statement?: string | null;
+            /** Revision No */
+            revision_no?: number | null;
+            /** Review Status */
+            review_status?: string | null;
+            /** Visibility Status */
+            visibility_status?: string | null;
+            /**
+             * Evidence Count
+             * @default 0
+             */
+            evidence_count: number;
+        };
         /** KnowledgeItemRead */
         KnowledgeItemRead: {
             /** Id */
@@ -6916,7 +6962,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["KnowledgeItemRead"][];
+                    "application/json": components["schemas"]["KnowledgeItemListRead"][];
                 };
             };
             /** @description Validation Error */

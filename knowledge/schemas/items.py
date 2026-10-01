@@ -68,6 +68,18 @@ class KnowledgeItemRevisionDetailRead(KnowledgeItemRevisionRead):
     evidence_links: list[KnowledgeItemEvidenceLinkRead] = Field(default_factory=list)
 
 
+class KnowledgeItemListRead(KnowledgeItemRead):
+    """List row: the item plus a summary of its current revision, so the console
+    can render titles without one detail request per item."""
+
+    title: str | None = None
+    statement: str | None = None
+    revision_no: int | None = None
+    review_status: str | None = None
+    visibility_status: str | None = None
+    evidence_count: int = 0
+
+
 class KnowledgeItemDetailResponse(BaseModel):
     item: KnowledgeItemRead
     current_revision: KnowledgeItemRevisionDetailRead | None = None

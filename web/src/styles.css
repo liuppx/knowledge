@@ -155,6 +155,14 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--brand-soft)
 .chunk { border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 12px; }
 .chunk header { display: flex; gap: 10px; align-items: center; margin-bottom: 6px; font-size: 12px; }
 .chunk p { margin: 0; white-space: pre-wrap; line-height: 1.55; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 12px; }
+.toolbar > input { flex: 1; min-width: 200px; }
+.scope-picker { display: flex; gap: 8px; flex-wrap: wrap; }
+.scope-picker select { max-width: 320px; }
+.evidence-text { white-space: pre-wrap; line-height: 1.6; margin: 0 0 12px; }
+.link-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.link-list li { display: flex; gap: 10px; align-items: baseline; }
+.link-list .text-link { border: 0; background: transparent; padding: 0; min-height: 0; }
 
 /* Legacy panel classes still used by P0 placeholder panels -------------- */
 .source-row { display: flex; justify-content: space-between; gap: 20px; padding: 12px 0; border-top: 1px solid var(--line); }

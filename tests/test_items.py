@@ -92,6 +92,13 @@ def test_candidate_generation_from_source_and_accept_to_formal_item():
         items = client.get(f"/kbs/{kb_id}/items", headers=headers)
         assert items.status_code == 200
         assert len(items.json()) == 1
+        # List rows carry the current revision summary so the console needs no per-item detail call.
+        listed = items.json()[0]
+        assert listed["title"] == accepted_payload["current_revision"]["title"]
+        assert listed["statement"] == accepted_payload["current_revision"]["statement"]
+        assert listed["revision_no"] == accepted_payload["current_revision"]["revision_no"]
+        assert listed["review_status"] == accepted_payload["current_revision"]["review_status"]
+        assert listed["evidence_count"] == 1
 
 
 def test_manual_item_create_records_manual_provenance_and_evidence_links():

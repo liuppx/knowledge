@@ -1,16 +1,19 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from knowledge.api.deps import get_current_wallet
 from knowledge.db.session import get_db
+from knowledge.models import KnowledgeItemRevision
 from knowledge.schemas.future_domain import KnowledgeItemCandidateRead, KnowledgeItemRead
 from knowledge.schemas.items import (
     CandidateAcceptRequest,
     CandidateGenerationResponse,
     CandidateRejectRequest,
     KnowledgeItemDetailResponse,
+    KnowledgeItemListRead,
     KnowledgeItemRevisionDetailRead,
     ManualItemCreateRequest,
     ManualItemUpdateRequest,
@@ -155,16 +158,34 @@ def reject_candidate(
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 
 
-@router.get("/{kb_id}/items", response_model=list[KnowledgeItemRead])
+@router.get("/{kb_id}/items", response_model=list[KnowledgeItemListRead])
 def list_items(
     kb_id: int,
     wallet_address: str = Depends(get_current_wallet),
     db: Session = Depends(get_db),
-) -> list[KnowledgeItemRead]:
+) -> list[KnowledgeItemListRead]:
     try:
-        return knowledge_items_service.list_items(db, wallet_address, kb_id)
+        items = knowledge_items_service.list_items(db, wallet_address, kb_id)
     except LookupError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+    revision_ids = [item.current_revision_id for item in items if item.current_revision_id is not None]
+    revisions = {
+        revision.id: revision
+        for revision in db.scalars(select(KnowledgeItemRevision).where(KnowledgeItemRevision.id.in_(revision_ids))).all()
+    } if revision_ids else {}
+    rows: list[KnowledgeItemListRead] = []
+    for item in items:
+        revision = revisions.get(item.current_revision_id) if item.current_revision_id is not None else None
+        row = KnowledgeItemListRead.model_validate(item)
+        if revision is not None:
+            row.title = revision.title
+            row.statement = revision.statement
+            row.revision_no = revision.revision_no
+            row.review_status = revision.review_status
+            row.visibility_status = revision.visibility_status
+            row.evidence_count = len(revision.evidence_links or [])
+        rows.append(row)
+    return rows
 
 
 @router.post("/{kb_id}/items/manual", response_model=KnowledgeItemDetailResponse)

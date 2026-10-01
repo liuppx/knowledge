@@ -2678,7 +2678,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/KnowledgeItemRead'
+                  $ref: '#/components/schemas/KnowledgeItemListRead'
                 title: Response List Items Kbs  Kb Id  Items Get
         '422':
           description: Validation Error
@@ -5066,6 +5066,82 @@ components:
       - rank
       - summary
       title: KnowledgeItemEvidenceLinkRead
+    KnowledgeItemListRead:
+      properties:
+        id:
+          type: integer
+          title: Id
+        kb_id:
+          type: integer
+          title: Kb Id
+        item_type:
+          type: string
+          title: Item Type
+        origin_type:
+          type: string
+          title: Origin Type
+        lifecycle_status:
+          type: string
+          title: Lifecycle Status
+        current_revision_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Current Revision Id
+        is_hotfix:
+          type: boolean
+          title: Is Hotfix
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+        title:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Title
+        statement:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Statement
+        revision_no:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Revision No
+        review_status:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Review Status
+        visibility_status:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Visibility Status
+        evidence_count:
+          type: integer
+          title: Evidence Count
+          default: 0
+      type: object
+      required:
+      - id
+      - kb_id
+      - item_type
+      - origin_type
+      - lifecycle_status
+      - is_hotfix
+      - created_at
+      - updated_at
+      title: KnowledgeItemListRead
+      description: 'List row: the item plus a summary of its current revision, so the console
+
+        can render titles without one detail request per item.'
     KnowledgeItemRead:
       properties:
         id:
