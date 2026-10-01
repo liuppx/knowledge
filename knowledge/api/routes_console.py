@@ -4,44 +4,28 @@ from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import FileResponse, HTMLResponse
-from fastapi.templating import Jinja2Templates
 
-from knowledge.core.settings import get_settings
-from knowledge.services.warehouse_scope import warehouse_app_id, warehouse_app_root, warehouse_default_upload_dir
-
-templates = Jinja2Templates(directory=str(Path(__file__).resolve().parents[1] / "templates"))
 web_dist_dir = Path(__file__).resolve().parents[2] / "web" / "dist"
 web_index = web_dist_dir / "index.html"
 router = APIRouter(include_in_schema=False)
 # Registered last in main.py so every API route wins before the SPA catch-all.
 spa_router = APIRouter(include_in_schema=False)
-settings = get_settings()
-CONSOLE_ASSET_VERSION = "20260803-validation-upload-1"
+
+MISSING_BUILD_HTML = """<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><title>Knowledge</title></head>
+<body style="font-family:system-ui,sans-serif;max-width:640px;margin:10vh auto;line-height:1.6;padding:0 16px">
+<h1>Knowledge API 正在运行</h1>
+<p>前端尚未构建。在仓库中执行 <code>cd web &amp;&amp; npm ci &amp;&amp; npm run build</code> 生成 <code>web/dist</code> 后刷新本页。</p>
+<p>接口文档：<a href="/docs">/docs</a> · 健康检查：<a href="/health">/health</a></p>
+</body></html>
+"""
 
 
 @router.get("/", response_class=HTMLResponse)
-def console_home(request: Request):
+def console_home():
     if web_index.is_file():
         return FileResponse(web_index)
-    return legacy_console_home(request)
-
-
-@router.get("/legacy-console", response_class=HTMLResponse)
-def legacy_console_home(request: Request):
-    return templates.TemplateResponse(
-        request,
-        "index.html",
-        {
-            "warehouse_app_id": warehouse_app_id(),
-            "warehouse_app_root": warehouse_app_root(),
-            "warehouse_upload_dir": warehouse_default_upload_dir(),
-            "object_storage_endpoint": settings.object_storage_endpoint,
-            "object_storage_region": settings.object_storage_region,
-            "warehouse_base_url": settings.warehouse_base_url,
-            "warehouse_webdav_prefix": settings.warehouse_webdav_prefix,
-            "console_asset_version": CONSOLE_ASSET_VERSION,
-        },
-    )
+    return HTMLResponse(MISSING_BUILD_HTML)
 
 
 @spa_router.api_route("/{path:path}", methods=["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE"])

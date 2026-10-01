@@ -60,12 +60,13 @@ def test_dist_root_files_and_traversal(tmp_path, monkeypatch):
     assert dist.is_dir()
 
 
-def test_without_dist_legacy_console_and_404(tmp_path, monkeypatch):
+def test_without_dist_serves_build_hint_and_404_for_deep_links(tmp_path, monkeypatch):
     monkeypatch.setattr(routes_console, "web_dist_dir", tmp_path / "absent")
     monkeypatch.setattr(routes_console, "web_index", tmp_path / "absent" / "index.html")
     client = TestClient(app)
 
     assert client.get("/kbs/1/search", headers=HTML).status_code == 404
-    legacy = client.get("/", headers=HTML)
-    assert legacy.status_code == 200
-    assert "spa-shell" not in legacy.text
+    home = client.get("/", headers=HTML)
+    assert home.status_code == 200
+    assert "npm run build" in home.text
+    assert "spa-shell" not in home.text

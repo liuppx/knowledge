@@ -80,8 +80,8 @@ export function AppShell() {
       <div className="content-column">
         <header className="topbar">
           <KbSwitcher kbId={kbId} section={section} />
-          <a className="text-link" href="/legacy-console" target="_blank" rel="noreferrer">
-            旧版控制台
+          <a className="text-link" href="/docs" target="_blank" rel="noreferrer">
+            API 文档
           </a>
         </header>
         <main className="content">

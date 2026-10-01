@@ -11,7 +11,6 @@ from tests.helpers import configure_warehouse_credentials
 from knowledge.db.session import engine, session_scope
 from knowledge.main import app
 from knowledge.models import ImportTask
-from knowledge.api.routes_console import CONSOLE_ASSET_VERSION
 from knowledge.services.warehouse import BoundTokenWarehouseGateway, WarehouseFileEntry, WarehouseGateway, WarehouseRequestAuth
 from knowledge.services.warehouse_access import WarehouseAccessService
 from knowledge.services.warehouse_scope import warehouse_app_path, warehouse_app_root, warehouse_default_upload_dir
@@ -39,34 +38,17 @@ def _login(client: TestClient, account) -> str:
     return data["access_token"]
 
 
-def test_web_console_is_primary_and_legacy_console_remains_available():
-    wallet_ref = f"/static/js/wallet.js?v={CONSOLE_ASSET_VERSION}"
-    bridge_ref = f"/static/js/warehouse_bridge.js?v={CONSOLE_ASSET_VERSION}"
-    app_ref = f"/static/js/app.js?v={CONSOLE_ASSET_VERSION}"
+def test_web_console_is_the_only_console():
     with TestClient(app) as client:
         response = client.get("/")
         assert response.status_code == 200
         assert 'id="root"' in response.text
         assert "/assets/" in response.text
-
-        legacy = client.get("/legacy-console")
-        assert legacy.status_code == 200
-        assert 'id="connect-wallet"' in legacy.text
-        assert "warehouse_base_url:" in legacy.text
-        assert "warehouse_webdav_prefix:" in legacy.text
-        wallet_index = legacy.text.index(wallet_ref)
-        bridge_index = legacy.text.index(bridge_ref)
-        app_index = legacy.text.index(app_ref)
-        assert wallet_index < app_index
-        assert bridge_index < app_index
-
-        wallet_script = client.get(wallet_ref)
-        assert wallet_script.status_code == 200
-        assert "window.KnowledgeWallet" in wallet_script.text
-
-        bridge_script = client.get(bridge_ref)
-        assert bridge_script.status_code == 200
-        assert "window.KnowledgeWarehouseBridge" in bridge_script.text
+        # The Jinja console and its /static bundle are gone; old links fall through
+        # to the SPA (HTML clients) or a plain 404 (everything else).
+        assert "/static/js/" not in response.text
+        assert client.get("/legacy-console", headers={"Accept": "application/json"}).status_code == 404
+        assert client.get("/static/js/app.js", headers={"Accept": "application/json"}).status_code == 404
 
 
 def test_read_credential_accepts_directory_scoped_key_without_parent_access():

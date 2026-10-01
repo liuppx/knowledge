@@ -1,6 +1,6 @@
 # Knowledge Web（React SPA）
 
-Knowledge 的产品前端：五个工作台（知识库概览 / 资产与导入 / 知识生产 / 检索台 / 发布与授权）+ Warehouse / 分析运行 / 运维。构建产物 `web/dist` 由 FastAPI 直接服务（`/` 与所有深链），`/legacy-console` 保留旧版控制台直到功能对等。
+Knowledge 的产品前端：五个工作台（知识库概览 / 资产与导入 / 知识生产 / 检索台 / 发布与授权）+ Warehouse / 分析运行 / 运维。构建产物 `web/dist` 由 FastAPI 直接服务（`/` 与所有深链）。
 
 ## 技术栈
 
@@ -38,4 +38,4 @@ src/styles/     tokens.css（移植自旧控制台的设计变量）
 
 ## 部署
 
-`npm run build` 后把 `web/dist` 放在仓库同级路径（FastAPI 在 `knowledge/main.py` 挂载 `web/dist/assets`，`routes_console.py` 服务 `index.html` 与深链回退）。没有 `web/dist` 时 `/` 回退到旧版控制台。
+`npm run build` 后把 `web/dist` 放在仓库同级路径（FastAPI 在 `knowledge/main.py` 挂载 `web/dist/assets`，`routes_console.py` 服务 `index.html` 与深链回退）。没有 `web/dist` 时 `/` 返回一个构建提示页，API 不受影响。

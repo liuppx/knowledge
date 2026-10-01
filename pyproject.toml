@@ -18,9 +18,6 @@ include = ["knowledge*"]
 
 [tool.setuptools.package-data]
 knowledge = [
-    "templates/*.html",
-    "static/css/*.css",
-    "static/js/*.js",
     "third_party/SOURCES.md",
     "third_party/connectors/LICENSE",
     "third_party/connectors/connectors/README.md",
