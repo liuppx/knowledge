@@ -180,6 +180,18 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--brand-soft)
 .hit-health li { display: flex; align-items: center; gap: 8px; }
 .signal-list { list-style: none; margin: 0 0 10px; padding: 0; display: grid; gap: 6px; }
 .signal-list li { display: flex; align-items: center; gap: 8px; }
+.check-list { list-style: none; margin: 0; padding: 0; max-height: 280px; overflow: auto; border: 1px solid var(--line); border-radius: var(--radius); }
+.check-list li { border-bottom: 1px solid var(--line); }
+.check-list li:last-child { border-bottom: 0; }
+.check-list label { display: flex; gap: 10px; align-items: center; padding: 8px 10px; cursor: pointer; }
+.diff-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.diff-list li { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: var(--radius); }
+.diff-added { background: var(--success-soft); }
+.diff-changed { background: var(--warning-soft); }
+.diff-removed { background: var(--danger-soft); }
+.metric-warning strong { color: var(--warning); }
+.metric-danger strong { color: var(--danger); }
+.reveal-box code { font-size: 13px; word-break: break-all; }
 
 /* Legacy panel classes still used by P0 placeholder panels -------------- */
 .source-row { display: flex; justify-content: space-between; gap: 20px; padding: 12px 0; border-top: 1px solid var(--line); }
