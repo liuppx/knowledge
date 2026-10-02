@@ -1,3 +1,17 @@
+# Local / single-host stack. API and worker share one image (see Dockerfile).
+#   docker compose up --build -d          # postgres + weaviate + api + worker
+#   docker compose up -d --scale worker=3 # more import workers
+# `.env` is loaded when present; the x-knowledge-env block below overrides the
+# addresses so containers talk to the compose services.
+x-knowledge-env: &knowledge-env
+  DATABASE_URL: postgresql://knowledge:knowledge@postgres:5432/knowledge?gssencmode=disable
+  WEAVIATE_URL: http://weaviate:8080
+  WEAVIATE_HOST: weaviate
+  WEAVIATE_PORT: "8080"
+  WEAVIATE_GRPC_PORT: "50051"
+  WAREHOUSE_MOCK_ROOT: /data/mock_warehouse
+  LOCAL_FILE_CONNECTOR_ROOT: /data/local_sources
+
 services:
   postgres:
     image: postgres:16-alpine
@@ -38,6 +52,44 @@ services:
       timeout: 5s
       retries: 12
 
+  api:
+    build: .
+    image: knowledge:local
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      <<: *knowledge-env
+    ports:
+      - "8000:8000"
+    volumes:
+      - knowledge-app-data:/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  worker:
+    image: knowledge:local
+    command: ["python", "-m", "knowledge.workers.runner"]
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      <<: *knowledge-env
+      # Empty => the runner derives a unique name from the container hostname,
+      # so scaled replicas never share a task lease identity.
+      WORKER_NAME: ""
+    volumes:
+      - knowledge-app-data:/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      api:
+        condition: service_started
+    restart: unless-stopped
+
 volumes:
   knowledge-postgres-data:
   knowledge-weaviate-data:
+  knowledge-app-data:

@@ -77,6 +77,21 @@ jobs:
       - name: Build
         run: npm run build
 
+  image:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build image
+        run: docker build -t knowledge:ci .
+
+      - name: Import smoke test
+        run: docker run --rm knowledge:ci python -c "import knowledge.main; print('import ok')"
+
+      - name: Console bundled
+        run: docker run --rm knowledge:ci sh -c "test -f web/dist/index.html && echo 'web/dist ok'"
+
   weaviate-roundtrip:
     runs-on: ubuntu-latest
 
