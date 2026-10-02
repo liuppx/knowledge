@@ -22,6 +22,8 @@
 ## 使用与运维
 
 - [控制台操作手册](控制台操作手册.md)
+- [部署指南](部署指南.md)：镜像、docker compose、生产配置守卫、上线检查与 CI 镜像门禁。
+- [备份与恢复手册](备份与恢复手册.md)：PostgreSQL 备份 / 恢复 / 向量重建与演练清单。
 - [Warehouse 凭证使用说明](Warehouse凭证使用说明.md)
 - [Warehouse 集成要求](Warehouse集成要求.md)：Knowledge V2 对 Warehouse 的契约、阻塞项和联调探针。
 - [Warehouse 鉴权与绑定重构说明](Warehouse鉴权与绑定重构说明.md)
