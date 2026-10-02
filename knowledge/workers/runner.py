@@ -176,4 +176,12 @@ class Worker:
 
 
 if __name__ == "__main__":
+    import socket
+
+    from knowledge.core.settings import get_settings
+
+    _settings = get_settings()
+    if not _settings.worker_name:
+        # Scaled replicas (docker compose --scale worker=N) must not share a lease identity.
+        _settings.worker_name = f"knowledge-worker-{socket.gethostname()}"
     Worker().run_forever()

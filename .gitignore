@@ -18,3 +18,4 @@ __pycache__/
 .knowledge-task-control/
 .mock_warehouse/
 .eval/
+backups/
