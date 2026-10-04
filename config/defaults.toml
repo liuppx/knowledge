@@ -1,0 +1,105 @@
+# Knowledge service configuration — shipped baseline.
+#
+# Two TOML files drive the service, both shipped with the package:
+#   config/defaults.toml  this file: every setting with its default value
+#   config/local.toml     per-host overrides (commented template; edit on the host)
+#
+# Precedence, highest first:
+#   process env  >  .env  >  config/local.toml  >  config/defaults.toml
+#
+# Tables are for readability only; every key is a Settings field name and the
+# same name in UPPER_CASE is the environment variable. Unknown keys and invalid
+# TOML stop the service at startup. Outside APP_ENV=development the startup
+# guard also rejects placeholder secrets, DEBUG=true and mock providers.
+
+[application]
+app_name = "knowledge"
+app_env = "development"              # deploy hosts: "production"
+debug = true                         # must be false outside development
+host = "0.0.0.0"
+port = 8000
+database_url = "postgresql://knowledge:knowledge@127.0.0.1:5432/knowledge?gssencmode=disable"
+jwt_secret = "change-me-in-production"   # placeholder: rejected outside development
+jwt_algorithm = "HS256"
+access_token_expire_minutes = 60
+refresh_token_expire_minutes = 10080
+challenge_ttl_seconds = 300
+siwe_domain = ""
+siwe_uri = ""
+siwe_chain_id = 1
+identity_node_url = ""
+identity_app_id = ""
+identity_redirect_uri = ""
+passport_session_ttl_seconds = 300
+
+[warehouse]
+warehouse_gateway_mode = ""          # legacy switch; production leaves this empty
+warehouse_base_url = "https://webdav.yeying.pub"
+warehouse_webdav_prefix = "/dav"
+object_storage_endpoint = "http://127.0.0.1:6066"
+object_storage_region = "us-east-1"
+warehouse_app_id = "knowledge.yeying.pub"
+warehouse_apps_prefix = "/apps"
+# warehouse_mock_root defaults to <repo>/.mock_warehouse (test/dev only)
+token_encryption_secret = ""         # must be set explicitly outside development
+
+[vector_store]
+vector_store_mode = "db"             # "weaviate" to enable the ANN accelerator
+weaviate_url = "http://127.0.0.1:8080"
+weaviate_index_name = "KnowledgeChunk"
+weaviate_unit_index_name = "KnowledgeUnit"
+weaviate_scheme = "http"
+weaviate_host = ""
+weaviate_port = 8080
+weaviate_grpc_port = 50051
+weaviate_api_key = ""
+
+[model]
+model_provider_mode = "mock"         # production: "openai_compatible"
+model_gateway_base_url = ""          # Router base URL, e.g. https://router.example/v1
+model_gateway_api_key = ""
+analysis_planner_model = "gpt-4o-mini"
+analysis_planner_timeout_seconds = 30
+embedding_model = "text-embedding-3-small"
+embedding_dimensions = 32            # must match the real embedding model (e.g. 1536)
+embedding_timeout_seconds = 30
+embedding_max_retries = 2
+
+[ingestion]
+document_parser_mode = "local"
+ragflow_parser_chunk_token_num = 512
+ragflow_parser_delimiter = "\n!?;。；！？"
+document_chunker_mode = "local"
+ragflow_chunker_delimiter = "\n。；！？"
+source_connector_mode = "warehouse"
+# local_file_connector_root defaults to <repo>/.local_source_files
+github_connector_access_token = ""
+github_connector_api_base_url = "https://api.github.com"
+
+[retrieval]
+chunk_size = 800
+chunk_overlap = 120
+retrieval_top_k = 6
+retrieval_hybrid_enabled = true
+retrieval_rrf_k = 60
+retrieval_vector_top_k = 20
+retrieval_rerank_enabled = true
+rerank_model = "rerank-english-v3.0"
+rerank_top_m = 20
+rerank_timeout_seconds = 10
+rerank_max_retries = 1
+memory_top_k = 4
+
+[memory]
+auto_memory_short_term_ttl_hours = 72
+auto_memory_max_long_terms = 3
+auto_memory_max_short_terms = 4
+auto_memory_recent_turn_max_chars = 600
+
+[worker]
+worker_poll_interval_seconds = 5
+worker_run_lease_ttl_seconds = 120
+worker_task_concurrency = 2
+worker_max_active_tasks_per_user = 1
+worker_task_heartbeat_interval_seconds = 15
+worker_name = "knowledge-worker-1"

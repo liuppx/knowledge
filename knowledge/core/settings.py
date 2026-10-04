@@ -1,13 +1,16 @@
 from __future__ import annotations
 
-from functools import lru_cache
-from pathlib import Path
 import base64
 import hashlib
+import os
+import tomllib
+from functools import lru_cache
+from pathlib import Path
+from typing import Any
 from urllib.parse import urlparse
 
 from pydantic import field_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, PydanticBaseSettingsSource, SettingsConfigDict, SettingsError
 
 
 DEFAULT_JWT_SECRET = "change-me-in-production"
@@ -17,14 +20,69 @@ INSECURE_JWT_SECRETS = frozenset(
     {DEFAULT_JWT_SECRET, "", "change-me", "replace-with-a-random-secret"}
 )
 
+_PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
 
 class ProductionConfigError(RuntimeError):
     """Raised when a non-development runtime still carries insecure defaults."""
 
 
+def config_dir() -> Path:
+    """Directory holding config/defaults.toml and config/local.toml.
+
+    ``KNOWLEDGE_CONFIG_DIR`` overrides the default ``<repo>/config`` so packaged
+    or containerised deployments can mount the files anywhere.
+    """
+    override = os.environ.get("KNOWLEDGE_CONFIG_DIR")
+    return Path(override) if override else _PROJECT_ROOT / "config"
+
+
+class TomlSettingsSource(PydanticBaseSettingsSource):
+    """Settings source backed by one TOML file.
+
+    The file is organised in tables (``[application]``, ``[warehouse]`` ...)
+    purely for readability; every leaf key must be a ``Settings`` field name and
+    the tables are flattened. Only keys present in the file are contributed, so
+    pydantic-settings' usual precedence applies to everything else. A missing
+    file is fine; a malformed file or an unknown key fails startup with a
+    message naming the file, so typos never silently fall back to defaults.
+    """
+
+    def __init__(self, settings_cls: type[BaseSettings], file_path: Path) -> None:
+        super().__init__(settings_cls)
+        self.file_path = file_path
+
+    def get_field_value(self, field: Any, field_name: str) -> tuple[Any, str, bool]:
+        return self._read().get(field_name), field_name, False
+
+    def __call__(self) -> dict[str, Any]:
+        return dict(self._read())
+
+    def _read(self) -> dict[str, Any]:
+        if not self.file_path.is_file():
+            return {}
+        try:
+            with self.file_path.open("rb") as handle:
+                parsed = tomllib.load(handle)
+        except tomllib.TOMLDecodeError as exc:
+            raise SettingsError(f"invalid TOML in {self.file_path}: {exc}") from exc
+        flat: dict[str, Any] = {}
+        for key, value in parsed.items():
+            if isinstance(value, dict):
+                flat.update(value)
+            else:
+                flat[key] = value
+        unknown = sorted(key for key in flat if key not in self.settings_cls.model_fields)
+        if unknown:
+            raise SettingsError(f"unknown settings in {self.file_path}: {', '.join(unknown)}")
+        return flat
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env",
+        # KNOWLEDGE_ENV_FILE lets tests and deployments point at another file
+        # (or a nonexistent path to disable .env entirely).
+        env_file=os.environ.get("KNOWLEDGE_ENV_FILE", ".env"),
         env_file_encoding="utf-8",
         extra="ignore",
         protected_namespaces=(),
@@ -63,7 +121,7 @@ class Settings(BaseSettings):
     s3_region: str = ""
     warehouse_app_id: str = "knowledge.yeying.pub"
     warehouse_apps_prefix: str = "/apps"
-    warehouse_mock_root: str = str(Path(__file__).resolve().parents[2] / ".mock_warehouse")
+    warehouse_mock_root: str = str(_PROJECT_ROOT / ".mock_warehouse")
     token_encryption_secret: str = ""
 
     vector_store_mode: str = "db"
@@ -97,7 +155,7 @@ class Settings(BaseSettings):
     document_chunker_mode: str = "local"
     ragflow_chunker_delimiter: str = "\n。；！？"
     source_connector_mode: str = "warehouse"
-    local_file_connector_root: str = str(Path(__file__).resolve().parents[2] / ".local_source_files")
+    local_file_connector_root: str = str(_PROJECT_ROOT / ".local_source_files")
     github_connector_access_token: str = ""
     github_connector_api_base_url: str = "https://api.github.com"
 
@@ -140,6 +198,32 @@ class Settings(BaseSettings):
         if not value.startswith("postgresql://"):
             raise ValueError("DATABASE_URL must use the postgresql:// scheme")
         return value
+
+    @classmethod
+    def settings_customise_sources(
+        cls,
+        settings_cls: type[BaseSettings],
+        init_settings: PydanticBaseSettingsSource,
+        env_settings: PydanticBaseSettingsSource,
+        dotenv_settings: PydanticBaseSettingsSource,
+        file_secret_settings: PydanticBaseSettingsSource,
+    ) -> tuple[PydanticBaseSettingsSource, ...]:
+        """Precedence, highest first: init kwargs > process env > .env > secrets dir
+        > config/local.toml > config/defaults.toml > field default.
+
+        pydantic-settings resolves each field from the first source in this tuple
+        that provides it, so the config files sit after the environment sources
+        and a single exported variable always overrides what the files declare.
+        """
+        directory = config_dir()
+        return (
+            init_settings,
+            env_settings,
+            dotenv_settings,
+            file_secret_settings,
+            TomlSettingsSource(settings_cls, directory / "local.toml"),
+            TomlSettingsSource(settings_cls, directory / "defaults.toml"),
+        )
 
 
 @lru_cache(maxsize=1)

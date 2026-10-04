@@ -1,0 +1,34 @@
+# Knowledge service configuration — per-host overrides.
+#
+# Uncomment and fill in what differs on this host. Keys use the same names as
+# config/defaults.toml; values here override defaults.toml, and process env /
+# .env still override this file. Everything below is commented out on purpose:
+# a literal placeholder would be used as-is in development and break startup.
+#
+# Minimum for a production host (the startup guard enforces these):
+
+[application]
+# app_env = "production"
+# debug = false
+# jwt_secret = "<long random value>"
+# database_url = "postgresql://user:pass@db-host:5432/knowledge"
+
+[warehouse]
+# object_storage_endpoint = "https://object-storage.example"
+# object_storage_region = "us-east-1"
+# token_encryption_secret = "<long random value, rotate with care>"
+
+[vector_store]
+# vector_store_mode = "weaviate"
+# weaviate_url = "http://weaviate:8080"
+
+[model]
+# model_provider_mode = "openai_compatible"
+# model_gateway_base_url = "https://router.example/v1"
+# model_gateway_api_key = "<router api key>"
+# embedding_model = "text-embedding-3-small"
+# embedding_dimensions = 1536
+
+[worker]
+# worker_name = "knowledge-worker-<host>"
+# worker_task_concurrency = 2
