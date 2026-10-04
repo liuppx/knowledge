@@ -22,7 +22,7 @@ mkdir -p "$stage_dir"
 # - web/dist (not dist) so FastAPI's web_dist_dir lookup resolves
 # - alembic.ini + migrations/ are required by the lifespan's ensure_database_schema
 # - __pycache__ directories are excluded to keep the archive small
-cp -R "$root_dir/knowledge" "$root_dir/scripts" "$root_dir/docs" "$root_dir/migrations" "$stage_dir/"
+cp -R "$root_dir/knowledge" "$root_dir/scripts" "$root_dir/docs" "$root_dir/migrations" "$root_dir/config" "$stage_dir/"
 mkdir -p "$stage_dir/web"
 cp -R "$root_dir/web/dist" "$stage_dir/web/"
 cp "$root_dir/alembic.ini" "$root_dir/pyproject.toml" "$root_dir/requirements.txt" "$root_dir/.env.template" "$stage_dir/"
