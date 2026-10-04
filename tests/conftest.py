@@ -9,6 +9,9 @@ from sqlalchemy import text
 os.environ["DATABASE_URL"] = os.environ.get(
     "TEST_DATABASE_URL", "postgresql://knowledge:knowledge@127.0.0.1:5432/knowledge_test?gssencmode=disable"
 )
+# Tests must not pick up the developer's .env; config files still load from
+# <repo>/config unless a test points KNOWLEDGE_CONFIG_DIR elsewhere.
+os.environ["KNOWLEDGE_ENV_FILE"] = "/nonexistent/knowledge-tests.env"
 os.environ.setdefault("WAREHOUSE_GATEWAY_MODE", "mock")
 os.environ.setdefault("WAREHOUSE_MOCK_ROOT", "/tmp/knowledge_test_runtime/mock_warehouse")
 os.environ.setdefault("VECTOR_STORE_MODE", "db")
