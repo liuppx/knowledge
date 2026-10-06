@@ -28,6 +28,11 @@ RUN pip install -r requirements.txt
 COPY alembic.ini ./
 COPY knowledge/ knowledge/
 COPY migrations/ migrations/
+# TOML config layer added in 483dc7f: defaults.toml + local.toml. Without these
+# the image can only start in development (the conftest.py / dev workaround
+# relies on missing files gracefully, but production hits the production-config
+# guard and the service refuses to start).
+COPY config/ config/
 # routes_console resolves web/dist relative to the package: /app/web/dist.
 COPY --from=web /src/web/dist web/dist
 
