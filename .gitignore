@@ -15,6 +15,10 @@ __pycache__/
 *.db-wal
 *.worker.lock
 .env
+*.swp
+*.swo
+/logs/
+/run/
 .knowledge-task-control/
 .mock_warehouse/
 .eval/
