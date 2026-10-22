@@ -2,10 +2,12 @@ from eth_account import Account
 from eth_account.messages import encode_defunct
 from fastapi.testclient import TestClient
 
+from knowledge.api import routes_auth
 from knowledge.main import app
 
 
-def test_siwe_challenge_accepts_web3_bs_fields_and_issues_token() -> None:
+def test_siwe_challenge_accepts_web3_bs_fields_and_issues_token(monkeypatch) -> None:
+    monkeypatch.setattr(routes_auth.service.settings, "app_env", "production")
     with TestClient(app) as client:
         account = Account.create()
         challenge = client.post("/auth/challenge", json={"address": account.address})

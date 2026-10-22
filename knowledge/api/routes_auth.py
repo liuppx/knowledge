@@ -307,17 +307,13 @@ def _ensure_demo_content(db: Session) -> None:
 
 @router.post("/challenge", response_model=ChallengeResponse)
 def create_challenge(payload: ChallengeRequest, request: Request, db: Session = Depends(get_db)) -> ChallengeResponse:
-    configured_domain = service.settings.siwe_domain.strip()
-    configured_uri = service.settings.siwe_uri.strip()
-    if service.settings.app_env != "development" and (not configured_domain or not configured_uri):
-        raise HTTPException(status_code=503, detail="SIWE_DOMAIN and SIWE_URI must be configured outside development")
     request_origin = f"{request.url.scheme}://{request.url.netloc}"
     try:
         challenge = service.create_challenge(
             db,
             payload.wallet_address,
-            domain=configured_domain or request.url.netloc,
-            uri=configured_uri or request_origin,
+            domain=request.url.netloc,
+            uri=request_origin,
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc

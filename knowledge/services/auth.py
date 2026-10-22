@@ -15,6 +15,9 @@ from knowledge.models import AuthChallenge, WalletUser
 from knowledge.utils.time import utc_now
 
 
+DEFAULT_SIWE_CHAIN_ID = 1
+
+
 class AuthService:
     def __init__(self) -> None:
         self.settings = get_settings()
@@ -32,8 +35,6 @@ class AuthService:
         parsed_uri = urlparse(uri)
         if parsed_uri.scheme not in {"http", "https"} or parsed_uri.netloc != domain:
             raise ValueError("SIWE URI must be an HTTP(S) URI for the configured domain")
-        if self.settings.siwe_chain_id < 1:
-            raise ValueError("SIWE chain ID must be positive")
         nonce = secrets.token_urlsafe(24)
         expires_at = utc_now() + timedelta(seconds=self.settings.challenge_ttl_seconds)
         message = (
@@ -42,7 +43,7 @@ class AuthService:
             "Sign in to Knowledge.\n\n"
             f"URI: {uri}\n"
             "Version: 1\n"
-            f"Chain ID: {self.settings.siwe_chain_id}\n"
+            f"Chain ID: {DEFAULT_SIWE_CHAIN_ID}\n"
             f"Nonce: {nonce}\n"
             f"Issued At: {utc_now().isoformat()}Z\n"
             f"Expiration Time: {expires_at.isoformat()}Z"

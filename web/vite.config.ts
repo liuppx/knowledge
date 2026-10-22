@@ -28,7 +28,8 @@ export default defineConfig({
     emptyOutDir: true,
   },
   server: {
-    port: 5173,
+    port: 5183,
+    strictPort: true,
     allowedHosts: ["knowledge.tidukongjian.com", "test-knowledge.tidukongjian.com"],
     proxy: Object.fromEntries(API_PREFIXES.map((prefix) => [prefix, BACKEND])),
   },

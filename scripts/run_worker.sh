@@ -5,17 +5,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 INSTANCE_ID="${1:-${WORKER_INSTANCE_ID:-1}}"
-ENV_FILE="${WORKER_ENV_FILE:-${PROJECT_DIR}/.env}"
 PYTHON_BIN="${WORKER_PYTHON_BIN:-${PROJECT_DIR}/.venv/bin/python}"
 WORKER_NAME_PREFIX="${WORKER_NAME_PREFIX:-knowledge-worker}"
 WORKER_NAME_OVERRIDE="${WORKER_NAME_OVERRIDE:-}"
-
-if [[ -f "${ENV_FILE}" ]]; then
-  set -a
-  # shellcheck disable=SC1090
-  source "${ENV_FILE}"
-  set +a
-fi
 
 if [[ ! -x "${PYTHON_BIN}" ]]; then
   echo "worker python interpreter not found: ${PYTHON_BIN}" >&2

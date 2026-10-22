@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Fingerprint, Wallet } from "lucide-react";
 import { getProvider, loginWithWalletIdentity } from "@yeying-community/web3-bs";
 import { ApiError } from "../../api/client";
-import { passportApi, tokenFromLogin, type PassportSession } from "./api";
+import { createIdentityLoginFetcher, passportApi, tokenFromLogin, type PassportSession } from "./api";
 import { saveSession } from "./session";
 
 type Props = { onAuthenticated: (walletAddress: string) => void };
@@ -60,7 +60,12 @@ export function PassportLoginPage({ onAuthenticated }: Props) {
       const provider = await getProvider({ preferYeYing: true, timeoutMs: 3000 });
       if (!provider) throw new Error("未检测到可用钱包，请安装并解锁夜莺钱包或兼容钱包扩展。");
       setStatus("请在钱包中确认钱包身份授权...");
-      const result = await loginWithWalletIdentity({ baseUrl: "/auth", provider, storeToken: false });
+      const result = await loginWithWalletIdentity({
+        baseUrl: "/auth",
+        provider,
+        fetcher: createIdentityLoginFetcher(),
+        storeToken: false,
+      });
       const token = tokenFromLogin(result.response);
       saveSession(token);
       onAuthenticated(token.wallet_address);

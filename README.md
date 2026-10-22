@@ -43,34 +43,39 @@ cp .env.template .env        # 按需修改 DATABASE_URL 等；生产配置见 d
 
 服务配置的优先级为：进程环境变量 > `.env` > `config/local.toml` > `config/defaults.toml`。本地开发通常只需要 `.env`；部署主机在 `config/local.toml` 中取消注释并填入真实值。
 
-### 3. 命令行启动服务
+### 3. 本地直接启动
 
-推荐使用统一脚本启动 API 和 worker：
+Knowledge 的本地完整联调由一个后端进程和一个后台任务进程组成。它们是同一个产品的内部运行角色，不需要安装或启动两个产品。
+
+先在第一个终端启动后端：
 
 ```bash
-scripts/starter.sh start
-scripts/starter.sh status
+source .venv/bin/activate
+python -m uvicorn knowledge.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-停止或重启：
+再在第二个终端启动后台任务处理：
 
 ```bash
-scripts/starter.sh stop
-scripts/starter.sh restart
+cd /path/to/knowledge
+source .venv/bin/activate
+python -m knowledge.workers.runner
 ```
 
-日志位于 `logs/api.log` 和 `logs/worker.log`，PID 文件位于 `run/`。
+后端只调试页面、接口或检索时，可以暂时不启动第二个进程；导入、重建索引、删除等异步任务需要它运行。
 
-也可以只启动 API：
+数据库迁移使用：
 
 ```bash
-scripts/starter.sh start-api
+source .venv/bin/activate
+python -m alembic upgrade head
 ```
 
-或直接用 uvicorn 以热重载方式开发：
+运行测试：
 
 ```bash
-.venv/bin/uvicorn knowledge.main:app --reload --host 127.0.0.1 --port 8000
+source .venv/bin/activate
+python -m pytest -q
 ```
 
 后端启动后可以访问：
@@ -98,25 +103,27 @@ cd web
 npm run dev
 ```
 
-前端默认访问：`http://127.0.0.1:5173/`
+前端默认访问：`http://127.0.0.1:5183/`
 
-前端开发服务器会把所有后端前缀（`/auth`、`/kbs`、`/warehouse`、`/tasks`、`/ops`、`/service` 等）代理到 `http://127.0.0.1:8000`（可用 `KNOWLEDGE_API_URL` 改写），所以请先启动后端。生产环境不运行开发服务器：`cd web && npm run build` 生成 `web/dist` 后由后端直接服务。
+前端开发服务器会把所有服务请求代理到后端（默认 `http://127.0.0.1:8000`，可用 `KNOWLEDGE_API_URL` 改写），所以先启动后端。生产环境不运行开发服务器：`cd web && npm run build` 生成 `web/dist` 后由后端提供控制台。
 
-如果 5173 端口被占用：
-
-```bash
-npm run dev -- --port 5174
-```
-
-### 5. 单独启动 worker
-
-导入、重建、删除等异步任务需要 worker。另开一个终端，在项目根目录执行：
+如果 5183 端口被占用：
 
 ```bash
-scripts/starter.sh start-worker
+npm run dev -- --port 5184
 ```
 
-生产或长期运行环境建议使用 systemd 管理 worker，参见 `docs/Worker部署与扩缩容建议.md`。
+### 5. 生产部署
+
+生产部署使用 `scripts/starter.sh` 和 `scripts/package.sh`，不要把它们当成本地开发入口：
+
+```bash
+scripts/starter.sh start
+scripts/starter.sh status
+scripts/starter.sh stop
+```
+
+长期运行和扩展后台处理能力建议使用 systemd，参见 `docs/Worker部署与扩缩容建议.md`。
 
 ### 6. 创建离线部署包
 
@@ -128,7 +135,7 @@ scripts/package.sh
 
 ## 常见问题
 
-- `Address already in use`：端口被占用。后端可改 `--port 8001`；前端可用 `npm run dev -- --port 5174`。
+- `Address already in use`：端口被占用。后端可改 `--port 8001`；前端可用 `npm run dev -- --port 5184`。
 - `unsupported operand type(s)` 或 `datetime | None` 类型注解错误：当前 `.venv` 使用了过低的 Python 版本，请用 Python 3.10+ 重建 `.venv`。
 - `password authentication failed for user "knowledge"`：确认本机 PostgreSQL 已启动，或在 `.env` 中填写实际可用的 `DATABASE_URL`。
 
