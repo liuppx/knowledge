@@ -96,4 +96,24 @@ GLEIF `RA000065` 的官方机构是 Registry Agency (Ministry of Justice)，其�
 
 确认 namespace 后，GLEIF 对 7 个 `RA000065 + UIC` 仍未返回权威 LEI 记录。这是“未观察到 LEI 映射”，不能表述成这些组织永久不存在 LEI，也不能用唯一名称候选替代权威 crosswalk。
 
-评测还会枚举 GLEIF API 当前 `entity.legalAddress.country=BG` 的完整分页结果，而不是只依赖 7 次精确 ID 查询。最近快照共 6,222 条记录、32 页；7 个 UIC 的 `validatedAs` 命中和规范化法定名称/别名命中均为 0。该扫描仍不构成独立 Golden Copy 交付证据：GLEIF [官方 API 说明](https://www.gleif.org/en/lei-data/gleif-api)明确 API 数据基于 Golden Copy，且扫描摘要会记录 `publishDate` 与 hash，供快照漂移审查。完整 Golden Copy 或另一独立官方交付通道仍是未完成门槛。
+评测还会枚举 GLEIF API 当前 `entity.legalAddress.country=BG` 的完整分页结果，而不是只依赖 7 次精确 ID 查询。最近快照共 6,222 条记录、32 页；7 个 UIC 的 `validatedAs` 命中和规范化法定名称/别名命中均为 0。该扫描仍不构成独立 Golden Copy 交付证据：GLEIF [官方 API 说明](https://www.gleif.org/en/lei-data/gleif-api)明确 API 数据基于 Golden Copy，且扫描摘要会记录 `publishDate` 与 hash，供快照漂移审查。为补独立交付通道，本研究另对官方 Concatenated File 做了全量扫描，详见下节。
+
+### GLEIF Concatenated File 独立复核
+
+[`bulgarian_gleif_concatenated_scan_v1.json`](bulgarian_gleif_concatenated_scan_v1.json) 是对 GLEIF 官方 Concatenated LEI-CDF 3.1 交付的最小扫描摘要；原始 ZIP 不提交仓库。下载地址：<https://leidata.gleif.org/api/v1/concatenated-files/lei2/get/42569/zip>。
+
+- ZIP SHA-256：`23c03705b3f93dd9869af2c9366f1bc191640ac1fd0759e615ff768fc2d09af6`；文件成员：`20261025-gleif-concatenated-file-lei2.xml`；
+- XML `ContentDate`：`2026-10-25T09:00:01Z`；头部 `RecordCount` 与实际流式扫描均为 `3,473,152`；
+- `LegalAddress/Country=BG`：`6,222`；`RegistrationAuthorityID=RA000065`：`5,698`；
+- 7 个 UIC 的 `RegistrationAuthorityEntityID` 命中为 `0`，7 个登记名称在 `LegalName` 或 `OtherEntityName` 中的规范化命中也为 `0`；
+- 扫描摘要 SHA-256：`e87800e89cfbbb5d4bd85930cf4254bf3775436d14009fafa5f3c9e4fc6dc9dc`；摘要文件 SHA-256：`48e0745e05bbb8e55c0bac1b3df393dd94fb2d8ab9e163b95b95e43c5f66bf39`。
+
+可复现命令（需要先下载对应 ZIP）：
+
+```bash
+python scripts/validate_gleif_bulgarian_concat.py \
+  --archive /path/to/20261025-gleif-concatenated-file-lei2.zip \
+  --output /tmp/bulgarian_gleif_concatenated_scan.json
+```
+
+这完成了“当前日期官方 Concatenated 交付中未观察到目标 LEI”的复核，但不证明组织永久没有 LEI；后续仍需记录人工裁决成本，并在数据更新后重新运行漂移门禁。

@@ -2,11 +2,17 @@
 
 from __future__ import annotations
 
+from io import BytesIO
+
 import pytest
+
+from scripts.validate_gleif_bulgarian_concat import scan_xml_stream
 
 from tests.eval.ontology_identifier_coverage_harness import (
     EXPECTED_BG_COMMERCIAL_REGISTER_EXTRACT_SHA256,
     EXPECTED_BG_COMMERCIAL_REGISTER_RECORDS_SHA256,
+    EXPECTED_BG_GLEIF_CONCATENATED_SCAN_FILE_SHA256,
+    EXPECTED_BG_GLEIF_CONCATENATED_SCAN_SUMMARY_SHA256,
     EXPECTED_BG_GLEIF_API_SCAN_SHA256,
     EXPECTED_BG_REGISTRATION_AUTHORITIES_SHA256,
     EXPECTED_MAPPING_OBSERVATIONS_SHA256,
@@ -144,6 +150,73 @@ def test_full_bulgarian_gleif_api_scan_finds_no_target_ids_or_names(identifier_r
     assert identifier_report["decision"]["gleif_bg_api_scan_has_no_target_match"] is True
 
 
+def test_official_concatenated_file_has_no_target_id_or_exact_name(identifier_report):
+    scan = identifier_report["gleif_bulgarian_concatenated_scan"]
+    assert scan["source_url"].endswith("/42569/zip")
+    assert scan["archive_sha256"] == (
+        "23c03705b3f93dd9869af2c9366f1bc191640ac1fd0759e615ff768fc2d09af6"
+    )
+    assert scan["archive_member"] == "20261025-gleif-concatenated-file-lei2.xml"
+    assert scan["xml_content_date"] == "2026-10-25T09:00:01Z"
+    assert scan["xml_record_count"] == 3_473_152
+    assert scan["records_scanned"] == scan["xml_record_count"]
+    assert scan["bg_legal_address_records"] == 6_222
+    assert scan["ra000065_records"] == 5_698
+    assert all(not hits for hits in scan["target_uic_hits"].values())
+    assert all(not hits for hits in scan["target_exact_name_or_alias_hits"].values())
+    assert scan["summary_sha256"] == EXPECTED_BG_GLEIF_CONCATENATED_SCAN_SUMMARY_SHA256
+    assert scan["extract_sha256"] == EXPECTED_BG_GLEIF_CONCATENATED_SCAN_FILE_SHA256
+    assert scan["independent_delivery"] is True
+    assert (
+        identifier_report["decision"]["gleif_concatenated_scan_has_no_target_match"]
+        is True
+    )
+
+
+def test_gleif_concat_parser_uses_header_count_and_scans_aliases():
+    xml = b"""<?xml version=\"1.0\" encoding=\"UTF-8\"?>
+    <lei:LEIData xmlns:lei=\"http://www.gleif.org/data/schema/leidata/2016\"
+      xmlns:gleif=\"http://www.gleif.org/concatenated-file/header-extension/2.0\">
+      <lei:LEIHeader><lei:ContentDate>2026-10-25T09:00:01Z</lei:ContentDate>
+        <lei:RecordCount>2</lei:RecordCount><lei:Extension><gleif:Sources>
+          <gleif:Source><gleif:RecordCount>999</gleif:RecordCount></gleif:Source>
+        </gleif:Sources></lei:Extension>
+      </lei:LEIHeader><lei:LEIRecords>
+        <lei:LEIRecord><lei:LEI>TESTLEI000000000001</lei:LEI><lei:Entity>
+          <lei:LegalName>Legal Company</lei:LegalName><lei:OtherEntityNames>
+            <lei:OtherEntityName>Target Name</lei:OtherEntityName>
+          </lei:OtherEntityNames><lei:LegalAddress><lei:Country>BG</lei:Country>
+          </lei:LegalAddress><lei:RegistrationAuthority>
+            <lei:RegistrationAuthorityID>RA000065</lei:RegistrationAuthorityID>
+            <lei:RegistrationAuthorityEntityID>123456789</lei:RegistrationAuthorityEntityID>
+          </lei:RegistrationAuthority></lei:Entity></lei:LEIRecord>
+        <lei:LEIRecord><lei:LEI>TESTLEI000000000002</lei:LEI><lei:Entity>
+          <lei:LegalName>Other Company</lei:LegalName><lei:LegalAddress>
+            <lei:Country>BG</lei:Country></lei:LegalAddress>
+          <lei:RegistrationAuthority>
+            <lei:RegistrationAuthorityID>RA000066</lei:RegistrationAuthorityID>
+            <lei:RegistrationAuthorityEntityID>987654321</lei:RegistrationAuthorityEntityID>
+          </lei:RegistrationAuthority></lei:Entity></lei:LEIRecord>
+      </lei:LEIRecords></lei:LEIData>"""
+    report = scan_xml_stream(
+        BytesIO(xml),
+        {
+            "123456789": {
+                "uic": "123456789",
+                "ted_name": "Target Name",
+                "registry_authority_id": "RA000065",
+            }
+        },
+    )
+    assert report["xml_record_count"] == report["records_scanned"] == 2
+    assert report["bg_legal_address_records"] == 2
+    assert report["ra000065_records"] == 1
+    assert report["target_uic_hits"]["123456789"][0]["lei"] == "TESTLEI000000000001"
+    assert report["target_exact_name_or_alias_hits"]["123456789"][0]["other_entity_names"] == [
+        "Target Name"
+    ]
+
+
 def test_identifier_report_keeps_search_and_namespace_limits_explicit(identifier_report):
     limitations = " ".join(identifier_report["limitations"]).lower()
     assert "lower bound" in limitations
@@ -153,7 +226,7 @@ def test_identifier_report_keeps_search_and_namespace_limits_explicit(identifier
     assert "official eforms xml resolves" in limitations
     assert "multiple gleif registration authorities" in limitations
     assert "commercial register independently confirms" in limitations
-    assert "not an independent" in limitations
+    assert "official gleif concatenated" in limitations
     assert "golden copy-based" in limitations
     assert "cannot estimate" in limitations
 

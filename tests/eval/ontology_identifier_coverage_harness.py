@@ -37,6 +37,9 @@ TED_XML_EXTRACT_PATH = (
 BG_COMMERCIAL_REGISTER_EXTRACT_PATH = (
     TED_XML_EXTRACT_PATH.parent / "bulgarian_commercial_register_extract_v1.json"
 )
+BG_GLEIF_CONCATENATED_SCAN_PATH = (
+    TED_XML_EXTRACT_PATH.parent / "bulgarian_gleif_concatenated_scan_v1.json"
+)
 EXPECTED_TED_XML_EXTRACT_SHA256 = (
     "9616c1381435d1f2032336208756112c99a6885a581cb7445556fa2ae03aacba"
 )
@@ -54,6 +57,12 @@ EXPECTED_MAPPING_OBSERVATIONS_SHA256 = (
 )
 EXPECTED_BG_GLEIF_API_SCAN_SHA256 = (
     "86411537768fc918ac9260bf07cb3b4279fb5314b7514eb46acafd0cb020eae5"
+)
+EXPECTED_BG_GLEIF_CONCATENATED_SCAN_FILE_SHA256 = (
+    "48e0745e05bbb8e55c0bac1b3df393dd94fb2d8ab9e163b95b95e43c5f66bf39"
+)
+EXPECTED_BG_GLEIF_CONCATENATED_SCAN_SUMMARY_SHA256 = (
+    "e87800e89cfbbb5d4bd85930cf4254bf3775436d14009fafa5f3c9e4fc6dc9dc"
 )
 
 _XML_NAMESPACES = {
@@ -203,6 +212,47 @@ def _load_bulgarian_commercial_register_extract() -> tuple[dict[str, Any], str]:
             f"{EXPECTED_BG_COMMERCIAL_REGISTER_EXTRACT_SHA256}, got {extract_hash}"
         )
     return json.loads(extract_bytes), extract_hash
+
+
+def _load_bulgarian_gleif_concatenated_scan(
+    registry_records: list[dict[str, Any]],
+) -> tuple[dict[str, Any], str]:
+    summary_bytes = BG_GLEIF_CONCATENATED_SCAN_PATH.read_bytes()
+    summary_hash = hashlib.sha256(summary_bytes).hexdigest()
+    if summary_hash != EXPECTED_BG_GLEIF_CONCATENATED_SCAN_FILE_SHA256:
+        raise AssertionError(
+            "GLEIF concatenated scan extract drift: expected "
+            f"{EXPECTED_BG_GLEIF_CONCATENATED_SCAN_FILE_SHA256}, got {summary_hash}"
+        )
+    summary = json.loads(summary_bytes)
+    supplied_summary_hash = summary.get("summary_sha256")
+    computed_summary_hash = _sha256_json(
+        {key: value for key, value in summary.items() if key != "summary_sha256"}
+    )
+    if supplied_summary_hash != computed_summary_hash:
+        raise AssertionError(
+            "GLEIF concatenated scan summary hash mismatch: "
+            f"expected {supplied_summary_hash}, got {computed_summary_hash}"
+        )
+    if computed_summary_hash != EXPECTED_BG_GLEIF_CONCATENATED_SCAN_SUMMARY_SHA256:
+        raise AssertionError(
+            "GLEIF concatenated scan summary drift: expected "
+            f"{EXPECTED_BG_GLEIF_CONCATENATED_SCAN_SUMMARY_SHA256}, "
+            f"got {computed_summary_hash}"
+        )
+    expected_targets = {item["uic"]: item for item in registry_records}
+    if summary.get("targets") != expected_targets:
+        raise AssertionError(
+            "GLEIF concatenated scan target organizations do not match the "
+            "validated Commercial Register extract"
+        )
+    if summary.get("archive_sha256") != (
+        "23c03705b3f93dd9869af2c9366f1bc191640ac1fd0759e615ff768fc2d09af6"
+    ):
+        raise AssertionError("unexpected GLEIF concatenated archive hash")
+    if summary.get("records_scanned") != summary.get("xml_record_count"):
+        raise AssertionError("GLEIF concatenated scan record count is incomplete")
+    return summary, summary_hash
 
 
 def _gleif_registration_authorities(
@@ -893,6 +943,9 @@ def run_identifier_coverage_eval(
             f"{EXPECTED_BG_COMMERCIAL_REGISTER_RECORDS_SHA256}, "
             f"got {registry_records_hash}"
         )
+    gleif_concatenated_scan, gleif_concatenated_scan_file_hash = (
+        _load_bulgarian_gleif_concatenated_scan(registry_records)
+    )
     gleif_bg_api_scan, gleif_bg_api_scan_hash = _gleif_bg_api_scan(
         registry_records, selected_cache
     )
@@ -974,6 +1027,11 @@ def run_identifier_coverage_eval(
             "summary_sha256": gleif_bg_api_scan_hash,
             "independent_delivery": False,
         },
+        "gleif_bulgarian_concatenated_scan": {
+            **gleif_concatenated_scan,
+            "extract_sha256": gleif_concatenated_scan_file_hash,
+            "independent_delivery": True,
+        },
         "source_local_coverage": {
             **coverage,
             "usa_uei_coverage": _ratio(coverage["usa_awards_with_uei"], coverage["usa_awards"]),
@@ -1022,6 +1080,16 @@ def run_identifier_coverage_eval(
                 value == 0
                 for value in gleif_bg_api_scan["target_exact_name_hits"].values()
             ),
+            "gleif_concatenated_scan_has_no_target_match": all(
+                not hits
+                for hits in gleif_concatenated_scan["target_uic_hits"].values()
+            )
+            and all(
+                not hits
+                for hits in gleif_concatenated_scan[
+                    "target_exact_name_or_alias_hits"
+                ].values()
+            ),
             "verdict": "keep_source_ids; review_cross_source_candidates; do_not_auto_merge",
         },
         "limitations": [
@@ -1059,8 +1127,15 @@ def run_identifier_coverage_eval(
             ),
             (
                 "A complete BG-country enumeration of the GLEIF API snapshot found no "
-                "target UIC or exact-name match; this is still not an independent "
-                "Golden Copy delivery because GLEIF documents the API as Golden Copy-based."
+                "target UIC or exact-name match; GLEIF documents the API as "
+                "Golden Copy-based."
+            ),
+            (
+                "The official GLEIF Concatenated LEI-CDF delivery was independently "
+                "scanned: its XML header count matched all records scanned, and it "
+                "contained no target UIC or exact legal-name/alias match. This is still "
+                "an observation about the dated delivery, not proof that the entities "
+                "can never obtain an LEI."
             ),
             (
                 "The sample deliberately contains modification chains and cannot estimate "
@@ -1087,6 +1162,7 @@ def render_identifier_coverage_markdown(report: dict[str, Any]) -> str:
     mapping = report["cross_source_mapping"]
     xml = report["ted_xml_resolution"]
     registry = report["bulgarian_commercial_register_crosswalk"]
+    concatenated = report["gleif_bulgarian_concatenated_scan"]
     lines = [
         "## Procurement stable-identifier coverage",
         "",
@@ -1128,6 +1204,20 @@ def render_identifier_coverage_markdown(report: dict[str, Any]) -> str:
         f"{sum(report['gleif_bg_api_scan']['target_exact_name_hits'].values())}",
         "- BG API snapshot SHA-256: "
         f"`{report['gleif_bg_api_scan']['summary_sha256']}`",
+        "- Official GLEIF Concatenated File XML content date: "
+        f"{concatenated['xml_content_date']}",
+        "- Official GLEIF Concatenated File records scanned: "
+        f"{concatenated['records_scanned']}",
+        "- BG legal-address / RA000065 records in official file: "
+        f"{concatenated['bg_legal_address_records']} / "
+        f"{concatenated['ra000065_records']}",
+        "- Official file target UIC/name-or-alias matches: "
+        f"{sum(len(hits) for hits in concatenated['target_uic_hits'].values())} / "
+        f"{sum(len(hits) for hits in concatenated['target_exact_name_or_alias_hits'].values())}",
+        "- Official GLEIF Concatenated File archive SHA-256: "
+        f"`{concatenated['archive_sha256']}`",
+        "- Official GLEIF scan extract SHA-256: "
+        f"`{concatenated['extract_sha256']}`",
         "",
         f"- unique source organizations: {mapping['unique_source_organizations']}",
         f"- mapping categories: `{mapping['categories']}`",
