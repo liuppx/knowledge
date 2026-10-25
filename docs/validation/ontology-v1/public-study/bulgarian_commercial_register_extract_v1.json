@@ -1,0 +1,88 @@
+{
+  "version": "bulgarian-commercial-register-extract-v1",
+  "purpose": "Confirm that the TED XML CompanyID values belong to the Bulgarian Commercial Register namespace represented by GLEIF registration authority RA000065.",
+  "registry_authority": {
+    "gleif_registration_authority_id": "RA000065",
+    "international_name": "Commercial Register",
+    "international_organization_name": "Registry Agency (Ministry of Justice)",
+    "gleif_website": "http://www.brra.bg/Default.ra",
+    "current_portal": "https://portal.registryagency.bg/"
+  },
+  "records": [
+    {
+      "registry_authority_id": "RA000065",
+      "uic": "106567752",
+      "ted_name": "МЕТАЛИНВЕСТ-РЕМКО ЕООД",
+      "registry_full_name": "\"МЕТАЛИНВЕСТ-РЕМКО\" ЕООД",
+      "registry_company_name": "МЕТАЛИНВЕСТ-РЕМКО",
+      "legal_form_code": 10,
+      "deed_status_code": 2,
+      "official_record_url": "https://portal.registryagency.bg/CR/api/Deeds/106567752?loadFieldsFromAllLegalForms=false"
+    },
+    {
+      "registry_authority_id": "RA000065",
+      "uic": "123018503",
+      "ted_name": "ЕЛИТ - МОНТАЖ ЕООД",
+      "registry_full_name": "\"ЕЛИТ - МОНТАЖ\" ЕООД",
+      "registry_company_name": "ЕЛИТ - МОНТАЖ",
+      "legal_form_code": 10,
+      "deed_status_code": 2,
+      "official_record_url": "https://portal.registryagency.bg/CR/api/Deeds/123018503?loadFieldsFromAllLegalForms=false"
+    },
+    {
+      "registry_authority_id": "RA000065",
+      "uic": "123531939",
+      "ted_name": "ТЕЦ МАРИЦА ИЗТОК 2 ЕАД",
+      "registry_full_name": "\"ТЕЦ МАРИЦА ИЗТОК 2\" ЕАД",
+      "registry_company_name": "ТЕЦ МАРИЦА ИЗТОК 2",
+      "legal_form_code": 11,
+      "deed_status_code": 2,
+      "official_record_url": "https://portal.registryagency.bg/CR/api/Deeds/123531939?loadFieldsFromAllLegalForms=false"
+    },
+    {
+      "registry_authority_id": "RA000065",
+      "uic": "123587426",
+      "ted_name": "ПЕТКО ПЕТКОВ - 24 ООД",
+      "registry_full_name": "\"ПЕТКО ПЕТКОВ - 24\" ООД",
+      "registry_company_name": "ПЕТКО ПЕТКОВ - 24",
+      "legal_form_code": 4,
+      "deed_status_code": 2,
+      "official_record_url": "https://portal.registryagency.bg/CR/api/Deeds/123587426?loadFieldsFromAllLegalForms=false"
+    },
+    {
+      "registry_authority_id": "RA000065",
+      "uic": "123630361",
+      "ted_name": "ВАЛИС ООД",
+      "registry_full_name": "\"ВАЛИС\" ООД",
+      "registry_company_name": "ВАЛИС",
+      "legal_form_code": 4,
+      "deed_status_code": 2,
+      "official_record_url": "https://portal.registryagency.bg/CR/api/Deeds/123630361?loadFieldsFromAllLegalForms=false"
+    },
+    {
+      "registry_authority_id": "RA000065",
+      "uic": "202714798",
+      "ted_name": "РУДИН ООД",
+      "registry_full_name": "\"РУДИН\" ООД",
+      "registry_company_name": "РУДИН",
+      "legal_form_code": 4,
+      "deed_status_code": 1,
+      "official_record_url": "https://portal.registryagency.bg/CR/api/Deeds/202714798?loadFieldsFromAllLegalForms=false"
+    },
+    {
+      "registry_authority_id": "RA000065",
+      "uic": "833067427",
+      "ted_name": "МЕТАЛИК АД",
+      "registry_full_name": "\"МЕТАЛИК\" АД",
+      "registry_company_name": "МЕТАЛИК",
+      "legal_form_code": 5,
+      "deed_status_code": 2,
+      "official_record_url": "https://portal.registryagency.bg/CR/api/Deeds/833067427?loadFieldsFromAllLegalForms=false"
+    }
+  ],
+  "limitations": [
+    "Only the minimum organization-level fields needed for namespace validation are retained; full registry responses may contain personal or contact data and are not committed.",
+    "deed_status_code and legal_form_code are preserved as official raw codes and are not interpreted by this study.",
+    "A confirmed RA000065 namespace does not imply that the organization has an LEI."
+  ]
+}

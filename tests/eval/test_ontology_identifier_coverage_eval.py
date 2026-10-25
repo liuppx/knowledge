@@ -5,6 +5,8 @@ from __future__ import annotations
 import pytest
 
 from tests.eval.ontology_identifier_coverage_harness import (
+    EXPECTED_BG_COMMERCIAL_REGISTER_EXTRACT_SHA256,
+    EXPECTED_BG_COMMERCIAL_REGISTER_RECORDS_SHA256,
     EXPECTED_BG_REGISTRATION_AUTHORITIES_SHA256,
     EXPECTED_MAPPING_OBSERVATIONS_SHA256,
     EXPECTED_TED_XML_EXTRACT_SHA256,
@@ -48,10 +50,12 @@ def test_cross_source_mapping_does_not_treat_name_candidates_as_authoritative(id
     mapping = identifier_report["cross_source_mapping"]
     assert mapping["unique_source_organizations"] == 29
     assert mapping["categories"] == {
-        "no_exact_gleif_candidate_observed": 26,
+        "authoritative_namespace_no_gleif_match_observed": 7,
+        "no_exact_gleif_candidate_observed": 19,
         "unique_exact_name_candidate_only": 3,
     }
     assert mapping["authoritative_auto_map_coverage"] == 0.0
+    assert mapping["ra000065_authoritative_lei_matches"] == 0
     assert mapping["manual_review_lower_bound"] == 29
     assert identifier_report["mapping_observations_sha256"] == EXPECTED_MAPPING_OBSERVATIONS_SHA256
     assert mapping["manual_review_lower_bound"] >= mapping["categories"].get(
@@ -74,11 +78,17 @@ def test_ted_multi_winner_ids_are_paired_before_deduplication(identifier_report)
     assert organizations[("ted_winner", "МЕТАЛИК АД")]["identifier_country_code"] == "BGR"
     assert (
         organizations[("ted_winner", "МЕТАЛИК АД")]["identifier_namespace_status"]
-        == "country_only_scheme_absent_in_ted_xml"
+        == "authoritative_ra000065_confirmed_by_registry"
+    )
+    assert (
+        organizations[("ted_winner", "МЕТАЛИК АД")][
+            "gleif_registry_authority_id"
+        ]
+        == "RA000065"
     )
 
 
-def test_ted_xml_restores_pairing_without_inventing_a_registry_namespace(identifier_report):
+def test_registry_agency_confirms_namespace_after_xml_restores_pairing(identifier_report):
     xml = identifier_report["ted_xml_resolution"]
     assert xml["extract_sha256"] == EXPECTED_TED_XML_EXTRACT_SHA256
     assert xml["source_xml_sha256"] == (
@@ -93,10 +103,29 @@ def test_ted_xml_restores_pairing_without_inventing_a_registry_namespace(identif
     assert [
         item["code"] for item in xml["gleif_registration_authority_candidates"]
     ] == ["RA000065", "RA000066", "RA000730", "RA000731"]
+    registry = identifier_report["bulgarian_commercial_register_crosswalk"]
+    assert registry["registry_authority_id"] == "RA000065"
+    assert registry["extract_sha256"] == (
+        EXPECTED_BG_COMMERCIAL_REGISTER_EXTRACT_SHA256
+    )
+    assert registry["records_sha256"] == EXPECTED_BG_COMMERCIAL_REGISTER_RECORDS_SHA256
+    assert registry["organizations_checked"] == 7
+    assert registry["exact_uic_and_name_matches"] == 7
+    assert registry["namespace_coverage"] == 1.0
+    assert registry["deed_status_code_counts"] == {1: 1, 2: 6}
+    assert {item["uic"] for item in registry["records"]} == {
+        "106567752",
+        "123018503",
+        "123531939",
+        "123587426",
+        "123630361",
+        "202714798",
+        "833067427",
+    }
     assert identifier_report["decision"]["ted_xml_restores_winner_pairing"] is True
     assert (
         identifier_report["decision"]["ted_company_id_namespace_is_authoritative"]
-        is False
+        is True
     )
 
 
@@ -108,6 +137,7 @@ def test_identifier_report_keeps_search_and_namespace_limits_explicit(identifier
     assert "raw repeated search-result rows" in limitations
     assert "official eforms xml resolves" in limitations
     assert "multiple gleif registration authorities" in limitations
+    assert "commercial register independently confirms" in limitations
     assert "cannot estimate" in limitations
 
 

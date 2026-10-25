@@ -6,6 +6,7 @@ import hashlib
 import json
 import os
 import re
+import time
 import urllib.parse
 from collections import Counter, defaultdict
 from concurrent.futures import ThreadPoolExecutor
@@ -18,6 +19,7 @@ from tests.eval.ontology_public_harness import (
     DEFAULT_REPORT_DIR,
     TED_FIELDS,
     TED_SEARCH_URL,
+    _cache_path,
     _request_json,
     _sha256_json,
     load_public_records,
@@ -32,14 +34,23 @@ TED_XML_EXTRACT_PATH = (
     / "public-study"
     / "ted_xml_organization_extract_v1.json"
 )
+BG_COMMERCIAL_REGISTER_EXTRACT_PATH = (
+    TED_XML_EXTRACT_PATH.parent / "bulgarian_commercial_register_extract_v1.json"
+)
 EXPECTED_TED_XML_EXTRACT_SHA256 = (
     "9616c1381435d1f2032336208756112c99a6885a581cb7445556fa2ae03aacba"
 )
+EXPECTED_BG_COMMERCIAL_REGISTER_EXTRACT_SHA256 = (
+    "48bfcd98d596b32392757480a67b9f09dd5a5499f63935886cf48658677927fd"
+)
 EXPECTED_BG_REGISTRATION_AUTHORITIES_SHA256 = (
-    "461549fddb62a17e6a07a4f1c985cfeb038953cae185d7328622e477a474d1c7"
+    "b2b7116589317ce03b96f9a2d7483971a4a73df9ffba0b43ffacac5f8d2a5110"
+)
+EXPECTED_BG_COMMERCIAL_REGISTER_RECORDS_SHA256 = (
+    "8f18545ecc20af9a53e0abfd93e85d5ead5ab1beaacb717598971c250d8d52ce"
 )
 EXPECTED_MAPPING_OBSERVATIONS_SHA256 = (
-    "27ad706210335a3d4ad34ad4d59375bdebfb373b6ab012fe7b27d0e421936110"
+    "dca565eb0444c2cd99f40d01fd9460a865b783cfc5286b43c012826c16667d95"
 )
 
 _XML_NAMESPACES = {
@@ -180,6 +191,17 @@ def _load_ted_xml_extract(cache_dir: Path) -> tuple[dict[str, Any], dict[str, An
     }
 
 
+def _load_bulgarian_commercial_register_extract() -> tuple[dict[str, Any], str]:
+    extract_bytes = BG_COMMERCIAL_REGISTER_EXTRACT_PATH.read_bytes()
+    extract_hash = hashlib.sha256(extract_bytes).hexdigest()
+    if extract_hash != EXPECTED_BG_COMMERCIAL_REGISTER_EXTRACT_SHA256:
+        raise AssertionError(
+            "Bulgarian Commercial Register extract drift: expected "
+            f"{EXPECTED_BG_COMMERCIAL_REGISTER_EXTRACT_SHA256}, got {extract_hash}"
+        )
+    return json.loads(extract_bytes), extract_hash
+
+
 def _gleif_registration_authorities(
     country_code: str, cache_dir: Path
 ) -> list[dict[str, Any]]:
@@ -216,6 +238,7 @@ def _gleif_registration_authorities(
                         "internationalOrganizationName"
                     ),
                     "local_organization_name": attributes.get("localOrganizationName"),
+                    "website": attributes.get("website"),
                     "jurisdictions": sorted(
                         jurisdictions,
                         key=lambda entry: (
@@ -226,6 +249,71 @@ def _gleif_registration_authorities(
                 }
             )
     return sorted(authorities, key=lambda item: item["code"])
+
+
+def _request_registry_json(url: str, cache_dir: Path) -> dict[str, Any]:
+    cache_path = _cache_path(cache_dir, url, None)
+    was_cached = cache_path.exists()
+    for attempt, delay in enumerate((0, 15, 30), start=1):
+        if delay:
+            time.sleep(delay)
+        try:
+            result = _request_json(url, cache_dir=cache_dir)
+            if not was_cached:
+                time.sleep(3)
+            return result
+        except RuntimeError as exc:
+            if "HTTP Error 429" not in str(exc) or attempt == 3:
+                raise
+    raise AssertionError("unreachable registry request retry state")
+
+
+def _bulgarian_commercial_register_records(
+    xml_extract: dict[str, Any],
+    registration_authorities: list[dict[str, Any]],
+    cache_dir: Path,
+) -> list[dict[str, Any]]:
+    authority = next(
+        (item for item in registration_authorities if item["code"] == "RA000065"),
+        None,
+    )
+    if authority is None or authority["international_name"] != "Commercial Register":
+        raise AssertionError("GLEIF RA000065 Commercial Register authority is missing")
+    if "brra.bg" not in str(authority["website"]):
+        raise AssertionError(f"unexpected RA000065 website: {authority['website']}")
+
+    records = []
+    for organization in sorted(
+        xml_extract["organizations"], key=lambda item: item["company_id"]
+    ):
+        uic = organization["company_id"]
+        url = (
+            "https://portal.registryagency.bg/CR/api/Deeds/"
+            f"{urllib.parse.quote(uic)}?loadFieldsFromAllLegalForms=false"
+        )
+        response = _request_registry_json(url, cache_dir)
+        if response.get("uic") != uic:
+            raise AssertionError(f"Bulgarian Commercial Register UIC mismatch for {uic}")
+        if _normalize_name(response.get("fullName", "")) != _normalize_name(
+            organization["name"]
+        ):
+            raise AssertionError(
+                f"Bulgarian Commercial Register name mismatch for {uic}: "
+                f"{response.get('fullName')} vs {organization['name']}"
+            )
+        records.append(
+            {
+                "registry_authority_id": "RA000065",
+                "uic": uic,
+                "ted_name": organization["name"],
+                "registry_full_name": response.get("fullName"),
+                "registry_company_name": response.get("companyName"),
+                "legal_form_code": response.get("legalForm"),
+                "deed_status_code": response.get("deedStatus"),
+                "official_record_url": url,
+            }
+        )
+    return records
 
 
 def _gleif_search(
@@ -324,6 +412,7 @@ def _resolve_ted_observations_with_xml(
     notice_id: str,
     observations: dict[str, dict[str, Any]],
     xml_extract: dict[str, Any],
+    registry_records: list[dict[str, Any]],
 ) -> dict[str, dict[str, Any]]:
     for result in observations.values():
         result["organizations"] = [
@@ -332,12 +421,14 @@ def _resolve_ted_observations_with_xml(
                 "identifier_country_code": None,
                 "identifier_namespace_status": "not_exposed_by_ted_search",
                 "identifier_evidence": "TED Search API raw rows",
+                "gleif_registry_authority_id": None,
             }
             for item in result["organizations"]
         ]
     if notice_id != xml_extract["source"]["notice_id"]:
         return observations
 
+    registry_by_uic = {item["uic"]: item for item in registry_records}
     for role in ("buyer", "winner"):
         result = observations[role]
         xml_organizations = sorted(
@@ -361,12 +452,13 @@ def _resolve_ted_observations_with_xml(
                 "name": item["name"],
                 "identifier": item["company_id"],
                 "identifier_country_code": item["country_code"],
-                "identifier_namespace_status": (
-                    "scheme_declared_in_ted_xml"
-                    if item["company_id_attributes"]
-                    else "country_only_scheme_absent_in_ted_xml"
+                "identifier_namespace_status": "authoritative_ra000065_confirmed_by_registry",
+                "identifier_evidence": (
+                    "TED eForms XML organization node + Bulgarian Commercial Register"
                 ),
-                "identifier_evidence": "TED eForms XML organization node",
+                "gleif_registry_authority_id": registry_by_uic[item["company_id"]][
+                    "registry_authority_id"
+                ],
             }
             for item in xml_organizations
         ]
@@ -378,7 +470,10 @@ def _resolve_ted_observations_with_xml(
 
 
 def _collect_organizations(
-    data: dict[str, Any], cache_dir: Path, xml_extract: dict[str, Any]
+    data: dict[str, Any],
+    cache_dir: Path,
+    xml_extract: dict[str, Any],
+    registry_records: list[dict[str, Any]],
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     organizations: dict[tuple[str, str, str], dict[str, Any]] = {}
     usa_name_to_ids: dict[str, set[str]] = defaultdict(set)
@@ -428,6 +523,7 @@ def _collect_organizations(
                 notice["notice_id"],
                 _fetch_ted_organization_observations(notice["notice_id"], cache_dir),
                 xml_extract,
+                registry_records,
             )
             buyer_result = observations["buyer"]
             winner_result = observations["winner"]
@@ -471,7 +567,9 @@ def _collect_organizations(
                             "identifier_namespace_status"
                         ],
                         "identifier_evidence": item["identifier_evidence"],
-                        "gleif_registry_authority_id": None,
+                        "gleif_registry_authority_id": item[
+                            "gleif_registry_authority_id"
+                        ],
                         "occurrences": 0,
                     },
                 )
@@ -486,6 +584,9 @@ def _collect_organizations(
                                 "identifier_namespace_status"
                             ],
                             "identifier_evidence": item["identifier_evidence"],
+                            "gleif_registry_authority_id": item[
+                                "gleif_registry_authority_id"
+                            ],
                         }
                     )
             for item in winner_pairs:
@@ -505,7 +606,9 @@ def _collect_organizations(
                             "identifier_namespace_status"
                         ],
                         "identifier_evidence": item["identifier_evidence"],
-                        "gleif_registry_authority_id": None,
+                        "gleif_registry_authority_id": item[
+                            "gleif_registry_authority_id"
+                        ],
                         "occurrences": 0,
                     },
                 )["occurrences"] += 1
@@ -620,6 +723,8 @@ def _map_organization(organization: dict[str, Any], cache_dir: Path) -> dict[str
             category = "unique_exact_name_candidate_only"
         elif len(exact_name_matches) > 1:
             category = "ambiguous_exact_name_candidates"
+        elif expected_authority:
+            category = "authoritative_namespace_no_gleif_match_observed"
         else:
             category = "no_exact_gleif_candidate_observed"
         direct_name_matches = exact_name_matches
@@ -643,7 +748,6 @@ def run_identifier_coverage_eval(
     )
     data = load_public_records(selected_cache)
     xml_extract, xml_validation = _load_ted_xml_extract(selected_cache)
-    organizations, coverage = _collect_organizations(data, selected_cache, xml_extract)
     xml_country_codes = sorted(
         {item["country_code"] for item in xml_extract["organizations"]}
     )
@@ -660,12 +764,38 @@ def run_identifier_coverage_eval(
             f"{EXPECTED_BG_REGISTRATION_AUTHORITIES_SHA256}, "
             f"got {registration_authorities_hash}"
         )
+    registry_records = _bulgarian_commercial_register_records(
+        xml_extract, registration_authorities, selected_cache
+    )
+    registry_extract, registry_extract_hash = (
+        _load_bulgarian_commercial_register_extract()
+    )
+    if registry_records != registry_extract["records"]:
+        raise AssertionError(
+            "Bulgarian Commercial Register live records no longer match frozen extract"
+        )
+    registry_records_hash = _sha256_json(registry_records)
+    if registry_records_hash != EXPECTED_BG_COMMERCIAL_REGISTER_RECORDS_SHA256:
+        raise AssertionError(
+            "Bulgarian Commercial Register normalized record drift: expected "
+            f"{EXPECTED_BG_COMMERCIAL_REGISTER_RECORDS_SHA256}, "
+            f"got {registry_records_hash}"
+        )
+    organizations, coverage = _collect_organizations(
+        data, selected_cache, xml_extract, registry_records
+    )
     with ThreadPoolExecutor(max_workers=6) as executor:
         mappings = list(
             executor.map(lambda org: _map_organization(org, selected_cache), organizations)
         )
     categories = Counter(mapping["mapping_category"] for mapping in mappings)
     authoritative = categories["authoritative_id_and_name"]
+    registry_uics = {item["uic"] for item in registry_records}
+    ra000065_authoritative_lei_matches = sum(
+        mapping["identifier"] in registry_uics
+        and mapping["mapping_category"] == "authoritative_id_and_name"
+        for mapping in mappings
+    )
     manual_review = len(mappings) - authoritative
     mapping_hash = _sha256_json(mappings)
     if mapping_hash != EXPECTED_MAPPING_OBSERVATIONS_SHA256:
@@ -703,6 +833,20 @@ def run_identifier_coverage_eval(
                 registration_authorities
             ),
         },
+        "bulgarian_commercial_register_crosswalk": {
+            "registry_authority_id": "RA000065",
+            "extract_sha256": registry_extract_hash,
+            "records_sha256": registry_records_hash,
+            "organizations_checked": len(registry_records),
+            "exact_uic_and_name_matches": len(registry_records),
+            "namespace_coverage": _ratio(
+                len(registry_records), len(xml_extract["organizations"])
+            ),
+            "deed_status_code_counts": dict(
+                sorted(Counter(item["deed_status_code"] for item in registry_records).items())
+            ),
+            "records": registry_records,
+        },
         "source_local_coverage": {
             **coverage,
             "usa_uei_coverage": _ratio(coverage["usa_awards_with_uei"], coverage["usa_awards"]),
@@ -720,6 +864,7 @@ def run_identifier_coverage_eval(
             "unique_source_organizations": len(mappings),
             "categories": dict(sorted(categories.items())),
             "authoritative_auto_map_coverage": _ratio(authoritative, len(mappings)),
+            "ra000065_authoritative_lei_matches": ra000065_authoritative_lei_matches,
             "manual_review_lower_bound": manual_review,
             "manual_review_rate_lower_bound": _ratio(manual_review, len(mappings)),
         },
@@ -736,9 +881,11 @@ def run_identifier_coverage_eval(
                 == coverage["ted_winner_names_published"]
             ),
             "ted_company_id_namespace_is_authoritative": (
-                coverage["ted_xml_company_ids_with_declared_scheme"]
-                == coverage["ted_xml_organizations"]
-                and len(registration_authorities) == 1
+                len(registry_records) == coverage["ted_xml_organizations"]
+                and all(
+                    item["registry_authority_id"] == "RA000065"
+                    for item in registry_records
+                )
             ),
             "verdict": "keep_source_ids; review_cross_source_candidates; do_not_auto_merge",
         },
@@ -767,8 +914,13 @@ def run_identifier_coverage_eval(
             ),
             (
                 "The sampled TED XML CompanyID elements have no scheme attribute, and "
-                "country BGR maps to multiple GLEIF registration authorities; the XML "
+                "country BGR maps to multiple GLEIF registration authorities; XML alone "
                 "therefore restores source-local pairing but not an authoritative namespace."
+            ),
+            (
+                "The Bulgarian Commercial Register independently confirms all seven UIC "
+                "and legal-name pairs under RA000065, but none produces an observed "
+                "authoritative LEI match in the sampled GLEIF queries."
             ),
             (
                 "The sample deliberately contains modification chains and cannot estimate "
@@ -794,6 +946,7 @@ def render_identifier_coverage_markdown(report: dict[str, Any]) -> str:
     local = report["source_local_coverage"]
     mapping = report["cross_source_mapping"]
     xml = report["ted_xml_resolution"]
+    registry = report["bulgarian_commercial_register_crosswalk"]
     lines = [
         "## Procurement stable-identifier coverage",
         "",
@@ -819,6 +972,14 @@ def render_identifier_coverage_markdown(report: dict[str, Any]) -> str:
         f"- TED XML CompanyID scheme coverage: {xml['company_id_scheme_coverage']:.1%}",
         "- GLEIF registration-authority candidates for BGR: "
         f"{xml['gleif_registration_authority_candidate_count']}",
+        "- Bulgarian Commercial Register RA000065 namespace coverage: "
+        f"{registry['namespace_coverage']:.1%}",
+        "- Bulgarian Commercial Register extract SHA-256: "
+        f"`{registry['extract_sha256']}`",
+        "- Bulgarian Commercial Register records SHA-256: "
+        f"`{registry['records_sha256']}`",
+        "- RA000065 UICs with authoritative GLEIF match: "
+        f"{mapping['ra000065_authoritative_lei_matches']}",
         "",
         f"- unique source organizations: {mapping['unique_source_organizations']}",
         f"- mapping categories: `{mapping['categories']}`",

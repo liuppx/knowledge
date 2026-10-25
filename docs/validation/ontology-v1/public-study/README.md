@@ -81,3 +81,17 @@ python scripts/validate_public_ontology_data.py \
 冻结文件只保存目标组织的规范化派生字段和 XML locator，不提交第三方完整 XML。评测在本地 XML cache 可用时会重新解析官方文件并与冻结提取逐字段比较；否则仍校验冻结提取本身的 hash，并明确报告源 XML 未在本轮重新读取。
 
 XML 使用显式 `TenderingParty/Tenderer → Organization` 引用恢复 6 个 winner 的 `PartyName + CompanyID + Country`，使当前样本的 TED winner 来源内配对达到 13/13。它没有声明 `CompanyID` 的 `schemeID` 或 `schemeName`；`BGR` 又对应 4 个 GLEIF registration authority，因此该提取不能作为 LEI 自动映射或跨来源实体自动合并的依据。
+
+## 保加利亚商业登记提取
+
+[`bulgarian_commercial_register_extract_v1.json`](bulgarian_commercial_register_extract_v1.json) 使用 Registry Agency 的公开 Commercial Register API 对上述 7 个 CompanyID 做权威 namespace 验证。提取文件 SHA-256：
+
+```text
+48bfcd98d596b32392757480a67b9f09dd5a5499f63935886cf48658677927fd
+```
+
+GLEIF `RA000065` 的官方机构是 Registry Agency (Ministry of Justice)，其网站重定向到 `portal.registryagency.bg`。固定记录调用 `/CR/api/Deeds/{UIC}`，7/7 的返回 UIC 与 TED CompanyID 精确一致，法定全名规范化后也与 TED Organization 名称一致。因此，这 7 个 ID 可以确认属于 `RA000065` Commercial Register namespace。
+
+冻结提取只保留 UIC、法定名称、法律形式原码、deed status 原码、官方记录 URL 和 authority ID；完整响应可能含个人或联系信息，不提交仓库。状态和法律形式代码只保留原值，不在本研究中主观解释。
+
+确认 namespace 后，GLEIF 对 7 个 `RA000065 + UIC` 仍未返回权威 LEI 记录。这是“未观察到 LEI 映射”，不能表述成这些组织永久不存在 LEI，也不能用唯一名称候选替代权威 crosswalk。
