@@ -1,0 +1,390 @@
+{
+  "version": "planner-challenge-v1",
+  "frozen_at": "2026-10-25",
+  "purpose": "Frozen natural-language-to-C3 operation and stable-identifier challenge set.",
+  "limitations": [
+    "Queries were authored from fixed public records and are not real user logs.",
+    "The set is committed before the planner baseline, but it is visible to implementers and is not a true externally held hidden test.",
+    "Expected parameters test intent and entity resolution; answer correctness is evaluated separately by executing C3."
+  ],
+  "cases": [
+    {
+      "id": "D01",
+      "split": "development",
+      "stratum": "usa_latest",
+      "query": "Award ZN31 目前所有已发布交易加总后的 federal action obligation 是多少？",
+      "expected_operation": "usa_latest_total",
+      "expected_params": {"award_id": "CONT_AWD_ZN31_9700_W91QUZ06D0004_9700"},
+      "expected_resolution": "answer"
+    },
+    {
+      "id": "D02",
+      "split": "development",
+      "stratum": "usa_as_of",
+      "query": "请把 ZL54 截止 2015-01-28 的 obligation 变更累计起来。",
+      "expected_operation": "usa_as_of_total",
+      "expected_params": {"award_id": "CONT_AWD_ZL54_9700_H9222210D0019_9700", "as_of": "2015-01-28"},
+      "expected_resolution": "answer"
+    },
+    {
+      "id": "D03",
+      "split": "development",
+      "stratum": "usa_product",
+      "query": "USAspending 合同 ZL06 采购的产品或服务是什么？",
+      "expected_operation": "usa_product",
+      "expected_params": {"award_id": "CONT_AWD_ZL06_9700_N0024412D0014_9700"},
+      "expected_resolution": "answer"
+    },
+    {
+      "id": "D04",
+      "split": "development",
+      "stratum": "ted_chain",
+      "query": "TED 修改公告 639634-2025 的上一份公告是哪一份？同时给出两个版本共有的 buyer ID 和 CPV。",
+      "expected_operation": "ted_chain",
+      "expected_params": {"current_notice_id": "0d4b759d-089c-4b8b-97f0-91276cb03ce6"},
+      "expected_resolution": "answer"
+    },
+    {
+      "id": "D05",
+      "split": "development",
+      "stratum": "ted_title",
+      "query": "编号 639637-2025 的 TED 程序标题是什么？",
+      "expected_operation": "ted_title",
+      "expected_params": {"notice_id": "a6c20ce1-ae27-4f25-b057-51bc2260f138"},
+      "expected_resolution": "answer"
+    },
+    {
+      "id": "D06",
+      "split": "development",
+      "stratum": "gleif_previous_name",
+      "query": "Hewlett-Packard Company 更名后对应的当前法律实体和 LEI 是什么？",
+      "expected_operation": "gleif_resolve_previous",
+      "expected_params": {"previous_name": "Hewlett-Packard Company"},
+      "expected_resolution": "answer"
+    },
+    {
+      "id": "D07",
+      "split": "development",
+      "stratum": "usa_latest",
+      "query": "完整 Award ID CONT_AWD_Z594_9700_N0001914D0001_9700 的当前累计义务金额。",
+      "expected_operation": "usa_latest_total",
+      "expected_params": {"award_id": "CONT_AWD_Z594_9700_N0001914D0001_9700"},
+      "expected_resolution": "answer"
+    },
+    {
+      "id": "D08",
+      "split": "development",
+      "stratum": "gleif_previous_name",
+      "query": "历史名称 RAYTHEON TECHNOLOGIES CORPORATION 现在登记为什么公司？请给 LEI。",
+      "expected_operation": "gleif_resolve_previous",
+      "expected_params": {"previous_name": "RAYTHEON TECHNOLOGIES CORPORATION"},
+      "expected_resolution": "answer"
+    },
+    {
+      "id": "D09",
+      "split": "development",
+      "stratum": "unknown_identifier",
+      "query": "Award NOT-A-REAL-AWARD-2099 当前累计 obligation 是多少？",
+      "expected_operation": null,
+      "expected_params": null,
+      "expected_resolution": "abstain"
+    },
+    {
+      "id": "D10",
+      "split": "development",
+      "stratum": "unknown_identifier",
+      "query": "TED 000000-2099 修改了哪份旧公告？",
+      "expected_operation": null,
+      "expected_params": null,
+      "expected_resolution": "abstain"
+    },
+    {
+      "id": "D11",
+      "split": "development",
+      "stratum": "ambiguous_entity",
+      "query": "THE BOEING COMPANY 的政府合同当前累计 obligation 是多少？",
+      "expected_operation": null,
+      "expected_params": null,
+      "expected_resolution": "abstain"
+    },
+    {
+      "id": "D12",
+      "split": "development",
+      "stratum": "unsupported_intent",
+      "query": "TED 公告 639634-2025 的所有中标人地址是什么？",
+      "expected_operation": null,
+      "expected_params": null,
+      "expected_resolution": "abstain"
+    },
+    {
+      "id": "T01",
+      "split": "test",
+      "stratum": "usa_latest",
+      "query": "把 Z550 从第一笔到最新一笔 transaction 的 federal action obligation 汇总。",
+      "expected_operation": "usa_latest_total",
+      "expected_params": {"award_id": "CONT_AWD_Z550_9700_N0001913D0007_9700"},
+      "expected_resolution": "answer"
+    },
+    {
+      "id": "T02",
+      "split": "test",
+      "stratum": "usa_latest",
+      "query": "XT06 的当前总 obligation，不要只看最后一次修改。",
+      "expected_operation": "usa_latest_total",
+      "expected_params": {"award_id": "CONT_AWD_XT06_9700_N0001908G0002_9700"},
+      "expected_resolution": "answer"
+    },
+    {
+      "id": "T03",
+      "split": "test",
+      "stratum": "usa_latest",
+      "query": "CONT_AWD_Z35J_9700_SPRPA113G001X_9700 到目前为止累计承诺了多少金额？",
+      "expected_operation": "usa_latest_total",
+      "expected_params": {"award_id": "CONT_AWD_Z35J_9700_SPRPA113G001X_9700"},
+      "expected_resolution": "answer"
+    },
+    {
+      "id": "T04",
+      "split": "test",
+      "stratum": "usa_as_of",
+      "query": "在 2014年9月2日 这个历史时点，Z506 的累计 federal obligation 是多少？",
+      "expected_operation": "usa_as_of_total",
+      "expected_params": {"award_id": "CONT_AWD_Z506_9700_N0001914D0001_9700", "as_of": "2014-09-02"},
+      "expected_resolution": "answer"
+    },
+    {
+      "id": "T05",
+      "split": "test",
+      "stratum": "usa_as_of",
+      "query": "Z18E 截至 2021/08/31 已发生的 obligation 合计。",
+      "expected_operation": "usa_as_of_total",
+      "expected_params": {"award_id": "CONT_AWD_Z18E_9700_SPRPA113G001X_9700", "as_of": "2021-08-31"},
+      "expected_resolution": "answer"
+    },
+    {
+      "id": "T06",
+      "split": "test",
+      "stratum": "usa_as_of",
+      "query": "不要用今天的总额；请重放 Award Z503 在 2019-08-16 当日可见的累计金额。",
+      "expected_operation": "usa_as_of_total",
+      "expected_params": {"award_id": "CONT_AWD_Z503_9700_N0001914D0001_9700", "as_of": "2019-08-16"},
+      "expected_resolution": "answer"
+    },
+    {
+      "id": "T07",
+      "split": "test",
+      "stratum": "usa_product",
+      "query": "ZN31 买的究竟是哪类产品或服务？",
+      "expected_operation": "usa_product",
+      "expected_params": {"award_id": "CONT_AWD_ZN31_9700_W91QUZ06D0004_9700"},
+      "expected_resolution": "answer"
+    },
+    {
+      "id": "T08",
+      "split": "test",
+      "stratum": "usa_product",
+      "query": "请返回 Award Z594 的 product or service description。",
+      "expected_operation": "usa_product",
+      "expected_params": {"award_id": "CONT_AWD_Z594_9700_N0001914D0001_9700"},
+      "expected_resolution": "answer"
+    },
+    {
+      "id": "T09",
+      "split": "test",
+      "stratum": "usa_product",
+      "query": "Z18E 对应的采购品类描述是什么？",
+      "expected_operation": "usa_product",
+      "expected_params": {"award_id": "CONT_AWD_Z18E_9700_SPRPA113G001X_9700"},
+      "expected_resolution": "answer"
+    },
+    {
+      "id": "T10",
+      "split": "test",
+      "stratum": "usa_product",
+      "query": "完整记录 CONT_AWD_XT06_9700_N0001908G0002_9700 采购的服务/产品说明。",
+      "expected_operation": "usa_product",
+      "expected_params": {"award_id": "CONT_AWD_XT06_9700_N0001908G0002_9700"},
+      "expected_resolution": "answer"
+    },
+    {
+      "id": "T11",
+      "split": "test",
+      "stratum": "ted_chain",
+      "query": "639816-2025 是修改公告。追溯它的 previous notice，并比较共有 buyer identifier 与 CPV。",
+      "expected_operation": "ted_chain",
+      "expected_params": {"current_notice_id": "d81443ac-81c7-4c72-810e-c7cae7fae555"},
+      "expected_resolution": "answer"
+    },
+    {
+      "id": "T12",
+      "split": "test",
+      "stratum": "ted_chain",
+      "query": "对 TED 639947-2025 做版本链查询：前一公告号、共同买方 ID、共同 CPV。",
+      "expected_operation": "ted_chain",
+      "expected_params": {"current_notice_id": "e8c81c20-70cf-44c8-874d-88a2f2912d06"},
+      "expected_resolution": "answer"
+    },
+    {
+      "id": "T13",
+      "split": "test",
+      "stratum": "ted_chain",
+      "query": "公告 640015-2025 改的是哪个 publication number？两个版本的 buyer 和 CPV 交集也要给出。",
+      "expected_operation": "ted_chain",
+      "expected_params": {"current_notice_id": "c39bcf5c-aeba-4cbe-bb55-c3a878749e21"},
+      "expected_resolution": "answer"
+    },
+    {
+      "id": "T14",
+      "split": "test",
+      "stratum": "ted_chain",
+      "query": "notice ID 8d6b78b3-5b24-4a57-a222-c093b99e85b4 的修改链和两个版本共有分类是什么？",
+      "expected_operation": "ted_chain",
+      "expected_params": {"current_notice_id": "8d6b78b3-5b24-4a57-a222-c093b99e85b4"},
+      "expected_resolution": "answer"
+    },
+    {
+      "id": "T15",
+      "split": "test",
+      "stratum": "ted_title",
+      "query": "只查程序名称：TED 640068-2025 的 title-proc。",
+      "expected_operation": "ted_title",
+      "expected_params": {"notice_id": "b3ed714a-3491-4978-9e27-e823ad131f98"},
+      "expected_resolution": "answer"
+    },
+    {
+      "id": "T16",
+      "split": "test",
+      "stratum": "ted_title",
+      "query": "640072-2025 这份采购通知的程序标题是什么？",
+      "expected_operation": "ted_title",
+      "expected_params": {"notice_id": "cdaea9b9-31d0-4ee3-b4c4-ed1f9182a324"},
+      "expected_resolution": "answer"
+    },
+    {
+      "id": "T17",
+      "split": "test",
+      "stratum": "ted_title",
+      "query": "给我 TED publication 640114-2025 的标题，不需要版本链。",
+      "expected_operation": "ted_title",
+      "expected_params": {"notice_id": "a511f820-3f57-4462-bf25-b6ab0f081ba3"},
+      "expected_resolution": "answer"
+    },
+    {
+      "id": "T18",
+      "split": "test",
+      "stratum": "ted_title",
+      "query": "notice 640232-2025 对应什么 procurement title？",
+      "expected_operation": "ted_title",
+      "expected_params": {"notice_id": "1354c082-c7c2-4b6f-86ed-5f0a2a6fb797"},
+      "expected_resolution": "answer"
+    },
+    {
+      "id": "T19",
+      "split": "test",
+      "stratum": "gleif_previous_name",
+      "query": "UNITED TECHNOLOGIES CORPORATION 这个旧法定名称现在对应哪个 LEI？",
+      "expected_operation": "gleif_resolve_previous",
+      "expected_params": {"previous_name": "UNITED TECHNOLOGIES CORPORATION"},
+      "expected_resolution": "answer"
+    },
+    {
+      "id": "T20",
+      "split": "test",
+      "stratum": "gleif_previous_name",
+      "query": "请将历史名称 DISCOVERY, INC. 解析到当前法律实体。",
+      "expected_operation": "gleif_resolve_previous",
+      "expected_params": {"previous_name": "DISCOVERY, INC."},
+      "expected_resolution": "answer"
+    },
+    {
+      "id": "T21",
+      "split": "test",
+      "stratum": "gleif_previous_name",
+      "query": "Discovery Communications, Inc. 后来登记成了什么名称，LEI 是多少？",
+      "expected_operation": "gleif_resolve_previous",
+      "expected_params": {"previous_name": "Discovery Communications, Inc."},
+      "expected_resolution": "answer"
+    },
+    {
+      "id": "T22",
+      "split": "test",
+      "stratum": "gleif_previous_name",
+      "query": "旧公司名 UBERCAB, INC 对应的当前公司和 LEI。",
+      "expected_operation": "gleif_resolve_previous",
+      "expected_params": {"previous_name": "UBERCAB, INC"},
+      "expected_resolution": "answer"
+    },
+    {
+      "id": "T23",
+      "split": "test",
+      "stratum": "gleif_previous_name",
+      "query": "ORO X MINING CORP. 现在使用哪个法律名称和 LEI？",
+      "expected_operation": "gleif_resolve_previous",
+      "expected_params": {"previous_name": "ORO X MINING CORP."},
+      "expected_resolution": "answer"
+    },
+    {
+      "id": "T24",
+      "split": "test",
+      "stratum": "near_miss_identifier",
+      "query": "Award ZL5A 当前累计 obligation 是多少？",
+      "expected_operation": null,
+      "expected_params": null,
+      "expected_resolution": "abstain"
+    },
+    {
+      "id": "T25",
+      "split": "test",
+      "stratum": "near_miss_entity",
+      "query": "Hewlett-Packard Corporation 这个历史名称对应哪个 LEI？",
+      "expected_operation": null,
+      "expected_params": null,
+      "expected_resolution": "abstain"
+    },
+    {
+      "id": "T26",
+      "split": "test",
+      "stratum": "ambiguous_entity",
+      "query": "THE BOEING COMPANY 采购的产品描述是什么？",
+      "expected_operation": null,
+      "expected_params": null,
+      "expected_resolution": "abstain"
+    },
+    {
+      "id": "T27",
+      "split": "test",
+      "stratum": "ambiguous_entity",
+      "query": "HAMILTON SUNDSTRAND CORPORATION 当前合同总金额是多少？",
+      "expected_operation": null,
+      "expected_params": null,
+      "expected_resolution": "abstain"
+    },
+    {
+      "id": "T28",
+      "split": "test",
+      "stratum": "near_miss_identifier",
+      "query": "TED 640231-2025 的程序标题是什么？",
+      "expected_operation": null,
+      "expected_params": null,
+      "expected_resolution": "abstain"
+    },
+    {
+      "id": "T29",
+      "split": "test",
+      "stratum": "unsupported_intent",
+      "query": "LEI WHKXQACZ14C5XRO8LW03 的注册地址和邮编是什么？",
+      "expected_operation": null,
+      "expected_params": null,
+      "expected_resolution": "abstain"
+    },
+    {
+      "id": "T30",
+      "split": "test",
+      "stratum": "unknown_entity",
+      "query": "Never Existing Corporation 以前的名称现在对应哪个 LEI？",
+      "expected_operation": null,
+      "expected_params": null,
+      "expected_resolution": "abstain"
+    }
+  ]
+}
