@@ -1,0 +1,16 @@
+question_id,kind,question,as_of,release,requires_relation_or_time,expected_summary
+Q01,decision,当前中国区产品 P7 应适用哪一份合同？,2026-10-24,current,yes,C-1002；C-1001 已被替代
+Q02,decision,合同 C-1002 覆盖哪些产品和地区，由哪个组织签署？,2026-10-24,current,yes,P7；CN；O1
+Q03,decision,C-1002 生效后，哪些旧关系应失效或标记为被替代？,2026-10-24,current,yes,A001/A002/A003 对应的 C-1001 关系
+Q04,decision,产品 P8 在中国区是否存在合同冲突？应如何展示？,2026-10-24,current,yes,C-1003 confirmed；C-1004 candidate；并列展示
+Q05,decision,华东工业有限公司与华东制造有限公司是否是同一组织？为什么？,2026-10-24,current,yes,同一 O1；稳定外部 ID 为 ORG-001
+Q06,decision,哪些关于 C-1004 的事实尚未正式发布？,2026-10-24,current,yes,A012/A013/A014 均为 candidate
+Q07,decision,固定到 rel-2026.05 的服务查询中国区 P7 时应看到哪份合同？,2026-10-24,rel-2026.05,yes,C-1001
+Q08,decision,哪些当前断言引用了缺失来源？系统应如何处理？,2026-10-24,current,yes,A018/A019；标记 stale 且不得作为可靠结论
+Q09,decision,哪些产品没有可靠的当前有效合同？,2026-10-24,current,yes,P9 与 P11；P10 单列为 stale 未决
+Q10,decision,Agent 根据合同事实执行动作前至少要检查什么？,2026-10-24,current,yes,confirmed、有效期、Evidence 健康、Release 可见、Grant 允许
+Q11,control,C-1001 的合同编号是什么？,2026-10-24,current,no,HT-2025-001
+Q12,control,C-1005 的签署方是谁？,2026-10-24,current,no,O2 环球供应链有限公司
+Q13,control,P8 的产品名称是什么？,2026-10-24,current,no,EdgeBox 8
+Q14,control,C-1004 是否已经签字？,2026-10-24,current,no,否；仍是草案
+Q15,control,C-1003 的适用区域如何描述？,2026-10-24,current,no,APAC 且明确包含 CN

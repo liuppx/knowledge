@@ -1,0 +1,20 @@
+assertion_id,subject_type,subject_id,predicate,object_kind,object_type,object_or_value,valid_from,valid_to,observed_at,status,confidence,evidence_ref,evidence_health,reviewed_by,release_from,release_to,notes
+A001,Contract,C-1001,SIGNED_BY,object,Organization,O1,2025-01-01,2026-05-31,2025-01-02,confirmed,1.0,E-C1001.md,healthy,reviewer-a,rel-2025.01,rel-2026.05,历史文件使用 O1 的旧名称
+A002,Contract,C-1001,APPLIES_TO,object,Product,P7,2025-01-01,2026-05-31,2025-01-02,confirmed,1.0,E-C1001.md,healthy,reviewer-a,rel-2025.01,rel-2026.05,被 C-1002 替代
+A003,Contract,C-1001,VALID_IN,literal,,CN,2025-01-01,2026-05-31,2025-01-02,confirmed,1.0,E-C1001.md,healthy,reviewer-a,rel-2025.01,rel-2026.05,
+A004,Contract,C-1002,SIGNED_BY,object,Organization,O1,2026-06-01,,2026-05-20,confirmed,1.0,E-C1002.md,healthy,reviewer-a,rel-2026.06,,O1 已使用新名称
+A005,Contract,C-1002,APPLIES_TO,object,Product,P7,2026-06-01,,2026-05-20,confirmed,1.0,E-C1002.md,healthy,reviewer-a,rel-2026.06,,
+A006,Contract,C-1002,VALID_IN,literal,,CN,2026-06-01,,2026-05-20,confirmed,1.0,E-C1002.md,healthy,reviewer-a,rel-2026.06,,
+A007,Contract,C-1002,SUPERSEDES,object,Contract,C-1001,2026-06-01,,2026-05-20,confirmed,1.0,E-C1002.md,healthy,reviewer-a,rel-2026.06,,
+A008,Contract,C-1003,SIGNED_BY,object,Organization,O2,2026-01-01,,2025-12-15,confirmed,1.0,E-C1003.md,healthy,reviewer-b,rel-2026.01,,
+A009,Contract,C-1003,APPLIES_TO,object,Product,P8,2026-01-01,,2025-12-15,confirmed,1.0,E-C1003.md,healthy,reviewer-b,rel-2026.01,,
+A010,Contract,C-1003,VALID_IN,literal,,APAC,2026-01-01,,2025-12-15,confirmed,1.0,E-C1003.md,healthy,reviewer-b,rel-2026.01,,协议明确 APAC 包含 CN
+A011,Contract,C-1003,VALID_IN,literal,,CN,2026-01-01,,2025-12-15,confirmed,1.0,E-C1003.md,healthy,reviewer-b,rel-2026.01,,由 APAC 范围展开的已确认关系
+A012,Contract,C-1004,SIGNED_BY,object,Organization,O3,2026-04-01,,2026-03-12,candidate,0.62,E-C1004-draft.md,healthy,,rel-candidate,,草案未签字
+A013,Contract,C-1004,APPLIES_TO,object,Product,P8,2026-04-01,,2026-03-12,candidate,0.74,E-C1004-draft.md,healthy,,rel-candidate,,与 C-1003 形成候选冲突
+A014,Contract,C-1004,VALID_IN,literal,,CN,2026-04-01,,2026-03-12,candidate,0.74,E-C1004-draft.md,healthy,,rel-candidate,,不能覆盖已确认断言
+A015,Contract,C-1005,SIGNED_BY,object,Organization,O2,2025-01-01,2026-03-31,2025-01-08,confirmed,1.0,E-C1005.md,healthy,reviewer-b,rel-2025.01,rel-2026.03,
+A016,Contract,C-1005,APPLIES_TO,object,Product,P9,2025-01-01,2026-03-31,2025-01-08,confirmed,1.0,E-C1005.md,healthy,reviewer-b,rel-2025.01,rel-2026.03,
+A017,Contract,C-1005,VALID_IN,literal,,CN,2025-01-01,2026-03-31,2025-01-08,confirmed,1.0,E-C1005.md,healthy,reviewer-b,rel-2025.01,rel-2026.03,
+A018,Contract,C-1003,APPLIES_TO,object,Product,P10,2026-07-01,,2026-06-20,stale,0.91,E-C1003-P10-missing.md,missing,reviewer-b,rel-2026.07,,来源附件已缺失，不能作为可靠当前事实
+A019,Contract,C-1003,VALID_IN,literal,,CN,2026-07-01,,2026-06-20,stale,0.91,E-C1003-P10-missing.md,missing,reviewer-b,rel-2026.07,,与 A018 共同构成缺失附件中的适用范围
