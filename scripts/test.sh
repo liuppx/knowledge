@@ -86,7 +86,8 @@ run_ontology_eval() {
   "${PY}" -m pytest -m ontology_eval ${PYTEST_EXTRA[@]+"${PYTEST_EXTRA[@]}"} \
     tests/eval/test_ontology_public_eval.py \
     tests/eval/test_ontology_planner_eval.py \
-    tests/eval/test_ontology_entity_resolution_eval.py
+    tests/eval/test_ontology_entity_resolution_eval.py \
+    tests/eval/test_ontology_identifier_coverage_eval.py
   if [[ -f "${report_dir}/ontology_public_pilot.md" ]]; then
     cat "${report_dir}/ontology_public_pilot.md"
   fi
@@ -95,6 +96,9 @@ run_ontology_eval() {
   fi
   if [[ -f "${report_dir}/ontology_entity_resolution.md" ]]; then
     cat "${report_dir}/ontology_entity_resolution.md"
+  fi
+  if [[ -f "${report_dir}/ontology_identifier_coverage.md" ]]; then
+    cat "${report_dir}/ontology_identifier_coverage.md"
   fi
 }
 
