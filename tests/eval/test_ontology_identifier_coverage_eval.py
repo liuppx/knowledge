@@ -7,6 +7,7 @@ import pytest
 from tests.eval.ontology_identifier_coverage_harness import (
     EXPECTED_BG_COMMERCIAL_REGISTER_EXTRACT_SHA256,
     EXPECTED_BG_COMMERCIAL_REGISTER_RECORDS_SHA256,
+    EXPECTED_BG_GLEIF_API_SCAN_SHA256,
     EXPECTED_BG_REGISTRATION_AUTHORITIES_SHA256,
     EXPECTED_MAPPING_OBSERVATIONS_SHA256,
     EXPECTED_TED_XML_EXTRACT_SHA256,
@@ -129,6 +130,20 @@ def test_registry_agency_confirms_namespace_after_xml_restores_pairing(identifie
     )
 
 
+def test_full_bulgarian_gleif_api_scan_finds_no_target_ids_or_names(identifier_report):
+    scan = identifier_report["gleif_bg_api_scan"]
+    assert scan["publish_date"] == "2026-10-25T16:00:00Z"
+    assert scan["country_filter"] == "BG"
+    assert scan["records_enumerated"] == 6222
+    assert scan["pages"] == 32
+    assert set(scan["target_validated_as_hits"].values()) == {0}
+    assert set(scan["target_exact_name_hits"].values()) == {0}
+    assert scan["target_match_records"] == {}
+    assert scan["summary_sha256"] == EXPECTED_BG_GLEIF_API_SCAN_SHA256
+    assert scan["independent_delivery"] is False
+    assert identifier_report["decision"]["gleif_bg_api_scan_has_no_target_match"] is True
+
+
 def test_identifier_report_keeps_search_and_namespace_limits_explicit(identifier_report):
     limitations = " ".join(identifier_report["limitations"]).lower()
     assert "lower bound" in limitations
@@ -138,6 +153,8 @@ def test_identifier_report_keeps_search_and_namespace_limits_explicit(identifier
     assert "official eforms xml resolves" in limitations
     assert "multiple gleif registration authorities" in limitations
     assert "commercial register independently confirms" in limitations
+    assert "not an independent" in limitations
+    assert "golden copy-based" in limitations
     assert "cannot estimate" in limitations
 
 

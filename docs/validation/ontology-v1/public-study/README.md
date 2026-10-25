@@ -95,3 +95,5 @@ GLEIF `RA000065` 的官方机构是 Registry Agency (Ministry of Justice)，其�
 冻结提取只保留 UIC、法定名称、法律形式原码、deed status 原码、官方记录 URL 和 authority ID；完整响应可能含个人或联系信息，不提交仓库。状态和法律形式代码只保留原值，不在本研究中主观解释。
 
 确认 namespace 后，GLEIF 对 7 个 `RA000065 + UIC` 仍未返回权威 LEI 记录。这是“未观察到 LEI 映射”，不能表述成这些组织永久不存在 LEI，也不能用唯一名称候选替代权威 crosswalk。
+
+评测还会枚举 GLEIF API 当前 `entity.legalAddress.country=BG` 的完整分页结果，而不是只依赖 7 次精确 ID 查询。最近快照共 6,222 条记录、32 页；7 个 UIC 的 `validatedAs` 命中和规范化法定名称/别名命中均为 0。该扫描仍不构成独立 Golden Copy 交付证据：GLEIF [官方 API 说明](https://www.gleif.org/en/lei-data/gleif-api)明确 API 数据基于 Golden Copy，且扫描摘要会记录 `publishDate` 与 hash，供快照漂移审查。完整 Golden Copy 或另一独立官方交付通道仍是未完成门槛。

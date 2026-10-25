@@ -52,6 +52,9 @@ EXPECTED_BG_COMMERCIAL_REGISTER_RECORDS_SHA256 = (
 EXPECTED_MAPPING_OBSERVATIONS_SHA256 = (
     "dca565eb0444c2cd99f40d01fd9460a865b783cfc5286b43c012826c16667d95"
 )
+EXPECTED_BG_GLEIF_API_SCAN_SHA256 = (
+    "86411537768fc918ac9260bf07cb3b4279fb5314b7514eb46acafd0cb020eae5"
+)
 
 _XML_NAMESPACES = {
     "cac": "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2",
@@ -343,6 +346,115 @@ def _gleif_search(
             }
         )
     return sorted(records, key=lambda item: (item["lei"], item["legal_name"]))
+
+
+def _gleif_bg_api_scan(
+    target_records: list[dict[str, Any]], cache_dir: Path
+) -> tuple[dict[str, Any], str]:
+    """Enumerate the complete BG API result set to check for scan omissions.
+
+    This is deliberately reported as an API scan, not as an independent Golden
+    Copy delivery. GLEIF documents the API as being based on the Golden Copy.
+    """
+
+    query_base = {
+        "filter[entity.legalAddress.country]": "BG",
+        "page[size]": 200,
+    }
+    first_query = urllib.parse.urlencode({**query_base, "page[number]": 1})
+    first_url = f"https://api.gleif.org/api/v1/lei-records?{first_query}"
+    first = _request_json(first_url, cache_dir=cache_dir)
+    first_pagination = first.get("meta", {}).get("pagination", {})
+    total = int(first_pagination.get("total") or 0)
+    per_page = int(first_pagination.get("perPage") or query_base["page[size]"])
+    last_page = int(first_pagination.get("lastPage") or 1)
+    publish_date = first.get("meta", {}).get("goldenCopy", {}).get("publishDate")
+
+    def fetch_page(page_number: int) -> dict[str, Any]:
+        query = urllib.parse.urlencode({**query_base, "page[number]": page_number})
+        return _request_json(
+            f"https://api.gleif.org/api/v1/lei-records?{query}",
+            cache_dir=cache_dir,
+        )
+
+    pages = [first]
+    if last_page > 1:
+        with ThreadPoolExecutor(max_workers=6) as executor:
+            pages.extend(executor.map(fetch_page, range(2, last_page + 1)))
+
+    target_by_uic = {item["uic"]: item for item in target_records}
+    id_hits: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    name_hits: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    page_counts = []
+    for page in pages:
+        metadata = page.get("meta", {})
+        page_date = metadata.get("goldenCopy", {}).get("publishDate")
+        page_total = int(metadata.get("pagination", {}).get("total") or 0)
+        if page_date != publish_date or page_total != total:
+            raise AssertionError(
+                "GLEIF BG API scan changed Golden Copy snapshot during pagination"
+            )
+        page_counts.append(len(page.get("data", [])))
+        for item in page.get("data", []):
+            attributes = item["attributes"]
+            entity = attributes["entity"]
+            registration = attributes["registration"]
+            record = {
+                "lei": attributes["lei"],
+                "legal_name": entity.get("legalName", {}).get("name", ""),
+                "aliases": sorted(
+                    other_name.get("name", "")
+                    for other_name in entity.get("otherNames", [])
+                    if other_name.get("name")
+                ),
+                "registry_authority_id": registration.get("validatedAt", {}).get(
+                    "id", ""
+                ),
+                "registry_entity_id": registration.get("validatedAs") or "",
+            }
+            for uic, target in target_by_uic.items():
+                if _normalize_identifier(record["registry_entity_id"]) == _normalize_identifier(
+                    uic
+                ):
+                    id_hits[uic].append(record)
+                if _record_has_name(record, target["ted_name"]):
+                    name_hits[uic].append(record)
+
+    if sum(page_counts) != total:
+        raise AssertionError(
+            f"GLEIF BG API scan page total mismatch: {sum(page_counts)} vs {total}"
+        )
+    summary = {
+        "api_url": "https://api.gleif.org/api/v1/lei-records",
+        "country_filter": "BG",
+        "publish_date": publish_date,
+        "records_enumerated": total,
+        "page_size": per_page,
+        "pages": last_page,
+        "target_uics": sorted(target_by_uic),
+        "target_names": {
+            uic: target_by_uic[uic]["ted_name"] for uic in sorted(target_by_uic)
+        },
+        "target_registry_authorities": {
+            uic: target_by_uic[uic]["registry_authority_id"]
+            for uic in sorted(target_by_uic)
+        },
+        "target_validated_as_hits": {
+            uic: len(id_hits.get(uic, [])) for uic in sorted(target_by_uic)
+        },
+        "target_exact_name_hits": {
+            uic: len(name_hits.get(uic, [])) for uic in sorted(target_by_uic)
+        },
+        "target_match_records": {
+            uic: sorted(
+                id_hits.get(uic, []) + name_hits.get(uic, []),
+                key=lambda item: (item["lei"], item["legal_name"]),
+            )
+            for uic in sorted(target_by_uic)
+            if id_hits.get(uic) or name_hits.get(uic)
+        },
+    }
+    return summary, _sha256_json(summary)
 
 
 def _single_language_rows(value: Any, *, notice_id: str, field: str) -> list[str]:
@@ -781,6 +893,16 @@ def run_identifier_coverage_eval(
             f"{EXPECTED_BG_COMMERCIAL_REGISTER_RECORDS_SHA256}, "
             f"got {registry_records_hash}"
         )
+    gleif_bg_api_scan, gleif_bg_api_scan_hash = _gleif_bg_api_scan(
+        registry_records, selected_cache
+    )
+    if EXPECTED_BG_GLEIF_API_SCAN_SHA256 and (
+        gleif_bg_api_scan_hash != EXPECTED_BG_GLEIF_API_SCAN_SHA256
+    ):
+        raise AssertionError(
+            "GLEIF BG API scan drift: expected "
+            f"{EXPECTED_BG_GLEIF_API_SCAN_SHA256}, got {gleif_bg_api_scan_hash}"
+        )
     organizations, coverage = _collect_organizations(
         data, selected_cache, xml_extract, registry_records
     )
@@ -847,6 +969,11 @@ def run_identifier_coverage_eval(
             ),
             "records": registry_records,
         },
+        "gleif_bg_api_scan": {
+            **gleif_bg_api_scan,
+            "summary_sha256": gleif_bg_api_scan_hash,
+            "independent_delivery": False,
+        },
         "source_local_coverage": {
             **coverage,
             "usa_uei_coverage": _ratio(coverage["usa_awards_with_uei"], coverage["usa_awards"]),
@@ -887,6 +1014,14 @@ def run_identifier_coverage_eval(
                     for item in registry_records
                 )
             ),
+            "gleif_bg_api_scan_has_no_target_match": all(
+                value == 0
+                for value in gleif_bg_api_scan["target_validated_as_hits"].values()
+            )
+            and all(
+                value == 0
+                for value in gleif_bg_api_scan["target_exact_name_hits"].values()
+            ),
             "verdict": "keep_source_ids; review_cross_source_candidates; do_not_auto_merge",
         },
         "limitations": [
@@ -921,6 +1056,11 @@ def run_identifier_coverage_eval(
                 "The Bulgarian Commercial Register independently confirms all seven UIC "
                 "and legal-name pairs under RA000065, but none produces an observed "
                 "authoritative LEI match in the sampled GLEIF queries."
+            ),
+            (
+                "A complete BG-country enumeration of the GLEIF API snapshot found no "
+                "target UIC or exact-name match; this is still not an independent "
+                "Golden Copy delivery because GLEIF documents the API as Golden Copy-based."
             ),
             (
                 "The sample deliberately contains modification chains and cannot estimate "
@@ -980,6 +1120,14 @@ def render_identifier_coverage_markdown(report: dict[str, Any]) -> str:
         f"`{registry['records_sha256']}`",
         "- RA000065 UICs with authoritative GLEIF match: "
         f"{mapping['ra000065_authoritative_lei_matches']}",
+        "- GLEIF BG API records scanned: "
+        f"{report['gleif_bg_api_scan']['records_enumerated']} across "
+        f"{report['gleif_bg_api_scan']['pages']} pages",
+        "- BG API target ID/name matches: "
+        f"{sum(report['gleif_bg_api_scan']['target_validated_as_hits'].values())}/"
+        f"{sum(report['gleif_bg_api_scan']['target_exact_name_hits'].values())}",
+        "- BG API snapshot SHA-256: "
+        f"`{report['gleif_bg_api_scan']['summary_sha256']}`",
         "",
         f"- unique source organizations: {mapping['unique_source_organizations']}",
         f"- mapping categories: `{mapping['categories']}`",
