@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import csv
 from io import BytesIO
+from pathlib import Path
 
 import pytest
 
@@ -215,6 +217,33 @@ def test_gleif_concat_parser_uses_header_count_and_scans_aliases():
     assert report["target_exact_name_or_alias_hits"]["123456789"][0]["other_entity_names"] == [
         "Target Name"
     ]
+
+
+def test_public_identity_adjudication_queue_matches_all_29_orgs(identifier_report):
+    queue_path = (
+        Path(__file__).resolve().parents[2]
+        / "docs"
+        / "validation"
+        / "ontology-v1"
+        / "public-study"
+        / "identity_adjudication_queue_v1.csv"
+    )
+    with queue_path.open(encoding="utf-8", newline="") as stream:
+        rows = list(csv.DictReader(stream))
+    assert len(rows) == 29
+    assert [row["case_id"] for row in rows] == [f"R{index:03}" for index in range(1, 30)]
+    assert {row["status"] for row in rows} == {"pending"}
+    assert all(not row["reviewer_a_outcome"] for row in rows)
+    assert all(not row["reviewer_b_outcome"] for row in rows)
+    queue_keys = {
+        (row["source_role"], row["source_identifier"], row["source_name"])
+        for row in rows
+    }
+    report_keys = {
+        (item["source_role"], item["identifier"], item["name"])
+        for item in identifier_report["organizations"]
+    }
+    assert queue_keys == report_keys
 
 
 def test_identifier_report_keeps_search_and_namespace_limits_explicit(identifier_report):
