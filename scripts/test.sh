@@ -14,13 +14,14 @@ PYTEST_EXTRA=()
 
 usage() {
   cat <<'EOF'
-Usage: scripts/test.sh [--suite {unit|integration|smoke|eval|all}] [--quiet] [--help]
+Usage: scripts/test.sh [--suite {unit|integration|smoke|eval|ontology-eval|all}] [--quiet] [--help]
 
 Suites:
   unit         pytest test suite (default). Requires PostgreSQL.
   integration  Alembic drift check + full pytest suite.
   smoke        Fast subset: config guard + OpenAPI contract gates.
   eval         Q01–Q12 retrieval quality report (tests/eval, writes .eval/).
+  ontology-eval  Public USAspending/TED/GLEIF ontology proxy pilot (networked).
   all          integration suite (Alembic drift + full pytest).
 
 Environment:
@@ -28,6 +29,8 @@ Environment:
   DATABASE_URL       DB for alembic check (default: TEST_DATABASE_URL)
   KNOWLEDGE_EVAL_PROVIDER    eval providers: offline (default) | live (real gateway)
   KNOWLEDGE_EVAL_REPORT_DIR  eval report output dir (default: .eval)
+  KNOWLEDGE_ONTOLOGY_EVAL_CACHE_DIR  public API cache (default: /tmp/knowledge-public-ontology-pilot-cache)
+  KNOWLEDGE_ONTOLOGY_EVAL_REFRESH    set to 1 to bypass cached API responses
 EOF
 }
 
@@ -77,6 +80,15 @@ run_eval() {
   fi
 }
 
+run_ontology_eval() {
+  local report_dir="${KNOWLEDGE_EVAL_REPORT_DIR:-.eval}"
+  echo ">> ontology public proxy eval (report=${report_dir})"
+  "${PY}" -m pytest -m ontology_eval ${PYTEST_EXTRA[@]+"${PYTEST_EXTRA[@]}"} tests/eval/test_ontology_public_eval.py
+  if [[ -f "${report_dir}/ontology_public_pilot.md" ]]; then
+    cat "${report_dir}/ontology_public_pilot.md"
+  fi
+}
+
 case "${SUITE}" in
   unit)
     run_pytest
@@ -86,6 +98,9 @@ case "${SUITE}" in
     ;;
   eval)
     run_eval
+    ;;
+  ontology-eval)
+    run_ontology_eval
     ;;
   integration|all)
     run_alembic_drift

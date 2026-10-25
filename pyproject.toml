@@ -31,5 +31,6 @@ testpaths = ["tests"]
 pythonpath = ["."]
 markers = [
     "eval: Q01–Q12 retrieval quality gate; excluded by default, run via scripts/test.sh --suite eval",
+    "ontology_eval: networked public-data ontology proxy pilot; excluded by default, run via scripts/test.sh --suite ontology-eval",
 ]
-addopts = "-m 'not eval'"
+addopts = "-m 'not eval and not ontology_eval'"
