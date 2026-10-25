@@ -15,7 +15,7 @@ Knowledge 的产品前端：五个工作台（知识库概览 / 资产与导入 
 ```bash
 cd web
 npm ci
-npm run dev            # http://127.0.0.1:5183，/kbs /auth /warehouse 等前缀代理到 KNOWLEDGE_API_URL（默认 127.0.0.1:8000）
+npm run dev            # http://127.0.0.1:5183，/kbs /auth /warehouse 等前缀代理到 KNOWLEDGE_API_URL（默认 127.0.0.1:8002）
 npm run gen:api        # 后端接口变更并重导 OpenAPI 后，重新生成类型
 npm run typecheck && npm test && npm run build
 ```

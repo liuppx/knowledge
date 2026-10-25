@@ -19,7 +19,7 @@ const API_PREFIXES = [
   "/docs",
   "/openapi.json",
 ];
-const BACKEND = process.env.KNOWLEDGE_API_URL ?? "http://127.0.0.1:8000";
+const BACKEND = process.env.KNOWLEDGE_API_URL ?? "http://127.0.0.1:8002";
 
 export default defineConfig({
   plugins: [react()],

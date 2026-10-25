@@ -14,7 +14,7 @@ is non-zero when a §6 pass condition fails.
 
 Usage:
   .venv/bin/python scripts/product_acceptance.py            # in-process, knowledge_test DB
-  .venv/bin/python scripts/product_acceptance.py --base-url http://127.0.0.1:8000
+  .venv/bin/python scripts/product_acceptance.py --base-url http://127.0.0.1:8002
 """
 
 from __future__ import annotations

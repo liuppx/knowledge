@@ -41,9 +41,9 @@ RUN useradd --create-home --uid 10001 knowledge \
     && chown -R knowledge:knowledge /app /data
 USER knowledge
 
-EXPOSE 8000
+EXPOSE 8002
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
-    CMD curl -fsS http://127.0.0.1:8000/health || exit 1
+    CMD curl -fsS http://127.0.0.1:8002/health || exit 1
 
 # Migrations run on startup (knowledge.main lifespan -> ensure_database_schema).
-CMD ["uvicorn", "knowledge.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "knowledge.main:app", "--host", "0.0.0.0", "--port", "8002"]

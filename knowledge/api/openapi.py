@@ -12,7 +12,7 @@ SPEC_PATH = REPO_ROOT / "docs" / "openapi" / "knowledge.openapi.yaml"
 # (Chat / Agent / Project) pin against this version.
 OPENAPI_VERSION = "1.0.0"
 OPENAPI_DESCRIPTION = "knowledge 控制面、知识生产、发布、检索与 Agent Run API。"
-DEFAULT_SERVERS = [{"url": "http://127.0.0.1:8000", "description": "本地开发环境"}]
+DEFAULT_SERVERS = [{"url": "http://127.0.0.1:8002", "description": "本地开发环境"}]
 
 
 def build_openapi_schema() -> dict:

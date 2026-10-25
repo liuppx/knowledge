@@ -92,7 +92,7 @@ class Settings(BaseSettings):
     app_env: str = "development"
     debug: bool = True
     host: str = "0.0.0.0"
-    port: int = 8000
+    port: int = 8002
 
     database_url: str = "postgresql://knowledge:knowledge@127.0.0.1:5432/knowledge?gssencmode=disable"
 

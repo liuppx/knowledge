@@ -51,7 +51,7 @@ Knowledge 的本地完整联调由一个后端进程和一个后台任务进程�
 
 ```bash
 source .venv/bin/activate
-python -m uvicorn knowledge.main:app --reload --host 127.0.0.1 --port 8000
+python -m uvicorn knowledge.main:app --reload --host 127.0.0.1 --port 8002
 ```
 
 再在第二个终端启动后台任务处理：
@@ -80,9 +80,9 @@ python -m pytest -q
 
 后端启动后可以访问：
 
-- API: `http://127.0.0.1:8000/`（已构建 `web/dist` 时直接是控制台）
-- Health: `http://127.0.0.1:8000/health`
-- Swagger UI: `http://127.0.0.1:8000/docs`
+- API: `http://127.0.0.1:8002/`（已构建 `web/dist` 时直接是控制台）
+- Health: `http://127.0.0.1:8002/health`
+- Swagger UI: `http://127.0.0.1:8002/docs`
 
 如果已有 `.venv` 是旧 Python 创建的，请重建：
 
@@ -105,7 +105,7 @@ npm run dev
 
 前端默认访问：`http://127.0.0.1:5183/`
 
-前端开发服务器会把所有服务请求代理到后端（默认 `http://127.0.0.1:8000`，可用 `KNOWLEDGE_API_URL` 改写），所以先启动后端。生产环境不运行开发服务器：`cd web && npm run build` 生成 `web/dist` 后由后端提供控制台。
+前端开发服务器会把所有服务请求代理到后端（默认 `http://127.0.0.1:8002`，可用 `KNOWLEDGE_API_URL` 改写），所以先启动后端。生产环境不运行开发服务器：`cd web && npm run build` 生成 `web/dist` 后由后端提供控制台。
 
 如果 5183 端口被占用：
 
@@ -135,7 +135,7 @@ scripts/package.sh
 
 ## 常见问题
 
-- `Address already in use`：端口被占用。后端可改 `--port 8001`；前端可用 `npm run dev -- --port 5184`。
+- `Address already in use`：端口被占用。后端可改 `--port 8003`；前端可用 `npm run dev -- --port 5184`。
 - `unsupported operand type(s)` 或 `datetime | None` 类型注解错误：当前 `.venv` 使用了过低的 Python 版本，请用 Python 3.10+ 重建 `.venv`。
 - `password authentication failed for user "knowledge"`：确认本机 PostgreSQL 已启动，或在 `.env` 中填写实际可用的 `DATABASE_URL`。
 

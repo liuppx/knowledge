@@ -33,8 +33,8 @@
 
 启动 knowledge API 后，可以使用 FastAPI 自带页面查看当前运行版本：
 
-- Swagger UI：`http://127.0.0.1:8000/docs`
-- ReDoc：`http://127.0.0.1:8000/redoc`
-- OpenAPI JSON：`http://127.0.0.1:8000/openapi.json`
+- Swagger UI：`http://127.0.0.1:8002/docs`
+- ReDoc：`http://127.0.0.1:8002/redoc`
+- OpenAPI JSON：`http://127.0.0.1:8002/openapi.json`
 
 仓库中的 YAML 用于代码审查、SDK 生成、接口测试和外部系统集成；运行时 `/openapi.json` 用于确认当前服务实际加载的接口版本。

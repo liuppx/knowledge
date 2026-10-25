@@ -61,14 +61,14 @@ services:
     environment:
       <<: *knowledge-env
     ports:
-      - "8000:8000"
+      - "8002:8002"
     volumes:
       - knowledge-app-data:/data
     depends_on:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/health"]
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8002/health"]
       interval: 10s
       timeout: 3s
       retries: 6
