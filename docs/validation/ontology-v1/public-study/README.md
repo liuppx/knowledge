@@ -62,3 +62,22 @@ python scripts/validate_public_ontology_data.py \
 金标不依赖本项目的主观判断：同一 LEI 的官方历史名称标为 `same`，不同 LEI 标为 `different`。后者即使属于关联公司、退休计划或信托，也是不得静默合并的不同法律实体。
 
 负例是为压力测试主动选取的 hard negative，不得用它们估计真实世界的同名或近似名称流行率。后续实验将比较字符串相似度自动合并与稳定 LEI/crosswalk 解析，并报告 precision、recall、false merge 和阈值敏感性。
+
+## TED XML 组织提取
+
+[`ted_xml_organization_extract_v1.json`](ted_xml_organization_extract_v1.json) 冻结了 TED Search API 扁平字段无法证明配对的一份通知。提取文件 SHA-256：
+
+```text
+9616c1381435d1f2032336208756112c99a6885a581cb7445556fa2ae03aacba
+```
+
+官方源 XML：
+
+- notice ID：`9c62249e-6449-490f-93f6-69f79694e225`；
+- publication number：`186732-2025`；
+- URL：<https://ted.europa.eu/en/notice/186732-2025/xml>；
+- SHA-256：`f65386528d46a20f30ca6da69f2df8afcad09d077da0fc2634761932cd0f3f5a`。
+
+冻结文件只保存目标组织的规范化派生字段和 XML locator，不提交第三方完整 XML。评测在本地 XML cache 可用时会重新解析官方文件并与冻结提取逐字段比较；否则仍校验冻结提取本身的 hash，并明确报告源 XML 未在本轮重新读取。
+
+XML 使用显式 `TenderingParty/Tenderer → Organization` 引用恢复 6 个 winner 的 `PartyName + CompanyID + Country`，使当前样本的 TED winner 来源内配对达到 13/13。它没有声明 `CompanyID` 的 `schemeID` 或 `schemeName`；`BGR` 又对应 4 个 GLEIF registration authority，因此该提取不能作为 LEI 自动映射或跨来源实体自动合并的依据。

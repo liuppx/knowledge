@@ -5,7 +5,9 @@ from __future__ import annotations
 import pytest
 
 from tests.eval.ontology_identifier_coverage_harness import (
+    EXPECTED_BG_REGISTRATION_AUTHORITIES_SHA256,
     EXPECTED_MAPPING_OBSERVATIONS_SHA256,
+    EXPECTED_TED_XML_EXTRACT_SHA256,
     run_identifier_coverage_eval,
 )
 from tests.eval.ontology_public_dataset import EXPECTED_NORMALIZED_SOURCE_SHA256
@@ -26,16 +28,19 @@ def test_source_local_identifier_coverage_is_measured_without_overclaiming(ident
     assert local["usa_name_to_multiple_uei"] == 0
     assert local["usa_uei_to_multiple_names"] == 0
     assert local["ted_buyer_identifier_coverage"] == 1.0
-    assert local["ted_winner_identifier_when_name_published"] == 0.5385
+    assert local["ted_winner_identifier_when_name_published"] == 1.0
     assert local["ted_buyer_chain_stability"] == 1.0
     assert local["ted_buyer_pairing_verified_notices"] == 20
-    assert local["ted_winner_pairing_verified_notices"] == 5
+    assert local["ted_winner_search_pairing_verified_notices"] == 5
+    assert local["ted_winner_xml_resolved_notices"] == 1
+    assert local["ted_winner_xml_resolved"] == 6
+    assert local["ted_winner_pairing_verified_notices"] == 6
     assert local["ted_winner_notices_with_names"] == 6
-    assert local["ted_winner_unresolved_pairing_notices"] == 1
-    assert local["ted_winner_unpaired_identifiers"] == 6
+    assert local["ted_winner_unresolved_pairing_notices"] == 0
+    assert local["ted_winner_unpaired_identifiers"] == 0
     assert (
         identifier_report["decision"]["source_local_ids_sufficient_for_all_sampled_organizations"]
-        is False
+        is True
     )
 
 
@@ -64,7 +69,35 @@ def test_ted_multi_winner_ids_are_paired_before_deduplication(identifier_report)
         "identifier"
     ] == "50003563201"
     assert organizations[("ted_winner", 'SIA "DEVRE"')]["identifier"] == "44103125989"
-    assert organizations[("ted_winner", "МЕТАЛИК АД")]["identifier"] == ""
+    assert organizations[("ted_winner", "МЕТАЛИК АД")]["identifier"] == "833067427"
+    assert organizations[("ted_winner", "ВАЛИС ООД")]["identifier"] == "123630361"
+    assert organizations[("ted_winner", "МЕТАЛИК АД")]["identifier_country_code"] == "BGR"
+    assert (
+        organizations[("ted_winner", "МЕТАЛИК АД")]["identifier_namespace_status"]
+        == "country_only_scheme_absent_in_ted_xml"
+    )
+
+
+def test_ted_xml_restores_pairing_without_inventing_a_registry_namespace(identifier_report):
+    xml = identifier_report["ted_xml_resolution"]
+    assert xml["extract_sha256"] == EXPECTED_TED_XML_EXTRACT_SHA256
+    assert xml["source_xml_sha256"] == (
+        "f65386528d46a20f30ca6da69f2df8afcad09d077da0fc2634761932cd0f3f5a"
+    )
+    assert xml["winner_identifiers_resolved_from_xml"] == 6
+    assert xml["organizations_in_frozen_extract"] == 7
+    assert xml["company_id_scheme_coverage"] == 0.0
+    assert xml["gleif_registration_authorities_sha256"] == (
+        EXPECTED_BG_REGISTRATION_AUTHORITIES_SHA256
+    )
+    assert [
+        item["code"] for item in xml["gleif_registration_authority_candidates"]
+    ] == ["RA000065", "RA000066", "RA000730", "RA000731"]
+    assert identifier_report["decision"]["ted_xml_restores_winner_pairing"] is True
+    assert (
+        identifier_report["decision"]["ted_company_id_namespace_is_authoritative"]
+        is False
+    )
 
 
 def test_identifier_report_keeps_search_and_namespace_limits_explicit(identifier_report):
@@ -73,5 +106,20 @@ def test_identifier_report_keeps_search_and_namespace_limits_explicit(identifier
     assert "not an authoritative crosswalk" in limitations
     assert "namespace metadata" in limitations
     assert "raw repeated search-result rows" in limitations
-    assert "unequal flattened winner-name" in limitations
+    assert "official eforms xml resolves" in limitations
+    assert "multiple gleif registration authorities" in limitations
     assert "cannot estimate" in limitations
+
+
+def test_frozen_xml_extract_reports_when_official_source_was_not_revalidated(
+    monkeypatch, tmp_path
+):
+    empty_xml_cache = tmp_path / "xml-cache"
+    empty_xml_cache.mkdir()
+    monkeypatch.setenv("KNOWLEDGE_TED_XML_CACHE_DIR", str(empty_xml_cache))
+    report = run_identifier_coverage_eval(report_dir=tmp_path / "reports")
+    assert report["ted_xml_resolution"]["source_xml_revalidated"] is False
+    assert report["ted_xml_resolution"]["extract_sha256"] == (
+        EXPECTED_TED_XML_EXTRACT_SHA256
+    )
+    assert report["mapping_observations_sha256"] == EXPECTED_MAPPING_OBSERVATIONS_SHA256

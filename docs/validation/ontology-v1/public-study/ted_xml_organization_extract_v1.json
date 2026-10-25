@@ -1,0 +1,98 @@
+{
+  "version": "ted-xml-organization-extract-v1",
+  "purpose": "Resolve the winner name-to-identifier pairing that cannot be reconstructed from flattened TED Search API fields.",
+  "source": {
+    "notice_id": "9c62249e-6449-490f-93f6-69f79694e225",
+    "publication_number": "186732-2025",
+    "official_xml_url": "https://ted.europa.eu/en/notice/186732-2025/xml",
+    "source_xml_sha256": "f65386528d46a20f30ca6da69f2df8afcad09d077da0fc2634761932cd0f3f5a",
+    "ubl_customization_id": "eforms-sdk-1.12"
+  },
+  "extraction": {
+    "organization_path": "efac:Organizations/efac:Organization/efac:Company",
+    "organization_id_path": "cac:PartyIdentification/cbc:ID",
+    "name_path": "cac:PartyName/cbc:Name",
+    "company_id_path": "cac:PartyLegalEntity/cbc:CompanyID",
+    "country_path": "cac:PostalAddress/cac:Country/cbc:IdentificationCode",
+    "winner_reference_path": "efac:NoticeResult/efac:TenderingParty/efac:Tenderer/cbc:ID",
+    "buyer_reference_path": "cac:ContractingParty/cac:Party/cac:PartyIdentification/cbc:ID"
+  },
+  "organizations": [
+    {
+      "xml_organization_id": "ORG-0001",
+      "roles": [
+        "buyer"
+      ],
+      "name": "ТЕЦ МАРИЦА ИЗТОК 2 ЕАД",
+      "company_id": "123531939",
+      "company_id_attributes": {},
+      "country_code": "BGR"
+    },
+    {
+      "xml_organization_id": "ORG-0003",
+      "roles": [
+        "winner"
+      ],
+      "name": "МЕТАЛИК АД",
+      "company_id": "833067427",
+      "company_id_attributes": {},
+      "country_code": "BGR"
+    },
+    {
+      "xml_organization_id": "ORG-0005",
+      "roles": [
+        "winner"
+      ],
+      "name": "ВАЛИС ООД",
+      "company_id": "123630361",
+      "company_id_attributes": {},
+      "country_code": "BGR"
+    },
+    {
+      "xml_organization_id": "ORG-0006",
+      "roles": [
+        "winner"
+      ],
+      "name": "ПЕТКО ПЕТКОВ - 24 ООД",
+      "company_id": "123587426",
+      "company_id_attributes": {},
+      "country_code": "BGR"
+    },
+    {
+      "xml_organization_id": "ORG-0007",
+      "roles": [
+        "winner"
+      ],
+      "name": "ЕЛИТ - МОНТАЖ ЕООД",
+      "company_id": "123018503",
+      "company_id_attributes": {},
+      "country_code": "BGR"
+    },
+    {
+      "xml_organization_id": "ORG-0008",
+      "roles": [
+        "winner"
+      ],
+      "name": "МЕТАЛИНВЕСТ-РЕМКО ЕООД",
+      "company_id": "106567752",
+      "company_id_attributes": {},
+      "country_code": "BGR"
+    },
+    {
+      "xml_organization_id": "ORG-0009",
+      "roles": [
+        "winner"
+      ],
+      "name": "РУДИН ООД",
+      "company_id": "202714798",
+      "company_id_attributes": {},
+      "country_code": "BGR"
+    }
+  ],
+  "limitations": [
+    "The official XML pairs organization names and CompanyID values through explicit organization references.",
+    "The sampled CompanyID elements have no schemeID, schemeName, or other registry-authority attribute.",
+    "Country code BGR narrows jurisdiction but does not identify a unique GLEIF registration authority.",
+    "This frozen extraction is not a substitute for revalidating the official XML SHA-256 when source access is available."
+  ]
+}

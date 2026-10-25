@@ -30,6 +30,7 @@ Environment:
   KNOWLEDGE_EVAL_PROVIDER    eval providers: offline (default) | live (real gateway)
   KNOWLEDGE_EVAL_REPORT_DIR  eval report output dir (default: .eval)
   KNOWLEDGE_ONTOLOGY_EVAL_CACHE_DIR  public API cache (default: /tmp/knowledge-public-ontology-pilot-cache)
+  KNOWLEDGE_TED_XML_CACHE_DIR  optional official TED XML cache for source revalidation
   KNOWLEDGE_ONTOLOGY_EVAL_REFRESH    set to 1 to bypass cached API responses
 EOF
 }

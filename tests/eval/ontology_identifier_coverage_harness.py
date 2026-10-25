@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
@@ -10,6 +11,7 @@ from collections import Counter, defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
+from xml.etree import ElementTree
 
 from tests.eval.ontology_public_harness import (
     DEFAULT_CACHE_DIR,
@@ -22,9 +24,30 @@ from tests.eval.ontology_public_harness import (
 )
 
 
-EXPECTED_MAPPING_OBSERVATIONS_SHA256 = (
-    "04fa671c96763da0fe5f8388f177f34523f216f8e0d7b6c9a14de07ff7cdfa23"
+TED_XML_EXTRACT_PATH = (
+    Path(__file__).resolve().parents[2]
+    / "docs"
+    / "validation"
+    / "ontology-v1"
+    / "public-study"
+    / "ted_xml_organization_extract_v1.json"
 )
+EXPECTED_TED_XML_EXTRACT_SHA256 = (
+    "9616c1381435d1f2032336208756112c99a6885a581cb7445556fa2ae03aacba"
+)
+EXPECTED_BG_REGISTRATION_AUTHORITIES_SHA256 = (
+    "461549fddb62a17e6a07a4f1c985cfeb038953cae185d7328622e477a474d1c7"
+)
+EXPECTED_MAPPING_OBSERVATIONS_SHA256 = (
+    "27ad706210335a3d4ad34ad4d59375bdebfb373b6ab012fe7b27d0e421936110"
+)
+
+_XML_NAMESPACES = {
+    "cac": "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2",
+    "cbc": "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2",
+    "efac": "http://data.europa.eu/p27/eforms-ubl-extension-aggregate-components/1",
+}
+_ISO3_TO_ISO2 = {"BGR": "BG"}
 
 
 def _normalize_name(value: str) -> str:
@@ -44,6 +67,165 @@ def _record_has_name(record: dict[str, Any], name: str) -> bool:
         *(_normalize_name(alias) for alias in record["aliases"]),
     }
     return normalized in record_names
+
+
+def _parse_ted_xml_organizations(xml_bytes: bytes) -> dict[str, Any]:
+    root = ElementTree.fromstring(xml_bytes)
+    organizations: dict[str, dict[str, Any]] = {}
+    for organization in root.findall(
+        ".//efac:Organizations/efac:Organization", _XML_NAMESPACES
+    ):
+        company = organization.find("efac:Company", _XML_NAMESPACES)
+        if company is None:
+            continue
+        xml_id = company.findtext(
+            "cac:PartyIdentification/cbc:ID", namespaces=_XML_NAMESPACES
+        )
+        company_id = company.find(
+            "cac:PartyLegalEntity/cbc:CompanyID", _XML_NAMESPACES
+        )
+        if not xml_id or company_id is None:
+            continue
+        organizations[xml_id] = {
+            "xml_organization_id": xml_id,
+            "name": company.findtext(
+                "cac:PartyName/cbc:Name", default="", namespaces=_XML_NAMESPACES
+            ),
+            "company_id": company_id.text or "",
+            "company_id_attributes": dict(sorted(company_id.attrib.items())),
+            "country_code": company.findtext(
+                "cac:PostalAddress/cac:Country/cbc:IdentificationCode",
+                default="",
+                namespaces=_XML_NAMESPACES,
+            ),
+        }
+
+    role_references = {
+        "buyer": {
+            item.text
+            for item in root.findall(
+                ".//cac:ContractingParty/cac:Party/cac:PartyIdentification/cbc:ID",
+                _XML_NAMESPACES,
+            )
+            if item.text
+        },
+        "winner": {
+            item.text
+            for item in root.findall(
+                ".//efac:NoticeResult/efac:TenderingParty/efac:Tenderer/cbc:ID",
+                _XML_NAMESPACES,
+            )
+            if item.text
+        },
+    }
+    selected = []
+    for xml_id in sorted(set().union(*role_references.values())):
+        item = organizations[xml_id]
+        selected.append(
+            {
+                **item,
+                "roles": sorted(
+                    role for role, references in role_references.items() if xml_id in references
+                ),
+            }
+        )
+    return {
+        "notice_id": root.findtext("cbc:ID", default="", namespaces=_XML_NAMESPACES),
+        "ubl_customization_id": root.findtext(
+            "cbc:CustomizationID", default="", namespaces=_XML_NAMESPACES
+        ),
+        "organizations": selected,
+    }
+
+
+def _load_ted_xml_extract(cache_dir: Path) -> tuple[dict[str, Any], dict[str, Any]]:
+    extract_bytes = TED_XML_EXTRACT_PATH.read_bytes()
+    extract_hash = hashlib.sha256(extract_bytes).hexdigest()
+    if extract_hash != EXPECTED_TED_XML_EXTRACT_SHA256:
+        raise AssertionError(
+            "TED XML organization extract drift: expected "
+            f"{EXPECTED_TED_XML_EXTRACT_SHA256}, got {extract_hash}"
+        )
+    extract = json.loads(extract_bytes)
+    source = extract["source"]
+    xml_cache = Path(
+        os.environ.get("KNOWLEDGE_TED_XML_CACHE_DIR", cache_dir / "ted-xml")
+    )
+    xml_path = xml_cache / f"{source['publication_number']}.xml"
+    source_revalidated = False
+    if xml_path.exists():
+        xml_bytes = xml_path.read_bytes()
+        xml_hash = hashlib.sha256(xml_bytes).hexdigest()
+        if xml_hash != source["source_xml_sha256"]:
+            raise AssertionError(
+                "TED source XML drift: expected "
+                f"{source['source_xml_sha256']}, got {xml_hash}"
+            )
+        parsed = _parse_ted_xml_organizations(xml_bytes)
+        expected = {
+            "notice_id": source["notice_id"],
+            "ubl_customization_id": source["ubl_customization_id"],
+            "organizations": sorted(
+                extract["organizations"], key=lambda item: item["xml_organization_id"]
+            ),
+        }
+        if parsed != expected:
+            raise AssertionError("TED XML organization extraction no longer matches frozen gold")
+        source_revalidated = True
+    return extract, {
+        "extract_sha256": extract_hash,
+        "source_xml_sha256": source["source_xml_sha256"],
+        "source_xml_revalidated": source_revalidated,
+        "source_xml_cache_path": str(xml_path),
+    }
+
+
+def _gleif_registration_authorities(
+    country_code: str, cache_dir: Path
+) -> list[dict[str, Any]]:
+    first_query = urllib.parse.urlencode({"page[number]": 1, "page[size]": 100})
+    first = _request_json(
+        f"https://api.gleif.org/api/v1/registration-authorities?{first_query}",
+        cache_dir=cache_dir,
+    )
+    last_page = first["meta"]["pagination"]["lastPage"]
+    responses = [first]
+    if last_page > 1:
+        urls = []
+        for page in range(2, last_page + 1):
+            query = urllib.parse.urlencode({"page[number]": page, "page[size]": 100})
+            urls.append(f"https://api.gleif.org/api/v1/registration-authorities?{query}")
+        with ThreadPoolExecutor(max_workers=6) as executor:
+            responses.extend(
+                executor.map(lambda url: _request_json(url, cache_dir=cache_dir), urls)
+            )
+
+    authorities = []
+    for response in responses:
+        for item in response["data"]:
+            attributes = item["attributes"]
+            jurisdictions = attributes.get("jurisdictions", [])
+            if not any(entry.get("countryCode") == country_code for entry in jurisdictions):
+                continue
+            authorities.append(
+                {
+                    "code": attributes["code"],
+                    "international_name": attributes.get("internationalName"),
+                    "local_name": attributes.get("localName"),
+                    "international_organization_name": attributes.get(
+                        "internationalOrganizationName"
+                    ),
+                    "local_organization_name": attributes.get("localOrganizationName"),
+                    "jurisdictions": sorted(
+                        jurisdictions,
+                        key=lambda entry: (
+                            entry.get("countryCode", ""),
+                            entry.get("jurisdiction", ""),
+                        ),
+                    ),
+                }
+            )
+    return sorted(authorities, key=lambda item: item["code"])
 
 
 def _gleif_search(
@@ -129,14 +311,74 @@ def _fetch_ted_organization_observations(
         result[role] = {
             "organizations": organizations,
             "pairing_verified": pairing_verified,
+            "search_pairing_verified": pairing_verified,
+            "xml_resolved": 0,
             "published_names": len(set(names)),
             "published_identifiers": len(set(identifiers)),
+            "published_identifier_values": sorted(set(identifiers)),
         }
     return result
 
 
+def _resolve_ted_observations_with_xml(
+    notice_id: str,
+    observations: dict[str, dict[str, Any]],
+    xml_extract: dict[str, Any],
+) -> dict[str, dict[str, Any]]:
+    for result in observations.values():
+        result["organizations"] = [
+            {
+                **item,
+                "identifier_country_code": None,
+                "identifier_namespace_status": "not_exposed_by_ted_search",
+                "identifier_evidence": "TED Search API raw rows",
+            }
+            for item in result["organizations"]
+        ]
+    if notice_id != xml_extract["source"]["notice_id"]:
+        return observations
+
+    for role in ("buyer", "winner"):
+        result = observations[role]
+        xml_organizations = sorted(
+            (
+                item
+                for item in xml_extract["organizations"]
+                if role in item["roles"]
+            ),
+            key=lambda item: item["name"],
+        )
+        xml_names = {item["name"] for item in xml_organizations}
+        search_names = {item["name"] for item in result["organizations"]}
+        xml_identifiers = {item["company_id"] for item in xml_organizations}
+        search_identifiers = set(result["published_identifier_values"])
+        if xml_names != search_names or xml_identifiers != search_identifiers:
+            raise AssertionError(
+                f"TED XML does not reconcile flattened {role} fields for {notice_id}"
+            )
+        result["organizations"] = [
+            {
+                "name": item["name"],
+                "identifier": item["company_id"],
+                "identifier_country_code": item["country_code"],
+                "identifier_namespace_status": (
+                    "scheme_declared_in_ted_xml"
+                    if item["company_id_attributes"]
+                    else "country_only_scheme_absent_in_ted_xml"
+                ),
+                "identifier_evidence": "TED eForms XML organization node",
+            }
+            for item in xml_organizations
+        ]
+        result["xml_resolved"] = (
+            0 if result["search_pairing_verified"] else len(xml_organizations)
+        )
+        result["pairing_verified"] = True
+    return observations
+
+
 def _collect_organizations(
-    data: dict[str, Any], cache_dir: Path
+    data: dict[str, Any], cache_dir: Path, xml_extract: dict[str, Any]
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     organizations: dict[tuple[str, str, str], dict[str, Any]] = {}
     usa_name_to_ids: dict[str, set[str]] = defaultdict(set)
@@ -153,6 +395,9 @@ def _collect_organizations(
                 "identifier": identifier,
                 "identifier_type": "UEI",
                 "identifier_namespace": "US-SAM-UEI",
+                "identifier_country_code": None,
+                "identifier_namespace_status": "known_source_namespace",
+                "identifier_evidence": "USAspending award recipient record",
                 "gleif_registry_authority_id": None,
                 "occurrences": 0,
             },
@@ -168,6 +413,9 @@ def _collect_organizations(
     ted_buyer_pairing_verified_notices = 0
     ted_winner_notices_with_names = 0
     ted_winner_pairing_verified_notices = 0
+    ted_winner_search_pairing_verified_notices = 0
+    ted_winner_xml_resolved_notices = 0
+    ted_winner_xml_resolved = 0
     ted_winner_unresolved_pairing_notices = 0
     ted_winner_unpaired_identifiers = 0
     for pair in data["ted"]:
@@ -176,8 +424,10 @@ def _collect_organizations(
         if set(current["buyer_ids"]) == set(previous["buyer_ids"]):
             stable_buyer_chains += 1
         for notice in (current, previous):
-            observations = _fetch_ted_organization_observations(
-                notice["notice_id"], cache_dir
+            observations = _resolve_ted_observations_with_xml(
+                notice["notice_id"],
+                _fetch_ted_organization_observations(notice["notice_id"], cache_dir),
+                xml_extract,
             )
             buyer_result = observations["buyer"]
             winner_result = observations["winner"]
@@ -189,9 +439,14 @@ def _collect_organizations(
             if winner_result["published_names"]:
                 ted_winner_notices_with_names += 1
                 ted_winner_pairing_verified_notices += int(winner_result["pairing_verified"])
+                ted_winner_search_pairing_verified_notices += int(
+                    winner_result["search_pairing_verified"]
+                )
+                ted_winner_xml_resolved_notices += int(winner_result["xml_resolved"] > 0)
                 ted_winner_unresolved_pairing_notices += int(
                     not winner_result["pairing_verified"]
                 )
+            ted_winner_xml_resolved += winner_result["xml_resolved"]
             ted_winner_unpaired_identifiers += (
                 0
                 if winner_result["pairing_verified"]
@@ -211,10 +466,28 @@ def _collect_organizations(
                         "identifier": identifier,
                         "identifier_type": "TED buyer identifier",
                         "identifier_namespace": "unresolved TED organization namespace",
+                        "identifier_country_code": item["identifier_country_code"],
+                        "identifier_namespace_status": item[
+                            "identifier_namespace_status"
+                        ],
+                        "identifier_evidence": item["identifier_evidence"],
                         "gleif_registry_authority_id": None,
                         "occurrences": 0,
                     },
-                )["occurrences"] += 1
+                )
+                organizations[key]["occurrences"] += 1
+                if item["identifier_evidence"].startswith("TED eForms XML"):
+                    organizations[key].update(
+                        {
+                            "identifier_country_code": item[
+                                "identifier_country_code"
+                            ],
+                            "identifier_namespace_status": item[
+                                "identifier_namespace_status"
+                            ],
+                            "identifier_evidence": item["identifier_evidence"],
+                        }
+                    )
             for item in winner_pairs:
                 name = item["name"]
                 identifier = item["identifier"]
@@ -227,6 +500,11 @@ def _collect_organizations(
                         "identifier": identifier,
                         "identifier_type": "TED winner identifier",
                         "identifier_namespace": "unresolved TED organization namespace",
+                        "identifier_country_code": item["identifier_country_code"],
+                        "identifier_namespace_status": item[
+                            "identifier_namespace_status"
+                        ],
+                        "identifier_evidence": item["identifier_evidence"],
                         "gleif_registry_authority_id": None,
                         "occurrences": 0,
                     },
@@ -247,8 +525,18 @@ def _collect_organizations(
         "ted_buyer_pairing_verified_notices": ted_buyer_pairing_verified_notices,
         "ted_winner_notices_with_names": ted_winner_notices_with_names,
         "ted_winner_pairing_verified_notices": ted_winner_pairing_verified_notices,
+        "ted_winner_search_pairing_verified_notices": (
+            ted_winner_search_pairing_verified_notices
+        ),
+        "ted_winner_xml_resolved_notices": ted_winner_xml_resolved_notices,
+        "ted_winner_xml_resolved": ted_winner_xml_resolved,
         "ted_winner_unresolved_pairing_notices": ted_winner_unresolved_pairing_notices,
         "ted_winner_unpaired_identifiers": ted_winner_unpaired_identifiers,
+        "ted_xml_organizations": len(xml_extract["organizations"]),
+        "ted_xml_company_ids_with_declared_scheme": sum(
+            bool(item["company_id_attributes"])
+            for item in xml_extract["organizations"]
+        ),
     }
     ordered = sorted(
         organizations.values(), key=lambda item: (item["source_role"], item["name"])
@@ -354,7 +642,24 @@ def run_identifier_coverage_eval(
         os.environ.get("KNOWLEDGE_ONTOLOGY_EVAL_CACHE_DIR", DEFAULT_CACHE_DIR)
     )
     data = load_public_records(selected_cache)
-    organizations, coverage = _collect_organizations(data, selected_cache)
+    xml_extract, xml_validation = _load_ted_xml_extract(selected_cache)
+    organizations, coverage = _collect_organizations(data, selected_cache, xml_extract)
+    xml_country_codes = sorted(
+        {item["country_code"] for item in xml_extract["organizations"]}
+    )
+    if xml_country_codes != ["BGR"]:
+        raise AssertionError(f"unexpected TED XML country codes: {xml_country_codes}")
+    gleif_country_code = _ISO3_TO_ISO2[xml_country_codes[0]]
+    registration_authorities = _gleif_registration_authorities(
+        gleif_country_code, selected_cache
+    )
+    registration_authorities_hash = _sha256_json(registration_authorities)
+    if registration_authorities_hash != EXPECTED_BG_REGISTRATION_AUTHORITIES_SHA256:
+        raise AssertionError(
+            "GLEIF Bulgarian registration-authority drift: expected "
+            f"{EXPECTED_BG_REGISTRATION_AUTHORITIES_SHA256}, "
+            f"got {registration_authorities_hash}"
+        )
     with ThreadPoolExecutor(max_workers=6) as executor:
         mappings = list(
             executor.map(lambda org: _map_organization(org, selected_cache), organizations)
@@ -371,6 +676,33 @@ def run_identifier_coverage_eval(
     report = {
         "normalized_public_source_sha256": _sha256_json(data),
         "mapping_observations_sha256": mapping_hash,
+        "ted_xml_resolution": {
+            **xml_validation,
+            "source_notice_id": xml_extract["source"]["notice_id"],
+            "source_publication_number": xml_extract["source"][
+                "publication_number"
+            ],
+            "winner_identifiers_resolved_from_xml": coverage[
+                "ted_winner_xml_resolved"
+            ],
+            "organizations_in_frozen_extract": coverage["ted_xml_organizations"],
+            "company_ids_with_declared_scheme": coverage[
+                "ted_xml_company_ids_with_declared_scheme"
+            ],
+            "company_id_scheme_coverage": _ratio(
+                coverage["ted_xml_company_ids_with_declared_scheme"],
+                coverage["ted_xml_organizations"],
+            ),
+            "country_codes": xml_country_codes,
+            "gleif_country_code": gleif_country_code,
+            "gleif_registration_authorities_sha256": (
+                registration_authorities_hash
+            ),
+            "gleif_registration_authority_candidates": registration_authorities,
+            "gleif_registration_authority_candidate_count": len(
+                registration_authorities
+            ),
+        },
         "source_local_coverage": {
             **coverage,
             "usa_uei_coverage": _ratio(coverage["usa_awards_with_uei"], coverage["usa_awards"]),
@@ -399,6 +731,15 @@ def run_identifier_coverage_eval(
                 and coverage["ted_buyer_stable_chains"] == coverage["ted_chains"]
             ),
             "cross_source_lei_mapping_is_automatic": authoritative == len(mappings),
+            "ted_xml_restores_winner_pairing": (
+                coverage["ted_winner_identified"]
+                == coverage["ted_winner_names_published"]
+            ),
+            "ted_company_id_namespace_is_authoritative": (
+                coverage["ted_xml_company_ids_with_declared_scheme"]
+                == coverage["ted_xml_organizations"]
+                and len(registration_authorities) == 1
+            ),
             "verdict": "keep_source_ids; review_cross_source_candidates; do_not_auto_merge",
         },
         "limitations": [
@@ -421,8 +762,13 @@ def run_identifier_coverage_eval(
             ),
             (
                 "One sampled TED notice publishes unequal flattened winner-name and "
-                "winner-identifier row counts, so six winner IDs remain unpaired until the "
-                "source XML or another authoritative organization structure is resolved."
+                "winner-identifier row counts; its official eForms XML resolves the six "
+                "pairs through organization references."
+            ),
+            (
+                "The sampled TED XML CompanyID elements have no scheme attribute, and "
+                "country BGR maps to multiple GLEIF registration authorities; the XML "
+                "therefore restores source-local pairing but not an authoritative namespace."
             ),
             (
                 "The sample deliberately contains modification chains and cannot estimate "
@@ -447,6 +793,7 @@ def run_identifier_coverage_eval(
 def render_identifier_coverage_markdown(report: dict[str, Any]) -> str:
     local = report["source_local_coverage"]
     mapping = report["cross_source_mapping"]
+    xml = report["ted_xml_resolution"]
     lines = [
         "## Procurement stable-identifier coverage",
         "",
@@ -457,9 +804,21 @@ def render_identifier_coverage_markdown(report: dict[str, Any]) -> str:
         "- TED buyer ID stability across modification chains: "
         f"{local['ted_buyer_chain_stability']:.1%}",
         f"- TED winner notices with verified raw-row pairing: "
-        f"{local['ted_winner_pairing_verified_notices']}/{local['ted_winner_notices_with_names']}",
+        f"{local['ted_winner_search_pairing_verified_notices']}/"
+        f"{local['ted_winner_notices_with_names']}",
+        "- TED winner IDs resolved from official XML: "
+        f"{local['ted_winner_xml_resolved']}",
+        "- TED winner pairing after XML resolution: "
+        f"{local['ted_winner_pairing_verified_notices']}/"
+        f"{local['ted_winner_notices_with_names']}",
         "- TED winner notices with unresolved pairing: "
         f"{local['ted_winner_unresolved_pairing_notices']}",
+        f"- TED XML extract SHA-256: `{xml['extract_sha256']}`",
+        f"- TED source XML SHA-256: `{xml['source_xml_sha256']}`",
+        f"- TED source XML revalidated this run: {xml['source_xml_revalidated']}",
+        f"- TED XML CompanyID scheme coverage: {xml['company_id_scheme_coverage']:.1%}",
+        "- GLEIF registration-authority candidates for BGR: "
+        f"{xml['gleif_registration_authority_candidate_count']}",
         "",
         f"- unique source organizations: {mapping['unique_source_organizations']}",
         f"- mapping categories: `{mapping['categories']}`",
