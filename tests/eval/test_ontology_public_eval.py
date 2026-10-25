@@ -55,6 +55,17 @@ def test_structured_evidence_arm_is_exact_traceable_and_abstains(report):
     assert arm["no_answer"]["no_answer_abstention"] == 1.0
 
 
+def test_source_native_tools_match_e_without_generic_assertions(report):
+    arm = report["alternatives"]["C3_source_native_tools"]
+    assert "no generic assertion projection" in arm["model"]
+    assert "oracle" in arm["planner"]
+    assert arm["all"]["accuracy"] == 1.0
+    assert arm["relationship_temporal"]["evidence_traceability"] == 1.0
+    assert arm["ordinary_text"]["accuracy"] == 1.0
+    assert arm["no_answer"]["no_answer_abstention"] == 1.0
+    assert report["decision"]["smaller_alternative_matches_e"] is True
+
+
 def test_baseline_effect_clears_preregistered_point_and_interval_gate(report):
     effect = report["paired_core_comparison_C2_vs_E"]["bootstrap"]
     assert effect["difference"] >= 0.10
@@ -80,4 +91,5 @@ def test_report_keeps_pilot_limitations_explicit(report):
     assert "not a hidden" in limitations
     assert "grant" in limitations
     assert "top-k" in limitations
+    assert "oracle intent" in limitations
     assert "f generation is omitted" in limitations

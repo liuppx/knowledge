@@ -1,10 +1,11 @@
 """Public-data ontology proxy pilot using the real Knowledge retrieval path.
 
 The pilot is deliberately an upper-bound/no-code experiment, not an ontology
-implementation.  A/B/C run ``ServiceSearchService._search_evidence`` against
-official-record excerpts.  D/E query a reviewed assertion table built in memory;
-E additionally has to return every required Evidence key.  F is not run because
-the local environment has no live generation/rerank gateway.
+implementation.  A/B/C/C2 run ``ServiceSearchService._search_evidence`` against
+official-record excerpts.  C3 uses narrow source-native deterministic tools.
+D/E query an assertion table derived in memory; E additionally has to return
+every required Evidence key.  F is not run because the local environment has no
+live generation/rerank gateway.
 """
 
 from __future__ import annotations
@@ -543,6 +544,90 @@ class StructuredFactView:
         return {"status": "not_answerable", "value": None}, []
 
 
+class SourceNativeToolView:
+    """Narrow alternative that queries normalized source records directly.
+
+    This deliberately avoids the generic assertion projection.  It shares the
+    same oracle operation/parameters as D/E, so it tests whether the sampled
+    tasks require a generic ontology after intent and stable IDs are known.
+    """
+
+    def __init__(self, data: dict[str, Any]) -> None:
+        self.awards = {award["award_id"]: award for award in data["usa"]}
+        self.ted_pairs = {pair["current"]["notice_id"]: pair for pair in data["ted"]}
+        self.ted_notices = {
+            notice["notice_id"]: notice
+            for pair in data["ted"]
+            for notice in (pair["current"], pair["previous"])
+        }
+        self.entities = data["gleif"]
+
+    def answer(self, operation: str, params: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
+        if operation in {"usa_latest_total", "usa_as_of_total"}:
+            award = self.awards.get(params.get("award_id"))
+            if award is None:
+                return {"status": "not_answerable", "value": None}, []
+            transactions = award["transactions"]
+            if operation == "usa_as_of_total":
+                transactions = [item for item in transactions if item["action_date"] <= params["as_of"]]
+            if not transactions:
+                return {"status": "not_answerable", "value": None}, []
+            total = sum(Decimal(item["obligation"]) for item in transactions)
+            evidence = [_usa_transaction_key(award, item) for item in transactions]
+            return {"status": "answered", "value": {"amount": _amount(total)}}, sorted(evidence)
+
+        if operation == "ted_chain":
+            pair = self.ted_pairs.get(params.get("current_notice_id"))
+            if pair is None:
+                return {"status": "not_answerable", "value": None}, []
+            current = pair["current"]
+            previous = pair["previous"]
+            return {
+                "status": "answered",
+                "value": {
+                    "current_publication": current["publication_number"],
+                    "previous_publication": previous["publication_number"],
+                    "shared_buyer_ids": sorted(set(current["buyer_ids"]) & set(previous["buyer_ids"])),
+                    "shared_cpv": sorted(set(current["cpv"]) & set(previous["cpv"])),
+                },
+            }, sorted({_ted_key(current), _ted_key(previous)})
+
+        if operation == "gleif_resolve_previous":
+            matches = [
+                entity
+                for entity in self.entities
+                if params.get("previous_name") in entity["previous_names"]
+            ]
+            if len(matches) != 1:
+                return {"status": "not_answerable", "value": None}, []
+            entity = matches[0]
+            return {
+                "status": "answered",
+                "value": {
+                    "lei": entity["lei"],
+                    "legal_name": entity["legal_name"],
+                    "registry_entity_id": entity["registry_entity_id"],
+                },
+            }, [_gleif_key(entity)]
+
+        if operation == "usa_product":
+            award = self.awards.get(params.get("award_id"))
+            if award is None:
+                return {"status": "not_answerable", "value": None}, []
+            return {
+                "status": "answered",
+                "value": {"description": award["psc_description"]},
+            }, [_usa_summary_key(award)]
+
+        if operation == "ted_title":
+            notice = self.ted_notices.get(params.get("notice_id"))
+            if notice is None:
+                return {"status": "not_answerable", "value": None}, []
+            return {"status": "answered", "value": {"title": notice["title"]}}, [_ted_key(notice)]
+
+        return {"status": "not_answerable", "value": None}, []
+
+
 def build_questions(data: dict[str, Any]) -> list[dict[str, Any]]:
     questions: list[dict[str, Any]] = []
     for index, award in enumerate(data["usa"], start=1):
@@ -889,6 +974,7 @@ def run_public_ontology_eval(report_dir: Path | None = None, cache_dir: Path | N
     assertions = build_assertions(data)
     questions = build_questions(data)
     facts = StructuredFactView(assertions)
+    source_tools = SourceNativeToolView(data)
     embedding = NgramHashEmbeddingProvider()
     rerank = NgramOverlapRerankProvider()
 
@@ -903,6 +989,7 @@ def run_public_ontology_eval(report_dir: Path | None = None, cache_dir: Path | N
         }
         structured_d: list[dict[str, Any]] = []
         structured_e: list[dict[str, Any]] = []
+        source_native_c3: list[dict[str, Any]] = []
         c2_sensitivity: dict[int, list[dict[str, Any]]] = {
             top_k: [] for top_k in TOP_K_SENSITIVITY
         }
@@ -954,8 +1041,18 @@ def run_public_ontology_eval(report_dir: Path | None = None, cache_dir: Path | N
             exact = answer == question["gold"]
             required = set(question["required_evidence"])
             trace_complete = exact and required <= set(evidence)
+            c3_answer, c3_evidence = source_tools.answer(question["operation"], question["params"])
+            c3_exact = c3_answer == question["gold"]
+            c3_trace_complete = c3_exact and required <= set(c3_evidence)
             d = {"question": question, "answer": answer, "exact": exact, "trace_complete": False}
             e = {"question": question, "answer": answer, "evidence": evidence, "exact": exact, "trace_complete": trace_complete}
+            c3 = {
+                "question": question,
+                "answer": c3_answer,
+                "evidence": c3_evidence,
+                "exact": c3_exact,
+                "trace_complete": c3_trace_complete,
+            }
             by_tier["A_lexical"].append({"question": question, "result": a})
             by_tier["B_hybrid"].append({"question": question, "result": b})
             by_tier["C_hybrid_source_filter"].append({"question": question, "result": c})
@@ -981,6 +1078,7 @@ def run_public_ontology_eval(report_dir: Path | None = None, cache_dir: Path | N
                     )
             structured_d.append(d)
             structured_e.append(e)
+            source_native_c3.append(c3)
             per_question[question["id"]] = {
                 "kind": question["kind"],
                 "query": question["query"],
@@ -989,6 +1087,12 @@ def run_public_ontology_eval(report_dir: Path | None = None, cache_dir: Path | N
                 "B": b,
                 "C": c,
                 "C2": c2,
+                "C3": {
+                    "answer": c3_answer,
+                    "evidence": c3_evidence,
+                    "exact": c3_exact,
+                    "trace_complete": c3_trace_complete,
+                },
                 "D": {"answer": answer, "exact": exact},
                 "E": {"answer": answer, "evidence": evidence, "exact": exact, "trace_complete": trace_complete},
             }
@@ -1014,6 +1118,16 @@ def run_public_ontology_eval(report_dir: Path | None = None, cache_dir: Path | N
             "ordinary_text": _structured_summary(structured_e, "ordinary_text"),
             "no_answer": _structured_summary(structured_e, "no_answer"),
         },
+    }
+    alternative_summaries = {
+        "C3_source_native_tools": {
+            "model": "normalized source records plus narrow deterministic tools; no generic assertion projection",
+            "planner": "oracle operation and stable-ID parameters shared with D/E",
+            "all": _structured_summary(source_native_c3),
+            "relationship_temporal": _structured_summary(source_native_c3, "relationship_temporal"),
+            "ordinary_text": _structured_summary(source_native_c3, "ordinary_text"),
+            "no_answer": _structured_summary(source_native_c3, "no_answer"),
+        }
     }
 
     core_questions = [question for question in questions if question["kind"] == "relationship_temporal"]
@@ -1046,7 +1160,19 @@ def run_public_ontology_eval(report_dir: Path | None = None, cache_dir: Path | N
         and result["E_minus_C2_bootstrap"]["ci95_low"] > 0
         for result in sensitivity_results.values()
     )
-    signal_passed = baseline_clears_preregistered_effect_gate and robustness_signal_passed
+    c3_summary = alternative_summaries["C3_source_native_tools"]
+    smaller_alternative_matches_e = (
+        c3_summary["all"]["accuracy"] == e_summary["all"]["accuracy"]
+        and c3_summary["relationship_temporal"]["evidence_traceability"]
+        == e_summary["relationship_temporal"]["evidence_traceability"]
+        and c3_summary["no_answer"]["no_answer_abstention"]
+        == e_summary["no_answer"]["no_answer_abstention"]
+    )
+    signal_passed = (
+        baseline_clears_preregistered_effect_gate
+        and robustness_signal_passed
+        and not smaller_alternative_matches_e
+    )
 
     report = {
         "generated_at": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
@@ -1073,6 +1199,7 @@ def run_public_ontology_eval(report_dir: Path | None = None, cache_dir: Path | N
             "backfills": backfills,
         },
         "retrieval": retrieval_summaries,
+        "alternatives": alternative_summaries,
         "structured": structured_summaries,
         "paired_core_comparison_C2_vs_E": {
             "bootstrap": effect,
@@ -1082,6 +1209,7 @@ def run_public_ontology_eval(report_dir: Path | None = None, cache_dir: Path | N
         "decision": {
             "baseline_clears_preregistered_effect_gate": baseline_clears_preregistered_effect_gate,
             "robustness_signal_passed": robustness_signal_passed,
+            "smaller_alternative_matches_e": smaller_alternative_matches_e,
             "proxy_signal_passed": signal_passed,
             "verdict": "validate_again_live_provider_required" if signal_passed else "dont_build_yet",
             "reason": (
@@ -1090,10 +1218,15 @@ def run_public_ontology_eval(report_dir: Path | None = None, cache_dir: Path | N
                 "are still required."
                 if signal_passed
                 else (
-                    "At the top-k=6 baseline, C2→E cleared the preregistered effect-size and interval "
-                    "threshold, but the effect disappeared when the "
-                    "entity-family retrieval window reached 15 records. The pilot therefore identifies a "
-                    "bounded-retrieval aggregation problem, not robust evidence that an ontology layer is required."
+                    "C3 source-native deterministic tools matched E on exact answers, Evidence traceability, "
+                    "and abstention without a generic assertion projection. In addition, the C2→E Evidence "
+                    "gap disappeared when the entity-family retrieval window reached 15 records. The sampled "
+                    "tasks therefore do not establish that an ontology layer is required."
+                    if smaller_alternative_matches_e
+                    else "At the top-k=6 baseline, C2→E cleared the preregistered effect-size and interval "
+                    "threshold, but the effect disappeared when the entity-family retrieval window reached "
+                    "15 records. The pilot therefore identifies a bounded-retrieval aggregation problem, not "
+                    "robust evidence that an ontology layer is required."
                     if baseline_clears_preregistered_effect_gate
                     else "The structured fact view did not clear the preregistered proxy effect and traceability gate."
                 )
@@ -1106,6 +1239,7 @@ def run_public_ontology_eval(report_dir: Path | None = None, cache_dir: Path | N
             "Public records cannot test production Grant leakage, user demand, or maintenance cost.",
             "The USAspending sample deliberately stresses awards with several modifications; it is not a prevalence estimate.",
             "C2 entity-family filtering and the top-k sensitivity analysis are post-hoc diagnostics rather than preregistered arms.",
+            "C3 shares oracle intent and stable-ID parameters with D/E; it does not test natural-language planning or entity resolution.",
             "F generation is omitted because no live model gateway is configured.",
         ],
         "questions": per_question,
@@ -1144,6 +1278,12 @@ def render_markdown(report: dict[str, Any]) -> str:
             f"| {arm} | {core['oracle_accuracy']:.1%} | {core['mean_evidence_recall']:.1%} "
             f"| {control['oracle_accuracy']:.1%} |"
         )
+    c3 = report["alternatives"]["C3_source_native_tools"]
+    lines.append(
+        f"| C3_source_native_tools | {c3['relationship_temporal']['accuracy']:.1%} exact "
+        f"| {c3['relationship_temporal']['evidence_traceability']:.1%} traceable "
+        f"| {c3['ordinary_text']['accuracy']:.1%} exact |"
+    )
     for arm in ("D_structured_facts", "E_structured_plus_evidence"):
         core = report["structured"][arm]["relationship_temporal"]
         control = report["structured"][arm]["ordinary_text"]
@@ -1176,6 +1316,7 @@ def render_markdown(report: dict[str, Any]) -> str:
         f"- baseline clears preregistered effect gate: "
         f"`{report['decision']['baseline_clears_preregistered_effect_gate']}`",
         f"- top-k robustness signal: `{report['decision']['robustness_signal_passed']}`",
+        f"- smaller C3 alternative matches E: `{report['decision']['smaller_alternative_matches_e']}`",
         f"- verdict: `{report['decision']['verdict']}`",
         "",
         report["decision"]["reason"],
