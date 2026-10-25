@@ -83,9 +83,14 @@ run_eval() {
 run_ontology_eval() {
   local report_dir="${KNOWLEDGE_EVAL_REPORT_DIR:-.eval}"
   echo ">> ontology public proxy eval (report=${report_dir})"
-  "${PY}" -m pytest -m ontology_eval ${PYTEST_EXTRA[@]+"${PYTEST_EXTRA[@]}"} tests/eval/test_ontology_public_eval.py
+  "${PY}" -m pytest -m ontology_eval ${PYTEST_EXTRA[@]+"${PYTEST_EXTRA[@]}"} \
+    tests/eval/test_ontology_public_eval.py \
+    tests/eval/test_ontology_planner_eval.py
   if [[ -f "${report_dir}/ontology_public_pilot.md" ]]; then
     cat "${report_dir}/ontology_public_pilot.md"
+  fi
+  if [[ -f "${report_dir}/ontology_planner_challenge.md" ]]; then
+    cat "${report_dir}/ontology_planner_challenge.md"
   fi
 }
 
