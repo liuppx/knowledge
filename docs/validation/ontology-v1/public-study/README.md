@@ -49,3 +49,16 @@ python scripts/validate_public_ontology_data.py \
 评测时只能向 planner 传入 `query`；不得在运行时读取 `expected_operation`、`expected_params` 或 `expected_resolution`，不得按 case ID 写特例。
 
 这是“先冻结、后实现”的 held-out challenge set，但不是真正的外部隐藏集：题目使用固定公开记录人工编写，并且已提交到仓库。正式结论仍需要由未参与实现的评测者保管隐藏问题。
+
+## GLEIF 实体解析 pair
+
+[`entity_resolution_pairs_v1.json`](entity_resolution_pairs_v1.json) 使用 GLEIF 官方 LEI 记录冻结 22 对组织名称：
+
+冻结文件 SHA-256：`0d1f07953ffa1474365e4ec3365512908534cf02a64781a617f6195dfa9d7d9d`。
+
+- 7 个 `same` 正例：当前法定名称与同一 LEI 记录中的 `PREVIOUS_LEGAL_NAME`；
+- 15 个 `different` 困难负例：全文搜索得到的相似名称，但官方 LEI 不同。
+
+金标不依赖本项目的主观判断：同一 LEI 的官方历史名称标为 `same`，不同 LEI 标为 `different`。后者即使属于关联公司、退休计划或信托，也是不得静默合并的不同法律实体。
+
+负例是为压力测试主动选取的 hard negative，不得用它们估计真实世界的同名或近似名称流行率。后续实验将比较字符串相似度自动合并与稳定 LEI/crosswalk 解析，并报告 precision、recall、false merge 和阈值敏感性。

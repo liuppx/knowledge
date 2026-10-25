@@ -1,0 +1,222 @@
+{
+  "version": "gleif-entity-resolution-pairs-v1",
+  "frozen_at": "2026-10-25",
+  "source": "GLEIF LEI Records API",
+  "source_url": "https://api.gleif.org/api/v1/lei-records/{lei}",
+  "sampling": {
+    "positive": "Current legal name paired with an official PREVIOUS_LEGAL_NAME in the same LEI record.",
+    "negative": "A target legal name paired with a similar full-text search result that has a different issued LEI.",
+    "search_seeds": [
+      "HEWLETT PACKARD",
+      "RTX CORPORATION",
+      "Discovery",
+      "MINING CORP",
+      "SILVER MINING"
+    ]
+  },
+  "limitations": [
+    "Hard negatives were deliberately selected after full-text search and do not estimate population prevalence.",
+    "Different LEIs establish different legal entities even when the records may describe related companies, plans, trusts, or subsidiaries.",
+    "The set tests identity resolution mechanics, not user demand or ontology maintenance cost."
+  ],
+  "pairs": [
+    {
+      "id": "P01",
+      "label": "same",
+      "lei_a": "WHKXQACZ14C5XRO8LW03",
+      "name_a": "HP INC.",
+      "lei_b": "WHKXQACZ14C5XRO8LW03",
+      "name_b": "Hewlett-Packard Company",
+      "evidence": "official previous legal name"
+    },
+    {
+      "id": "P02",
+      "label": "same",
+      "lei_a": "I07WOS4YJ0N7YRFE7309",
+      "name_a": "RTX CORPORATION",
+      "lei_b": "I07WOS4YJ0N7YRFE7309",
+      "name_b": "RAYTHEON TECHNOLOGIES CORPORATION",
+      "evidence": "official previous legal name"
+    },
+    {
+      "id": "P03",
+      "label": "same",
+      "lei_a": "I07WOS4YJ0N7YRFE7309",
+      "name_a": "RTX CORPORATION",
+      "lei_b": "I07WOS4YJ0N7YRFE7309",
+      "name_b": "UNITED TECHNOLOGIES CORPORATION",
+      "evidence": "official previous legal name"
+    },
+    {
+      "id": "P04",
+      "label": "same",
+      "lei_a": "5493006ZCRFWKF6B1K26",
+      "name_a": "WARNER BROS. DISCOVERY, INC.",
+      "lei_b": "5493006ZCRFWKF6B1K26",
+      "name_b": "DISCOVERY, INC.",
+      "evidence": "official previous legal name"
+    },
+    {
+      "id": "P05",
+      "label": "same",
+      "lei_a": "5493006ZCRFWKF6B1K26",
+      "name_a": "WARNER BROS. DISCOVERY, INC.",
+      "lei_b": "5493006ZCRFWKF6B1K26",
+      "name_b": "Discovery Communications, Inc.",
+      "evidence": "official previous legal name"
+    },
+    {
+      "id": "P06",
+      "label": "same",
+      "lei_a": "549300B2FTG34FILDR98",
+      "name_a": "UBER TECHNOLOGIES, INC.",
+      "lei_b": "549300B2FTG34FILDR98",
+      "name_b": "UBERCAB, INC",
+      "evidence": "official previous legal name"
+    },
+    {
+      "id": "P07",
+      "label": "same",
+      "lei_a": "894500TOVTJDJJ6WSU81",
+      "name_a": "SILVER X MINING CORP.",
+      "lei_b": "894500TOVTJDJJ6WSU81",
+      "name_b": "ORO X MINING CORP.",
+      "evidence": "official previous legal name"
+    },
+    {
+      "id": "N01",
+      "label": "different",
+      "lei_a": "WHKXQACZ14C5XRO8LW03",
+      "name_a": "HP INC.",
+      "lei_b": "5493000HZ5LD7S594M08",
+      "name_b": "Hewlett-Packard, Sverige, Aktiebolag",
+      "evidence": "different issued LEIs"
+    },
+    {
+      "id": "N02",
+      "label": "different",
+      "lei_a": "WHKXQACZ14C5XRO8LW03",
+      "name_a": "HP INC.",
+      "lei_b": "549300FHFSJ1YJHAI590",
+      "name_b": "HEWLETT-PACKARD LIMITED RETIREMENT BENEFITS PLAN - HEWLETT-PACKARD SECTION",
+      "evidence": "different issued LEIs"
+    },
+    {
+      "id": "N03",
+      "label": "different",
+      "lei_a": "WHKXQACZ14C5XRO8LW03",
+      "name_a": "HP INC.",
+      "lei_b": "335800UDYI7VQU5IHO21",
+      "name_b": "HEWLETT PACKARD FINANCIAL SERVICES (INDIA) PRIVATE LTD",
+      "evidence": "different issued LEIs"
+    },
+    {
+      "id": "N04",
+      "label": "different",
+      "lei_a": "WHKXQACZ14C5XRO8LW03",
+      "name_a": "HP INC.",
+      "lei_b": "549300B5PRENBDHYQ971",
+      "name_b": "Hewlett-Packard GmbH",
+      "evidence": "different issued LEIs"
+    },
+    {
+      "id": "N05",
+      "label": "different",
+      "lei_a": "I07WOS4YJ0N7YRFE7309",
+      "name_a": "RTX CORPORATION",
+      "lei_b": "549300SSD7KXNIINO370",
+      "name_b": "RTX SAVINGS PLAN MASTER TRUST",
+      "evidence": "different issued LEIs"
+    },
+    {
+      "id": "N06",
+      "label": "different",
+      "lei_a": "I07WOS4YJ0N7YRFE7309",
+      "name_a": "RTX CORPORATION",
+      "lei_b": "549300G3VPSFEIDLOV48",
+      "name_b": "RTX MASTER RETIREMENT TRUST",
+      "evidence": "different issued LEIs"
+    },
+    {
+      "id": "N07",
+      "label": "different",
+      "lei_a": "I07WOS4YJ0N7YRFE7309",
+      "name_a": "RTX CORPORATION",
+      "lei_b": "213800YHEHULT6J8TQ86",
+      "name_b": "UNITED TECHNOLOGIES CORPORATION (UK) PENSION SCHEME",
+      "evidence": "different issued LEIs"
+    },
+    {
+      "id": "N08",
+      "label": "different",
+      "lei_a": "I07WOS4YJ0N7YRFE7309",
+      "name_a": "RTX CORPORATION",
+      "lei_b": "549300O4ZS0AUJQGDA89",
+      "name_b": "RTX VENTURES, LLC",
+      "evidence": "different issued LEIs"
+    },
+    {
+      "id": "N09",
+      "label": "different",
+      "lei_a": "5493006ZCRFWKF6B1K26",
+      "name_a": "WARNER BROS. DISCOVERY, INC.",
+      "lei_b": "636700B1PZIJHNAZL651",
+      "name_b": "AlzeCure Discovery AB",
+      "evidence": "different issued LEIs"
+    },
+    {
+      "id": "N10",
+      "label": "different",
+      "lei_a": "5493006ZCRFWKF6B1K26",
+      "name_a": "WARNER BROS. DISCOVERY, INC.",
+      "lei_b": "378900829E00766A5281",
+      "name_b": "Discovery Invest Collective Investment Scheme",
+      "evidence": "different issued LEIs"
+    },
+    {
+      "id": "N11",
+      "label": "different",
+      "lei_a": "5493006ZCRFWKF6B1K26",
+      "name_a": "WARNER BROS. DISCOVERY, INC.",
+      "lei_b": "3789002F23B6AF11BE66",
+      "name_b": "Discovery Global Multi Asset Fund",
+      "evidence": "different issued LEIs"
+    },
+    {
+      "id": "N12",
+      "label": "different",
+      "lei_a": "894500TOVTJDJJ6WSU81",
+      "name_a": "SILVER X MINING CORP.",
+      "lei_b": "549300KR50UPLTF0XY61",
+      "name_b": "SANTACRUZ SILVER MINING LTD.",
+      "evidence": "different issued LEIs"
+    },
+    {
+      "id": "N13",
+      "label": "different",
+      "lei_a": "894500TOVTJDJJ6WSU81",
+      "name_a": "SILVER X MINING CORP.",
+      "lei_b": "254900L4HEFQR7HP7I23",
+      "name_b": "Silver Bow Mining Corp.",
+      "evidence": "different issued LEIs"
+    },
+    {
+      "id": "N14",
+      "label": "different",
+      "lei_a": "894500TOVTJDJJ6WSU81",
+      "name_a": "SILVER X MINING CORP.",
+      "lei_b": "894500WPVRSDR8BLH071",
+      "name_b": "Silver Storm Mining Ltd.",
+      "evidence": "different issued LEIs"
+    },
+    {
+      "id": "N15",
+      "label": "different",
+      "lei_a": "894500TOVTJDJJ6WSU81",
+      "name_a": "SILVER X MINING CORP.",
+      "lei_b": "875500JAGKFVRK5AB584",
+      "name_b": "Germanium Mining Corp.",
+      "evidence": "different issued LEIs"
+    }
+  ]
+}
