@@ -28,3 +28,16 @@
 - `insufficient_evidence`：无法完成必要查询或证据不可访问。
 
 每项填写 reviewer pseudonymous ID、UTC 开始/提交时间、有效处理秒数、决定方法和可审计来源 URI。评审者之间不共享候选或结论；不一致项交由 adjudicator 并记录最终证据与处理秒数。报告原始一致率、Cohen's kappa、分歧率、平均/中位/P90 处理时间，并换算每 100 个组织的人工处理时长。不得把 `pending` 解释成 no-match，也不得根据公开演练结果外推真实业务工时。
+
+完成或部分填写队列后，用仓库虚拟环境生成报告：
+
+```bash
+.venv/bin/python scripts/report_identity_adjudication.py \
+  docs/validation/ontology-v1/public-study/identity_adjudication_queue_v1.csv
+
+.venv/bin/python scripts/report_identity_adjudication.py \
+  docs/validation/ontology-v1/public-study/identity_adjudication_queue_v1.csv \
+  --format json --output /tmp/identity-adjudication-report.json
+```
+
+报告仅把字段齐全、结果属于上述枚举、UTC 时间合法且耗时为非负数的记录纳入统计。部分记录列入 data-quality issues 并使命令返回非零；仍为 `pending` 且没有填写评审字段的记录只计入待办，不作 no-match 推断。Cohen's kappa 按名义类别计算，分母只使用两名评审均完成的配对记录。
