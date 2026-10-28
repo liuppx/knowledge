@@ -117,3 +117,30 @@ python scripts/validate_gleif_bulgarian_concat.py \
 ```
 
 这完成了“当前日期官方 Concatenated 交付中未观察到目标 LEI”的复核，但不证明组织永久没有 LEI；后续仍需记录人工裁决成本，并在数据更新后重新运行漂移门禁。
+
+## 身份 crosswalk 工具辅助参考件（非独立评审）
+
+[`identity_crosswalk_reference_v1.json`](identity_crosswalk_reference_v1.json) 由
+`scripts/research_identity_crosswalk_probe.py` 对 29 条队列做**单次**公开 GLEIF API 查询生成，
+用于提供一个可审计的参考下界。它**不是**两名评审者的独立裁决，**不得**写入队列的 `reviewer_*` 列，
+也不得外推真实业务工时。
+
+复现：
+
+```bash
+.venv/bin/python scripts/research_identity_crosswalk_probe.py \
+  docs/validation/ontology-v1/public-study/identity_adjudication_queue_v1.csv \
+  docs/validation/ontology-v1/public-study/identity_crosswalk_reference_v1.json
+```
+
+最近一次运行的分类（0 条 authoritative、4 条 candidate、25 条 no-match）要点：
+
+- 对 7 个保加利亚 `RA000065 + UIC`，GLEIF 的 `registeredAs` 过滤均无命中，与官方 Concatenated 全量扫描一致；
+- 6 个美国 UEI 中只有 3 个按名称得到单一 candidate（Hamilton Sundstrand、Vertex Aerospace、Boeing），
+  且 **UEI 不是 GLEIF 的键**，名称命中不能等同权威 crosswalk；
+- Boeing 的名称查询同时返回公司本体与两个关联 Master Trust，正是不得静默合并的 false-merge 陷阱；
+- 关键实现注意：GLEIF 的 `filter[entity.legalName]` **不是精确匹配**，无命中时会返回整个集合（total 可达数万），
+  因此脚本按 `meta.pagination.total` 而非页内记录数判定，避免把“未过滤”误判成“多候选”。
+
+结论：即便对知名美国主承包商，公开数据也得不到 authoritative 的 UEI→LEI crosswalk，只有需裁决的名称候选。
+这支持“用稳定 ID/权威 crosswalk 而非名称阈值自动合并”，但真实一致率与人工成本仍须由两名评审者独立产出。

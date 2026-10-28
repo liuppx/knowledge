@@ -1,0 +1,669 @@
+{
+  "schema": "yeying.research.identity-crosswalk-reference.v1",
+  "disclaimer": "单次工具辅助公开查询参考件，非两名评审者的独立裁决；不得写入 reviewer_* 列，不得外推真实业务成本。",
+  "source_queue": "docs/validation/ontology-v1/public-study/identity_adjudication_queue_v1.csv",
+  "gleif_api": "https://api.gleif.org/api/v1/lei-records",
+  "generated_cases": 29,
+  "classification_tally": {
+    "no_crosswalk_found_in_checked_sources": 25,
+    "candidate_requires_adjudication": 4
+  },
+  "results": [
+    {
+      "case_id": "R001",
+      "source_role": "ted_buyer",
+      "source_name": "AGENTIA NATIONALA DE CADASTRU SI PUBLICITATE IMOBILIARA",
+      "source_identifier": "9051601",
+      "namespace_status": "not_exposed_by_ted_search",
+      "classification": "no_crosswalk_found_in_checked_sources",
+      "checks": [
+        {
+          "method": "gleif registeredAs==UIC & country==BG",
+          "total": 0,
+          "page_records": []
+        }
+      ],
+      "evidence_uris": [
+        "https://api.gleif.org/api/v1/lei-records?filter%5Bentity.registeredAs%5D=9051601&filter%5Bentity.legalAddress.country%5D=BG&page%5Bsize%5D=5"
+      ]
+    },
+    {
+      "case_id": "R002",
+      "source_role": "ted_buyer",
+      "source_name": "AS \"Sadales tīkls\"",
+      "source_identifier": "40003857687",
+      "namespace_status": "not_exposed_by_ted_search",
+      "classification": "no_crosswalk_found_in_checked_sources",
+      "checks": [
+        {
+          "method": "gleif registeredAs==UIC & country==BG",
+          "total": 0,
+          "page_records": []
+        }
+      ],
+      "evidence_uris": [
+        "https://api.gleif.org/api/v1/lei-records?filter%5Bentity.registeredAs%5D=40003857687&filter%5Bentity.legalAddress.country%5D=BG&page%5Bsize%5D=5"
+      ]
+    },
+    {
+      "case_id": "R003",
+      "source_role": "ted_buyer",
+      "source_name": "DB InfraGO AG – Geschäftsbereich Fahrweg (Bukr 16)",
+      "source_identifier": "fb197f94-7578-4673-8a57-4642ae120532",
+      "namespace_status": "not_exposed_by_ted_search",
+      "classification": "no_crosswalk_found_in_checked_sources",
+      "checks": [
+        {
+          "method": "gleif legalName (any country)",
+          "total": 0,
+          "page_records": []
+        }
+      ],
+      "evidence_uris": [
+        "https://api.gleif.org/api/v1/lei-records?filter%5Bentity.legalName%5D=DB+InfraGO+AG+%E2%80%93+Gesch%C3%A4ftsbereich+Fahrweg+%28Bukr+16%29&page%5Bsize%5D=5"
+      ]
+    },
+    {
+      "case_id": "R004",
+      "source_role": "ted_buyer",
+      "source_name": "DB InfraGO AG – Geschäftsbereich Personenbahnhöfe (Bukr 11)",
+      "source_identifier": "a6ceb1fb-e3c6-459d-a608-8a792d7bf449",
+      "namespace_status": "not_exposed_by_ted_search",
+      "classification": "no_crosswalk_found_in_checked_sources",
+      "checks": [
+        {
+          "method": "gleif legalName (any country)",
+          "total": 0,
+          "page_records": []
+        }
+      ],
+      "evidence_uris": [
+        "https://api.gleif.org/api/v1/lei-records?filter%5Bentity.legalName%5D=DB+InfraGO+AG+%E2%80%93+Gesch%C3%A4ftsbereich+Personenbahnh%C3%B6fe+%28Bukr+11%29&page%5Bsize%5D=5"
+      ]
+    },
+    {
+      "case_id": "R005",
+      "source_role": "ted_buyer",
+      "source_name": "Dienvidkurzemes novada pašvaldība",
+      "source_identifier": "90000058625",
+      "namespace_status": "not_exposed_by_ted_search",
+      "classification": "no_crosswalk_found_in_checked_sources",
+      "checks": [
+        {
+          "method": "gleif registeredAs==UIC & country==BG",
+          "total": 0,
+          "page_records": []
+        }
+      ],
+      "evidence_uris": [
+        "https://api.gleif.org/api/v1/lei-records?filter%5Bentity.registeredAs%5D=90000058625&filter%5Bentity.legalAddress.country%5D=BG&page%5Bsize%5D=5"
+      ]
+    },
+    {
+      "case_id": "R006",
+      "source_role": "ted_buyer",
+      "source_name": "INSPECTORATUL GENERAL AL POLITIEI DE FRONTIERA",
+      "source_identifier": "4193222",
+      "namespace_status": "not_exposed_by_ted_search",
+      "classification": "no_crosswalk_found_in_checked_sources",
+      "checks": [
+        {
+          "method": "gleif registeredAs==UIC & country==BG",
+          "total": 0,
+          "page_records": []
+        }
+      ],
+      "evidence_uris": [
+        "https://api.gleif.org/api/v1/lei-records?filter%5Bentity.registeredAs%5D=4193222&filter%5Bentity.legalAddress.country%5D=BG&page%5Bsize%5D=5"
+      ]
+    },
+    {
+      "case_id": "R007",
+      "source_role": "ted_buyer",
+      "source_name": "Kuusalu Vallavalitsus",
+      "source_identifier": "75033496",
+      "namespace_status": "not_exposed_by_ted_search",
+      "classification": "no_crosswalk_found_in_checked_sources",
+      "checks": [
+        {
+          "method": "gleif registeredAs==UIC & country==BG",
+          "total": 0,
+          "page_records": []
+        }
+      ],
+      "evidence_uris": [
+        "https://api.gleif.org/api/v1/lei-records?filter%5Bentity.registeredAs%5D=75033496&filter%5Bentity.legalAddress.country%5D=BG&page%5Bsize%5D=5"
+      ]
+    },
+    {
+      "case_id": "R008",
+      "source_role": "ted_buyer",
+      "source_name": "MINISTERUL APARARII UNITATEA MILITARA 02033 IASI",
+      "source_identifier": "14593609",
+      "namespace_status": "not_exposed_by_ted_search",
+      "classification": "no_crosswalk_found_in_checked_sources",
+      "checks": [
+        {
+          "method": "gleif registeredAs==UIC & country==BG",
+          "total": 0,
+          "page_records": []
+        }
+      ],
+      "evidence_uris": [
+        "https://api.gleif.org/api/v1/lei-records?filter%5Bentity.registeredAs%5D=14593609&filter%5Bentity.legalAddress.country%5D=BG&page%5Bsize%5D=5"
+      ]
+    },
+    {
+      "case_id": "R009",
+      "source_role": "ted_buyer",
+      "source_name": "ВОДОСНАБДЯВАНЕ И КАНАЛИЗАЦИЯ ДОБРИЧ АД",
+      "source_identifier": "204219357",
+      "namespace_status": "not_exposed_by_ted_search",
+      "classification": "no_crosswalk_found_in_checked_sources",
+      "checks": [
+        {
+          "method": "gleif registeredAs==UIC & country==BG",
+          "total": 0,
+          "page_records": []
+        }
+      ],
+      "evidence_uris": [
+        "https://api.gleif.org/api/v1/lei-records?filter%5Bentity.registeredAs%5D=204219357&filter%5Bentity.legalAddress.country%5D=BG&page%5Bsize%5D=5"
+      ]
+    },
+    {
+      "case_id": "R010",
+      "source_role": "ted_buyer",
+      "source_name": "ТЕЦ МАРИЦА ИЗТОК 2 ЕАД",
+      "source_identifier": "123531939",
+      "namespace_status": "authoritative_ra000065_confirmed_by_registry",
+      "classification": "no_crosswalk_found_in_checked_sources",
+      "checks": [
+        {
+          "method": "gleif registeredAs==UIC & country==BG",
+          "total": 0,
+          "page_records": []
+        }
+      ],
+      "evidence_uris": [
+        "https://api.gleif.org/api/v1/lei-records?filter%5Bentity.registeredAs%5D=123531939&filter%5Bentity.legalAddress.country%5D=BG&page%5Bsize%5D=5"
+      ]
+    },
+    {
+      "case_id": "R011",
+      "source_role": "ted_winner",
+      "source_name": "BTH Bahn- und Tiefbau GmbH",
+      "source_identifier": "0a809026-83de-4f58-bc42-f0bc7d1ad05d",
+      "namespace_status": "not_exposed_by_ted_search",
+      "classification": "no_crosswalk_found_in_checked_sources",
+      "checks": [
+        {
+          "method": "gleif legalName (any country)",
+          "total": 0,
+          "page_records": []
+        }
+      ],
+      "evidence_uris": [
+        "https://api.gleif.org/api/v1/lei-records?filter%5Bentity.legalName%5D=BTH+Bahn-+und+Tiefbau+GmbH&page%5Bsize%5D=5"
+      ]
+    },
+    {
+      "case_id": "R012",
+      "source_role": "ted_winner",
+      "source_name": "SIA \"DEVRE\"",
+      "source_identifier": "44103125989",
+      "namespace_status": "not_exposed_by_ted_search",
+      "classification": "no_crosswalk_found_in_checked_sources",
+      "checks": [
+        {
+          "method": "gleif registeredAs==UIC & country==BG",
+          "total": 0,
+          "page_records": []
+        }
+      ],
+      "evidence_uris": [
+        "https://api.gleif.org/api/v1/lei-records?filter%5Bentity.registeredAs%5D=44103125989&filter%5Bentity.legalAddress.country%5D=BG&page%5Bsize%5D=5"
+      ]
+    },
+    {
+      "case_id": "R013",
+      "source_role": "ted_winner",
+      "source_name": "Sabiedrība ar ierobežotu atbildību \"Elnetworks\"",
+      "source_identifier": "42103054809",
+      "namespace_status": "not_exposed_by_ted_search",
+      "classification": "no_crosswalk_found_in_checked_sources",
+      "checks": [
+        {
+          "method": "gleif registeredAs==UIC & country==BG",
+          "total": 0,
+          "page_records": []
+        }
+      ],
+      "evidence_uris": [
+        "https://api.gleif.org/api/v1/lei-records?filter%5Bentity.registeredAs%5D=42103054809&filter%5Bentity.legalAddress.country%5D=BG&page%5Bsize%5D=5"
+      ]
+    },
+    {
+      "case_id": "R014",
+      "source_role": "ted_winner",
+      "source_name": "Sabiedrība ar ierobežotu atbildību \"Enersense\"",
+      "source_identifier": "50003563201",
+      "namespace_status": "not_exposed_by_ted_search",
+      "classification": "no_crosswalk_found_in_checked_sources",
+      "checks": [
+        {
+          "method": "gleif registeredAs==UIC & country==BG",
+          "total": 0,
+          "page_records": []
+        }
+      ],
+      "evidence_uris": [
+        "https://api.gleif.org/api/v1/lei-records?filter%5Bentity.registeredAs%5D=50003563201&filter%5Bentity.legalAddress.country%5D=BG&page%5Bsize%5D=5"
+      ]
+    },
+    {
+      "case_id": "R015",
+      "source_role": "ted_winner",
+      "source_name": "Sabiedrība ar ierobežotu atbildību \"VOLTS-1\"",
+      "source_identifier": "51203003591",
+      "namespace_status": "not_exposed_by_ted_search",
+      "classification": "no_crosswalk_found_in_checked_sources",
+      "checks": [
+        {
+          "method": "gleif registeredAs==UIC & country==BG",
+          "total": 0,
+          "page_records": []
+        }
+      ],
+      "evidence_uris": [
+        "https://api.gleif.org/api/v1/lei-records?filter%5Bentity.registeredAs%5D=51203003591&filter%5Bentity.legalAddress.country%5D=BG&page%5Bsize%5D=5"
+      ]
+    },
+    {
+      "case_id": "R016",
+      "source_role": "ted_winner",
+      "source_name": "Wieland & Schultz GmbH",
+      "source_identifier": "4919756c-f60e-484d-9331-1c8fc5ccf38f",
+      "namespace_status": "not_exposed_by_ted_search",
+      "classification": "candidate_requires_adjudication",
+      "checks": [
+        {
+          "method": "gleif legalName (any country)",
+          "total": 1,
+          "page_records": [
+            {
+              "lei": "391200DILLO232JU7Z90",
+              "legal_name": "Wieland & Schultz SiKoTec GmbH",
+              "country": "DE",
+              "registered_as": "HRB 725348",
+              "registered_at": "RA000296",
+              "status": "ACTIVE"
+            }
+          ]
+        }
+      ],
+      "evidence_uris": [
+        "https://api.gleif.org/api/v1/lei-records?filter%5Bentity.legalName%5D=Wieland+%26+Schultz+GmbH&page%5Bsize%5D=5"
+      ]
+    },
+    {
+      "case_id": "R017",
+      "source_role": "ted_winner",
+      "source_name": "ВАЛИС ООД",
+      "source_identifier": "123630361",
+      "namespace_status": "authoritative_ra000065_confirmed_by_registry",
+      "classification": "no_crosswalk_found_in_checked_sources",
+      "checks": [
+        {
+          "method": "gleif registeredAs==UIC & country==BG",
+          "total": 0,
+          "page_records": []
+        }
+      ],
+      "evidence_uris": [
+        "https://api.gleif.org/api/v1/lei-records?filter%5Bentity.registeredAs%5D=123630361&filter%5Bentity.legalAddress.country%5D=BG&page%5Bsize%5D=5"
+      ]
+    },
+    {
+      "case_id": "R018",
+      "source_role": "ted_winner",
+      "source_name": "ВиК Енерджи груп ЕООД",
+      "source_identifier": "206705510",
+      "namespace_status": "not_exposed_by_ted_search",
+      "classification": "no_crosswalk_found_in_checked_sources",
+      "checks": [
+        {
+          "method": "gleif registeredAs==UIC & country==BG",
+          "total": 0,
+          "page_records": []
+        }
+      ],
+      "evidence_uris": [
+        "https://api.gleif.org/api/v1/lei-records?filter%5Bentity.registeredAs%5D=206705510&filter%5Bentity.legalAddress.country%5D=BG&page%5Bsize%5D=5"
+      ]
+    },
+    {
+      "case_id": "R019",
+      "source_role": "ted_winner",
+      "source_name": "ЕЛИТ - МОНТАЖ ЕООД",
+      "source_identifier": "123018503",
+      "namespace_status": "authoritative_ra000065_confirmed_by_registry",
+      "classification": "no_crosswalk_found_in_checked_sources",
+      "checks": [
+        {
+          "method": "gleif registeredAs==UIC & country==BG",
+          "total": 0,
+          "page_records": []
+        }
+      ],
+      "evidence_uris": [
+        "https://api.gleif.org/api/v1/lei-records?filter%5Bentity.registeredAs%5D=123018503&filter%5Bentity.legalAddress.country%5D=BG&page%5Bsize%5D=5"
+      ]
+    },
+    {
+      "case_id": "R020",
+      "source_role": "ted_winner",
+      "source_name": "МЕТАЛИК АД",
+      "source_identifier": "833067427",
+      "namespace_status": "authoritative_ra000065_confirmed_by_registry",
+      "classification": "no_crosswalk_found_in_checked_sources",
+      "checks": [
+        {
+          "method": "gleif registeredAs==UIC & country==BG",
+          "total": 0,
+          "page_records": []
+        }
+      ],
+      "evidence_uris": [
+        "https://api.gleif.org/api/v1/lei-records?filter%5Bentity.registeredAs%5D=833067427&filter%5Bentity.legalAddress.country%5D=BG&page%5Bsize%5D=5"
+      ]
+    },
+    {
+      "case_id": "R021",
+      "source_role": "ted_winner",
+      "source_name": "МЕТАЛИНВЕСТ-РЕМКО ЕООД",
+      "source_identifier": "106567752",
+      "namespace_status": "authoritative_ra000065_confirmed_by_registry",
+      "classification": "no_crosswalk_found_in_checked_sources",
+      "checks": [
+        {
+          "method": "gleif registeredAs==UIC & country==BG",
+          "total": 0,
+          "page_records": []
+        }
+      ],
+      "evidence_uris": [
+        "https://api.gleif.org/api/v1/lei-records?filter%5Bentity.registeredAs%5D=106567752&filter%5Bentity.legalAddress.country%5D=BG&page%5Bsize%5D=5"
+      ]
+    },
+    {
+      "case_id": "R022",
+      "source_role": "ted_winner",
+      "source_name": "ПЕТКО ПЕТКОВ - 24 ООД",
+      "source_identifier": "123587426",
+      "namespace_status": "authoritative_ra000065_confirmed_by_registry",
+      "classification": "no_crosswalk_found_in_checked_sources",
+      "checks": [
+        {
+          "method": "gleif registeredAs==UIC & country==BG",
+          "total": 0,
+          "page_records": []
+        }
+      ],
+      "evidence_uris": [
+        "https://api.gleif.org/api/v1/lei-records?filter%5Bentity.registeredAs%5D=123587426&filter%5Bentity.legalAddress.country%5D=BG&page%5Bsize%5D=5"
+      ]
+    },
+    {
+      "case_id": "R023",
+      "source_role": "ted_winner",
+      "source_name": "РУДИН ООД",
+      "source_identifier": "202714798",
+      "namespace_status": "authoritative_ra000065_confirmed_by_registry",
+      "classification": "no_crosswalk_found_in_checked_sources",
+      "checks": [
+        {
+          "method": "gleif registeredAs==UIC & country==BG",
+          "total": 0,
+          "page_records": []
+        }
+      ],
+      "evidence_uris": [
+        "https://api.gleif.org/api/v1/lei-records?filter%5Bentity.registeredAs%5D=202714798&filter%5Bentity.legalAddress.country%5D=BG&page%5Bsize%5D=5"
+      ]
+    },
+    {
+      "case_id": "R024",
+      "source_role": "usa_recipient",
+      "source_name": "GENERAL DYNAMICS INFORMATION TECHNOLOGY, INC.",
+      "source_identifier": "NYM8TAUFLXP3",
+      "namespace_status": "known_source_namespace",
+      "classification": "no_crosswalk_found_in_checked_sources",
+      "checks": [
+        {
+          "method": "gleif legalName (US); UEI is NOT a GLEIF key",
+          "total": 43449,
+          "page_records": [
+            {
+              "lei": "2549009DDQMA6IJTTB95",
+              "legal_name": "Pruvations Inc 401K Inc",
+              "country": "US",
+              "registered_as": "0450425171",
+              "registered_at": "RA000625",
+              "status": "ACTIVE"
+            },
+            {
+              "lei": "549300HG3P8O47ZOXT24",
+              "legal_name": "GIIG, Inc. TOOT, Inc.",
+              "country": "US",
+              "registered_as": null,
+              "registered_at": "RA999999",
+              "status": "ACTIVE"
+            },
+            {
+              "lei": "254900BKPTPRT0NOC077",
+              "legal_name": "Guillotine Inc.",
+              "country": "US",
+              "registered_as": "10651679",
+              "registered_at": "RA000602",
+              "status": "ACTIVE"
+            },
+            {
+              "lei": "254900OWW9U1W0M2V060",
+              "legal_name": "VOTR INC.",
+              "country": "US",
+              "registered_as": "2959181",
+              "registered_at": "RA000602",
+              "status": "ACTIVE"
+            },
+            {
+              "lei": "254900WRNEQME15Q5N07",
+              "legal_name": "ABACUS.AI, INC.",
+              "country": "US",
+              "registered_as": "7323864",
+              "registered_at": "RA000602",
+              "status": "ACTIVE"
+            }
+          ]
+        }
+      ],
+      "evidence_uris": [
+        "https://api.gleif.org/api/v1/lei-records?filter%5Bentity.legalName%5D=GENERAL+DYNAMICS+INFORMATION+TECHNOLOGY%2C+INC.&filter%5Bentity.legalAddress.country%5D=US&page%5Bsize%5D=5"
+      ]
+    },
+    {
+      "case_id": "R025",
+      "source_role": "usa_recipient",
+      "source_name": "HAMILTON SUNDSTRAND CORPORATION",
+      "source_identifier": "JC42EBJ5NFJ1",
+      "namespace_status": "known_source_namespace",
+      "classification": "candidate_requires_adjudication",
+      "checks": [
+        {
+          "method": "gleif legalName (US); UEI is NOT a GLEIF key",
+          "total": 1,
+          "page_records": [
+            {
+              "lei": "549300F6QQRMY8JUAD47",
+              "legal_name": "HAMILTON SUNDSTRAND CORPORATION",
+              "country": "US",
+              "registered_as": "3006271",
+              "registered_at": "RA000602",
+              "status": "ACTIVE"
+            }
+          ]
+        }
+      ],
+      "evidence_uris": [
+        "https://api.gleif.org/api/v1/lei-records?filter%5Bentity.legalName%5D=HAMILTON+SUNDSTRAND+CORPORATION&filter%5Bentity.legalAddress.country%5D=US&page%5Bsize%5D=5"
+      ]
+    },
+    {
+      "case_id": "R026",
+      "source_role": "usa_recipient",
+      "source_name": "HPI FEDERAL LLC",
+      "source_identifier": "DJRUN4KK1HK3",
+      "namespace_status": "known_source_namespace",
+      "classification": "no_crosswalk_found_in_checked_sources",
+      "checks": [
+        {
+          "method": "gleif legalName (US); UEI is NOT a GLEIF key",
+          "total": 0,
+          "page_records": []
+        }
+      ],
+      "evidence_uris": [
+        "https://api.gleif.org/api/v1/lei-records?filter%5Bentity.legalName%5D=HPI+FEDERAL+LLC&filter%5Bentity.legalAddress.country%5D=US&page%5Bsize%5D=5"
+      ]
+    },
+    {
+      "case_id": "R027",
+      "source_role": "usa_recipient",
+      "source_name": "NEW CINGULAR WIRELESS SERVICES, INC.",
+      "source_identifier": "E5FGYCH7UWL6",
+      "namespace_status": "known_source_namespace",
+      "classification": "no_crosswalk_found_in_checked_sources",
+      "checks": [
+        {
+          "method": "gleif legalName (US); UEI is NOT a GLEIF key",
+          "total": 43449,
+          "page_records": [
+            {
+              "lei": "2549009DDQMA6IJTTB95",
+              "legal_name": "Pruvations Inc 401K Inc",
+              "country": "US",
+              "registered_as": "0450425171",
+              "registered_at": "RA000625",
+              "status": "ACTIVE"
+            },
+            {
+              "lei": "549300HG3P8O47ZOXT24",
+              "legal_name": "GIIG, Inc. TOOT, Inc.",
+              "country": "US",
+              "registered_as": null,
+              "registered_at": "RA999999",
+              "status": "ACTIVE"
+            },
+            {
+              "lei": "254900BKPTPRT0NOC077",
+              "legal_name": "Guillotine Inc.",
+              "country": "US",
+              "registered_as": "10651679",
+              "registered_at": "RA000602",
+              "status": "ACTIVE"
+            },
+            {
+              "lei": "254900OWW9U1W0M2V060",
+              "legal_name": "VOTR INC.",
+              "country": "US",
+              "registered_as": "2959181",
+              "registered_at": "RA000602",
+              "status": "ACTIVE"
+            },
+            {
+              "lei": "254900WRNEQME15Q5N07",
+              "legal_name": "ABACUS.AI, INC.",
+              "country": "US",
+              "registered_as": "7323864",
+              "registered_at": "RA000602",
+              "status": "ACTIVE"
+            }
+          ]
+        }
+      ],
+      "evidence_uris": [
+        "https://api.gleif.org/api/v1/lei-records?filter%5Bentity.legalName%5D=NEW+CINGULAR+WIRELESS+SERVICES%2C+INC.&filter%5Bentity.legalAddress.country%5D=US&page%5Bsize%5D=5"
+      ]
+    },
+    {
+      "case_id": "R028",
+      "source_role": "usa_recipient",
+      "source_name": "THE BOEING COMPANY",
+      "source_identifier": "LYL4E7AZMKN7",
+      "namespace_status": "known_source_namespace",
+      "classification": "candidate_requires_adjudication",
+      "checks": [
+        {
+          "method": "gleif legalName (US); UEI is NOT a GLEIF key",
+          "total": 3,
+          "page_records": [
+            {
+              "lei": "RVHJWBXLJ1RFUBSY1F30",
+              "legal_name": "THE BOEING COMPANY",
+              "country": "US",
+              "registered_as": "334807",
+              "registered_at": "RA000602",
+              "status": "ACTIVE"
+            },
+            {
+              "lei": "7ZE7Y847DN5MYFKTGY57",
+              "legal_name": "The Boeing Company Employee Savings Plans Master Trust",
+              "country": "US",
+              "registered_as": null,
+              "registered_at": "RA999999",
+              "status": "ACTIVE"
+            },
+            {
+              "lei": "1YUFC5ZDM2WIXF56CS74",
+              "legal_name": "The Boeing Company Employee Retirement Plans Master Trust",
+              "country": "US",
+              "registered_as": null,
+              "registered_at": "RA999999",
+              "status": "ACTIVE"
+            }
+          ]
+        }
+      ],
+      "evidence_uris": [
+        "https://api.gleif.org/api/v1/lei-records?filter%5Bentity.legalName%5D=THE+BOEING+COMPANY&filter%5Bentity.legalAddress.country%5D=US&page%5Bsize%5D=5"
+      ]
+    },
+    {
+      "case_id": "R029",
+      "source_role": "usa_recipient",
+      "source_name": "VERTEX AEROSPACE LLC",
+      "source_identifier": "CDWHLNLYJHX1",
+      "namespace_status": "known_source_namespace",
+      "classification": "candidate_requires_adjudication",
+      "checks": [
+        {
+          "method": "gleif legalName (US); UEI is NOT a GLEIF key",
+          "total": 1,
+          "page_records": [
+            {
+              "lei": "549300X5CXKHM1VC0O80",
+              "legal_name": "VERTEX AEROSPACE LLC",
+              "country": "US",
+              "registered_as": "3375318",
+              "registered_at": "RA000602",
+              "status": "ACTIVE"
+            }
+          ]
+        }
+      ],
+      "evidence_uris": [
+        "https://api.gleif.org/api/v1/lei-records?filter%5Bentity.legalName%5D=VERTEX+AEROSPACE+LLC&filter%5Bentity.legalAddress.country%5D=US&page%5Bsize%5D=5"
+      ]
+    }
+  ]
+}
