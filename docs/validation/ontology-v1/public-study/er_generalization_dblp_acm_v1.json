@@ -1,0 +1,70 @@
+{
+  "schema": "yeying.research.er-generalization-check.v1",
+  "disclaimer": "本报告是对 DBLP-ACM（独立学术引文基准，Leipzig DB Group 自 2010 年维护，与 USAspending/TED/GLEIF 无关）的泛化检验，不替代 Task 238 的三项外部依赖（隐藏题集/真实 query log、两名非开发者独立评审、授权真实工作流）。",
+  "dataset_source": "https://dbs.uni-leipzig.de/research/projects/benchmark-datasets-for-entity-resolution",
+  "dataset_files": [
+    "ACM.csv",
+    "DBLP2.csv",
+    "DBLP-ACM_perfectMapping.csv"
+  ],
+  "pairs_total": 4448,
+  "pairs_same": 2224,
+  "pairs_different": 2224,
+  "h4_targets": {
+    "precision": 0.98,
+    "recall": 0.9,
+    "false_merge_rate": 0.01
+  },
+  "name_only_methods": {
+    "sequence_similarity": {
+      "best_f1": {
+        "threshold": 0.65,
+        "tp": 2208,
+        "fp": 3,
+        "fn": 16,
+        "tn": 2221,
+        "precision": 0.9986,
+        "recall": 0.9928,
+        "f1": 0.9957,
+        "false_merge_rate": 0.0013
+      },
+      "qualifying_threshold_count": 11
+    },
+    "token_jaccard_without_stopwords": {
+      "best_f1": {
+        "threshold": 0.25,
+        "tp": 2222,
+        "fp": 6,
+        "fn": 2,
+        "tn": 2218,
+        "precision": 0.9973,
+        "recall": 0.9991,
+        "f1": 0.9982,
+        "false_merge_rate": 0.0027
+      },
+      "qualifying_threshold_count": 17
+    },
+    "max_sequence_or_jaccard": {
+      "best_f1": {
+        "threshold": 0.65,
+        "tp": 2212,
+        "fp": 3,
+        "fn": 12,
+        "tn": 2221,
+        "precision": 0.9986,
+        "recall": 0.9946,
+        "f1": 0.9966,
+        "false_merge_rate": 0.0013
+      },
+      "qualifying_threshold_count": 11
+    }
+  },
+  "decision": {
+    "any_name_only_threshold_meets_h4": true
+  },
+  "limitations": [
+    "This is title-string matching on academic citation records, not organization/company identity resolution; it tests whether the GLEIF finding generalizes across domains, not whether it applies directly to the ontology's business entities.",
+    "Hard negatives are same-venue/same-year paper pairs, a stress-test construction, not a production prevalence estimate.",
+    "Positive pairs come from the dataset's published gold mapping, an academic ground truth; it is not a substitute for the two-non-developer identity adjudication required by the research plan."
+  ]
+}
