@@ -6,25 +6,6 @@ export type { TokenPair } from "./session";
 export type PassportSession = Schema<"PassportSessionResponse">;
 export type PassportSessionStatus = Schema<"PassportStatusResponse">;
 
-export function createIdentityLoginFetcher(fetcher: typeof fetch = fetch): typeof fetch {
-  return async (input, init) => {
-    const response = await fetcher(input, init);
-    if (!response.ok) return response;
-
-    const payload: unknown = await response.clone().json();
-    if (!payload || typeof payload !== "object" || "data" in payload || "code" in payload) return response;
-
-    const headers = new Headers(response.headers);
-    headers.delete("content-length");
-    headers.delete("content-encoding");
-    return new Response(JSON.stringify({ data: payload }), {
-      status: response.status,
-      statusText: response.statusText,
-      headers,
-    });
-  };
-}
-
 export const passportApi = {
   createSession: () => request<PassportSession>("/auth/passport/sessions", { method: "POST" }),
   getSession: (sessionId: string) => request<PassportSessionStatus>(`/auth/passport/sessions/${encodeURIComponent(sessionId)}`),

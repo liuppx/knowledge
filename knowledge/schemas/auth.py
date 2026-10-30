@@ -28,6 +28,7 @@ class TokenResponse(BaseModel):
     wallet_address: str
     expires_at: datetime
     refresh_expires_at: datetime
+    did: str | None = None
 
 
 class RefreshRequest(BaseModel):
@@ -44,3 +45,30 @@ class PassportSessionResponse(BaseModel):
 class PassportStatusResponse(BaseModel):
     status: str
     token: TokenResponse | None = None
+
+
+class WalletIdentityLoginSession(BaseModel):
+    session_id: str
+    audience: str
+    nonce: str
+    scopes: list[str]
+    issuerEndpoint: str | None = None
+    expires_at: datetime
+
+
+class WalletIdentityLoginSessionEnvelope(BaseModel):
+    code: int = 0
+    message: str = "ok"
+    data: WalletIdentityLoginSession
+
+
+class WalletIdentityLoginVerifyRequest(BaseModel):
+    session_id: str
+    request_id: str | None = None
+    presentation: dict
+
+
+class WalletIdentityLoginResultEnvelope(BaseModel):
+    code: int = 0
+    message: str = "ok"
+    data: TokenResponse

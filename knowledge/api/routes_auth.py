@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from sqlalchemy.orm import Session
 
 from knowledge.core.settings import get_settings
@@ -20,7 +20,18 @@ from knowledge.models import (
     SourceAsset,
     WalletUser,
 )
-from knowledge.schemas.auth import ChallengeRequest, ChallengeResponse, PassportSessionResponse, PassportStatusResponse, RefreshRequest, TokenResponse, VerifyRequest
+from knowledge.schemas.auth import (
+    ChallengeRequest,
+    ChallengeResponse,
+    PassportSessionResponse,
+    PassportStatusResponse,
+    RefreshRequest,
+    TokenResponse,
+    VerifyRequest,
+    WalletIdentityLoginResultEnvelope,
+    WalletIdentityLoginSessionEnvelope,
+    WalletIdentityLoginVerifyRequest,
+)
 from knowledge.services.auth import AuthService
 from knowledge.services.passport_auth import PassportAuthService
 from knowledge.utils.time import utc_now
@@ -351,21 +362,30 @@ def create_passport_session(db: Session = Depends(get_db)) -> PassportSessionRes
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     return PassportSessionResponse(session_id=session.id, verify_url=session.verify_url, status=session.status, expires_at=session.expires_at)
 
-@router.post("/identity/login/session")
-def create_identity_login_session(db: Session = Depends(get_db)) -> dict:
+@router.post("/identity/login/session", response_model=WalletIdentityLoginSessionEnvelope)
+def create_identity_login_session(request: Request, db: Session = Depends(get_db)) -> dict:
+    scheme = (request.headers.get("x-forwarded-proto") or request.url.scheme).split(",", 1)[0].strip()
+    host = (request.headers.get("x-forwarded-host") or request.headers.get("host") or request.url.netloc).split(",", 1)[0].strip()
+    audience = f"{scheme}://{host}"
     try:
-        return passport_service.create_identity_session(db)
+        return {"code": 0, "message": "ok", "data": passport_service.create_identity_session(db, audience)}
     except ValueError as exc:
-        raise HTTPException(status_code=503, detail=str(exc)) from exc
+        return JSONResponse(status_code=503, content={"code": 1, "message": str(exc)})
 
-@router.post("/identity/login/verify", response_model=TokenResponse)
-def verify_identity_login(payload: dict, db: Session = Depends(get_db)) -> TokenResponse:
+@router.post("/identity/login/verify", response_model=WalletIdentityLoginResultEnvelope)
+def verify_identity_login(payload: WalletIdentityLoginVerifyRequest, db: Session = Depends(get_db)) -> dict:
     try:
-        address = passport_service.verify_identity(db, str(payload.get("session_id") or ""), payload.get("presentation") or {})
+        address, did = passport_service.verify_identity(
+            db,
+            payload.session_id,
+            payload.request_id,
+            payload.presentation,
+        )
     except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    access, refresh = service.create_token_pair(address)
-    return TokenResponse(access_token=access[0], token=access[0], refresh_token=refresh[0], wallet_address=address, expires_at=access[1], refresh_expires_at=refresh[1])
+        return JSONResponse(status_code=400, content={"code": 1, "message": str(exc)})
+    access, refresh = service.create_token_pair(address, did)
+    token_response = TokenResponse(access_token=access[0], token=access[0], refresh_token=refresh[0], wallet_address=address, did=did, expires_at=access[1], refresh_expires_at=refresh[1])
+    return {"code": 0, "message": "ok", "data": token_response.model_dump(mode="json")}
 
 
 @router.get("/passport/callback", response_class=HTMLResponse)
@@ -374,7 +394,7 @@ def passport_callback(code: str = Query(min_length=1), state: str = Query(min_le
         passport_service.receive_callback(db, state, code)
     except LookupError as exc:
         raise HTTPException(status_code=410, detail=str(exc)) from exc
-    return HTMLResponse("<html><body><p>夜莺通行证登录已确认，请回到 Knowledge 继续使用。</p></body></html>")
+    return HTMLResponse("<!doctype html><html lang='zh-CN'><meta charset='utf-8'><title>登录已确认</title><body><p>夜莺身份已确认，请返回 Knowledge。</p><script>setTimeout(function(){window.close()},300)</script></body></html>")
 
 
 @router.get("/passport/sessions/{session_id}", response_model=PassportStatusResponse)
@@ -387,12 +407,12 @@ def get_passport_session(session_id: str, db: Session = Depends(get_db)) -> Pass
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     if session.status != "completed" or not session.wallet_address:
         return PassportStatusResponse(status=session.status)
-    access, refresh = service.create_token_pair(session.wallet_address)
+    access, refresh = service.create_token_pair(session.wallet_address, session.identity_did)
     return PassportStatusResponse(
         status="completed",
         token=TokenResponse(
             access_token=access[0], token=access[0], refresh_token=refresh[0], wallet_address=session.wallet_address,
-            expires_at=access[1], refresh_expires_at=refresh[1],
+            did=session.identity_did, expires_at=access[1], refresh_expires_at=refresh[1],
         ),
     )
 
@@ -424,11 +444,12 @@ def refresh_token(payload: RefreshRequest) -> TokenResponse:
         claims = service.parse_token(payload.refresh_token, expected_type="refresh")
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(status_code=401, detail=str(exc)) from exc
-    access, refresh = service.create_token_pair(str(claims["wallet_address"]).lower())
+    access, refresh = service.create_token_pair(str(claims["wallet_address"]).lower(), str(claims.get("did") or "") or None)
     return TokenResponse(
         access_token=access[0],
         refresh_token=refresh[0],
         wallet_address=str(claims["wallet_address"]).lower(),
+        did=str(claims.get("did") or "") or None,
         expires_at=access[1],
         refresh_expires_at=refresh[1],
     )

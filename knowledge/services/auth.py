@@ -87,7 +87,7 @@ class AuthService:
         db.refresh(user)
         return user
 
-    def _build_token(self, wallet_address: str, token_type: str, minutes: int) -> tuple[str, datetime]:
+    def _build_token(self, wallet_address: str, token_type: str, minutes: int, did: str | None = None) -> tuple[str, datetime]:
         expires_at = utc_now() + timedelta(minutes=minutes)
         payload = {
             "sub": wallet_address,
@@ -96,12 +96,14 @@ class AuthService:
             "exp": expires_at,
             "iat": utc_now(),
         }
+        if did:
+            payload["did"] = did
         token = jwt.encode(payload, self.settings.jwt_secret, algorithm=self.settings.jwt_algorithm)
         return token, expires_at
 
-    def create_token_pair(self, wallet_address: str) -> tuple[tuple[str, datetime], tuple[str, datetime]]:
-        access = self._build_token(wallet_address, "access", self.settings.access_token_expire_minutes)
-        refresh = self._build_token(wallet_address, "refresh", self.settings.refresh_token_expire_minutes)
+    def create_token_pair(self, wallet_address: str, did: str | None = None) -> tuple[tuple[str, datetime], tuple[str, datetime]]:
+        access = self._build_token(wallet_address, "access", self.settings.access_token_expire_minutes, did)
+        refresh = self._build_token(wallet_address, "refresh", self.settings.refresh_token_expire_minutes, did)
         return access, refresh
 
     def parse_token(self, token: str, expected_type: str = "access") -> dict:

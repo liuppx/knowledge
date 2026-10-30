@@ -40,6 +40,7 @@ class WalletUser(Base):
     __tablename__ = "wallet_users"
 
     wallet_address: Mapped[str] = mapped_column(String(64), primary_key=True)
+    identity_did: Mapped[str | None] = mapped_column(String(255), unique=True, index=True, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, nullable=False)
     last_login_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, nullable=False)
 
@@ -65,9 +66,14 @@ class PassportLoginSession(Base):
     request_id: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
     code_verifier: Mapped[str] = mapped_column(String(255), nullable=False)
     redirect_uri: Mapped[str] = mapped_column(String(1024), nullable=False)
+    state: Mapped[str | None] = mapped_column(String(128), unique=True, nullable=True)
+    audience: Mapped[str | None] = mapped_column(String(1024), nullable=True)
+    nonce: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    scopes: Mapped[list] = mapped_column(JSON, default=list, nullable=False)
     status: Mapped[str] = mapped_column(String(32), default="pending", nullable=False)
     authorization_code: Mapped[str | None] = mapped_column(String(2048), nullable=True)
-    subject_id: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
+    subject_id: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)  # legacy data only; never used for login
+    identity_did: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
     wallet_address: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
     expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, nullable=False)

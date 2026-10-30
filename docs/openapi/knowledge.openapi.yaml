@@ -91,8 +91,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                title: Response Create Identity Login Session Auth Identity Login Session Post
+                $ref: '#/components/schemas/WalletIdentityLoginSessionEnvelope'
   /auth/identity/login/verify:
     post:
       tags:
@@ -103,8 +102,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              title: Payload
+              $ref: '#/components/schemas/WalletIdentityLoginVerifyRequest'
         required: true
       responses:
         '200':
@@ -112,7 +110,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TokenResponse'
+                $ref: '#/components/schemas/WalletIdentityLoginResultEnvelope'
         '422':
           description: Validation Error
           content:
@@ -7378,6 +7376,11 @@ components:
           type: string
           format: date-time
           title: Refresh Expires At
+        did:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Did
       type: object
       required:
       - access_token
@@ -7503,6 +7506,89 @@ components:
       - wallet_address
       - signature
       title: VerifyRequest
+    WalletIdentityLoginResultEnvelope:
+      properties:
+        code:
+          type: integer
+          title: Code
+          default: 0
+        message:
+          type: string
+          title: Message
+          default: ok
+        data:
+          $ref: '#/components/schemas/TokenResponse'
+      type: object
+      required:
+      - data
+      title: WalletIdentityLoginResultEnvelope
+    WalletIdentityLoginSession:
+      properties:
+        session_id:
+          type: string
+          title: Session Id
+        audience:
+          type: string
+          title: Audience
+        nonce:
+          type: string
+          title: Nonce
+        scopes:
+          items:
+            type: string
+          type: array
+          title: Scopes
+        issuerEndpoint:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Issuerendpoint
+        expires_at:
+          type: string
+          format: date-time
+          title: Expires At
+      type: object
+      required:
+      - session_id
+      - audience
+      - nonce
+      - scopes
+      - expires_at
+      title: WalletIdentityLoginSession
+    WalletIdentityLoginSessionEnvelope:
+      properties:
+        code:
+          type: integer
+          title: Code
+          default: 0
+        message:
+          type: string
+          title: Message
+          default: ok
+        data:
+          $ref: '#/components/schemas/WalletIdentityLoginSession'
+      type: object
+      required:
+      - data
+      title: WalletIdentityLoginSessionEnvelope
+    WalletIdentityLoginVerifyRequest:
+      properties:
+        session_id:
+          type: string
+          title: Session Id
+        request_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Request Id
+        presentation:
+          type: object
+          title: Presentation
+      type: object
+      required:
+      - session_id
+      - presentation
+      title: WalletIdentityLoginVerifyRequest
     WarehouseBootstrapChallengeResponse:
       properties:
         wallet_address:

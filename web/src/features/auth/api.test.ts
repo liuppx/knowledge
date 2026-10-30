@@ -1,22 +1,20 @@
 import { describe, expect, it } from "vitest";
-import { createIdentityLoginFetcher } from "./api";
+import { tokenFromLogin } from "./api";
 
-describe("createIdentityLoginFetcher", () => {
-  it("wraps raw FastAPI success responses in the SDK data envelope", async () => {
-    const data = { audience: "http://127.0.0.1:8002", nonce: "nonce" };
-    const fetcher = createIdentityLoginFetcher(async () => new Response(JSON.stringify(data)));
-
-    const response = await fetcher("/auth/identity/login/session", { method: "POST" });
-
-    expect(await response.json()).toEqual({ data });
+describe("tokenFromLogin", () => {
+  it("requires the complete wallet identity token pair", () => {
+    expect(tokenFromLogin({
+      access_token: "access",
+      token: "access",
+      refresh_token: "refresh",
+      wallet_address: "0x1111111111111111111111111111111111111111",
+      expires_at: "2026-10-29T12:00:00Z",
+      refresh_expires_at: "2026-11-05T12:00:00Z",
+      did: "did:yeying:wid_test",
+    })).toMatchObject({ access_token: "access", refresh_token: "refresh", did: "did:yeying:wid_test" });
   });
 
-  it("does not wrap responses that already use an API envelope", async () => {
-    const body = { code: 0, data: { audience: "http://127.0.0.1:8002" } };
-    const fetcher = createIdentityLoginFetcher(async () => new Response(JSON.stringify(body)));
-
-    const response = await fetcher("/auth/identity/login/session", { method: "POST" });
-
-    expect(await response.json()).toEqual(body);
+  it("rejects incomplete login responses", () => {
+    expect(() => tokenFromLogin({ token: "access" })).toThrow("钱包登录未返回会话信息");
   });
 });

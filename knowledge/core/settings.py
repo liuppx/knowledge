@@ -104,6 +104,7 @@ class Settings(BaseSettings):
     identity_node_url: str = ""
     identity_app_id: str = ""
     identity_redirect_uri: str = ""
+    identity_trust_dir: str = ""
     passport_session_ttl_seconds: int = 300
 
     # Deprecated compatibility switch. Production uses the standard object
