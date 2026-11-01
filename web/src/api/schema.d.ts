@@ -3937,6 +3937,8 @@ export interface components {
              * Format: date-time
              */
             refresh_expires_at: string;
+            /** Did */
+            did?: string | null;
         };
         /** UnitReindexResponse */
         UnitReindexResponse: {
@@ -4012,6 +4014,61 @@ export interface components {
             wallet_address: string;
             /** Signature */
             signature: string;
+        };
+        /** WalletIdentityLoginResultEnvelope */
+        WalletIdentityLoginResultEnvelope: {
+            /**
+             * Code
+             * @default 0
+             */
+            code: number;
+            /**
+             * Message
+             * @default ok
+             */
+            message: string;
+            data: components["schemas"]["TokenResponse"];
+        };
+        /** WalletIdentityLoginSession */
+        WalletIdentityLoginSession: {
+            /** Session Id */
+            session_id: string;
+            /** Audience */
+            audience: string;
+            /** Nonce */
+            nonce: string;
+            /** Scopes */
+            scopes: string[];
+            /** Issuerendpoint */
+            issuerEndpoint?: string | null;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+        };
+        /** WalletIdentityLoginSessionEnvelope */
+        WalletIdentityLoginSessionEnvelope: {
+            /**
+             * Code
+             * @default 0
+             */
+            code: number;
+            /**
+             * Message
+             * @default ok
+             */
+            message: string;
+            data: components["schemas"]["WalletIdentityLoginSession"];
+        };
+        /** WalletIdentityLoginVerifyRequest */
+        WalletIdentityLoginVerifyRequest: {
+            /** Session Id */
+            session_id: string;
+            /** Request Id */
+            request_id?: string | null;
+            /** Presentation */
+            presentation: Record<string, never>;
         };
         /** WarehouseBootstrapChallengeResponse */
         WarehouseBootstrapChallengeResponse: {
@@ -4360,7 +4417,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": Record<string, never>;
+                    "application/json": components["schemas"]["WalletIdentityLoginSessionEnvelope"];
                 };
             };
         };
@@ -4374,7 +4431,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": Record<string, never>;
+                "application/json": components["schemas"]["WalletIdentityLoginVerifyRequest"];
             };
         };
         responses: {
@@ -4384,7 +4441,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["TokenResponse"];
+                    "application/json": components["schemas"]["WalletIdentityLoginResultEnvelope"];
                 };
             };
             /** @description Validation Error */

@@ -66,7 +66,7 @@ class PassportLoginSession(Base):
     request_id: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
     code_verifier: Mapped[str] = mapped_column(String(255), nullable=False)
     redirect_uri: Mapped[str] = mapped_column(String(1024), nullable=False)
-    state: Mapped[str | None] = mapped_column(String(128), unique=True, nullable=True)
+    state: Mapped[str | None] = mapped_column(String(128), unique=True, index=True, nullable=True)
     audience: Mapped[str | None] = mapped_column(String(1024), nullable=True)
     nonce: Mapped[str | None] = mapped_column(String(255), nullable=True)
     scopes: Mapped[list] = mapped_column(JSON, default=list, nullable=False)
