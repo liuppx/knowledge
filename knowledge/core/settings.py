@@ -107,6 +107,8 @@ class Settings(BaseSettings):
     identity_trust_dir: str = ""
     passport_session_ttl_seconds: int = 300
 
+    ontology_identity_enabled: bool = False
+
     # Deprecated compatibility switch. Production uses the standard object
     # storage gateway below; keep this only for legacy tests/transitional setups.
     warehouse_gateway_mode: str = ""

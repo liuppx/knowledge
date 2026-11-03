@@ -35,6 +35,16 @@ from knowledge.models.entities import (
     WarehouseAccessCredential,
     WorkerStatus,
 )
+from knowledge.models.ontology import (
+    OntologyConflictResolution,
+    OntologyCrosswalk,
+    OntologyEvidenceReference,
+    OntologyExternalIdentifier,
+    OntologyIdentifierConflict,
+    OntologyIdentifierConflictReport,
+    OntologyIdentityReview,
+    OntologyObject,
+)
 
 __all__ = [
     "AuthChallenge",
@@ -72,4 +82,12 @@ __all__ = [
     "WalletUser",
     "WarehouseAccessCredential",
     "WorkerStatus",
+    "OntologyConflictResolution",
+    "OntologyCrosswalk",
+    "OntologyEvidenceReference",
+    "OntologyExternalIdentifier",
+    "OntologyIdentifierConflict",
+    "OntologyIdentifierConflictReport",
+    "OntologyIdentityReview",
+    "OntologyObject",
 ]

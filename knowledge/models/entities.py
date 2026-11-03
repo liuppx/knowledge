@@ -91,6 +91,9 @@ class PassportSubject(Base):
 
 class KnowledgeBase(Base):
     __tablename__ = "knowledge_bases"
+    __table_args__ = (
+        UniqueConstraint("id", "owner_wallet_address", name="uq_knowledge_bases_id_owner_wallet"),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     owner_wallet_address: Mapped[str] = mapped_column(ForeignKey("wallet_users.wallet_address"), index=True, nullable=False)

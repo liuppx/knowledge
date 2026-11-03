@@ -29,6 +29,9 @@ identity_app_id = ""
 identity_redirect_uri = ""
 passport_session_ttl_seconds = 300
 
+[ontology]
+ontology_identity_enabled = false       # explicitly enable only after migration and authorization checks
+
 [warehouse]
 warehouse_gateway_mode = ""          # legacy switch; production leaves this empty
 warehouse_base_url = "https://webdav.yeying.pub"

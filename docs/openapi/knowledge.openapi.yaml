@@ -3797,6 +3797,482 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
       security:
       - HTTPBearer: []
+  /kbs/{kb_id}/ontology/evidence:
+    post:
+      tags:
+      - ontology
+      summary: Create Evidence
+      operationId: create_evidence_kbs__kb_id__ontology_evidence_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OntologyEvidenceCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OntologyEvidenceRead'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /kbs/{kb_id}/ontology/evidence/{evidence_id}:
+    get:
+      tags:
+      - ontology
+      summary: Get Evidence
+      operationId: get_evidence_kbs__kb_id__ontology_evidence__evidence_id__get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      - name: evidence_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Evidence Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OntologyEvidenceRead'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /kbs/{kb_id}/ontology/objects:
+    post:
+      tags:
+      - ontology
+      summary: Create Object
+      operationId: create_object_kbs__kb_id__ontology_objects_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OntologyObjectCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OntologyObjectRead'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    get:
+      tags:
+      - ontology
+      summary: List Objects
+      operationId: list_objects_kbs__kb_id__ontology_objects_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          default: 100
+          title: Limit
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+          title: Offset
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OntologyObjectRead'
+                title: Response List Objects Kbs  Kb Id  Ontology Objects Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /kbs/{kb_id}/ontology/objects/{object_id}:
+    get:
+      tags:
+      - ontology
+      summary: Get Object
+      operationId: get_object_kbs__kb_id__ontology_objects__object_id__get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      - name: object_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Object Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OntologyObjectRead'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /kbs/{kb_id}/ontology/objects/{object_id}/identifiers:
+    post:
+      tags:
+      - ontology
+      summary: Register Identifier
+      operationId: register_identifier_kbs__kb_id__ontology_objects__object_id__identifiers_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      - name: object_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Object Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OntologyIdentifierCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OntologyIdentifierRead'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /kbs/{kb_id}/ontology/objects/{object_id}/reviews:
+    post:
+      tags:
+      - ontology
+      summary: Review Identity
+      operationId: review_identity_kbs__kb_id__ontology_objects__object_id__reviews_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      - name: object_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Object Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OntologyReviewCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OntologyReviewRead'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /kbs/{kb_id}/ontology/objects/{object_id}/crosswalks:
+    post:
+      tags:
+      - ontology
+      summary: Confirm Crosswalk
+      operationId: confirm_crosswalk_kbs__kb_id__ontology_objects__object_id__crosswalks_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      - name: object_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Object Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OntologyCrosswalkCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OntologyCrosswalkRead'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /kbs/{kb_id}/ontology/objects/{claimant_object_id}/conflicts:
+    post:
+      tags:
+      - ontology
+      summary: Report Identifier Conflict
+      operationId: report_identifier_conflict_kbs__kb_id__ontology_objects__claimant_object_id__conflicts_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      - name: claimant_object_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Claimant Object Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OntologyConflictReportCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OntologyConflictRead'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /kbs/{kb_id}/ontology/conflicts:
+    get:
+      tags:
+      - ontology
+      summary: List Conflicts
+      operationId: list_conflicts_kbs__kb_id__ontology_conflicts_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      - name: status
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - enum:
+            - open
+            - claim_rejected
+            type: string
+          - type: 'null'
+          title: Status
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          default: 100
+          title: Limit
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+          title: Offset
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OntologyConflictRead'
+                title: Response List Conflicts Kbs  Kb Id  Ontology Conflicts Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /kbs/{kb_id}/ontology/conflicts/{conflict_id}:
+    get:
+      tags:
+      - ontology
+      summary: Get Conflict
+      operationId: get_conflict_kbs__kb_id__ontology_conflicts__conflict_id__get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      - name: conflict_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Conflict Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OntologyConflictRead'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /kbs/{kb_id}/ontology/conflicts/{conflict_id}/adjudications:
+    post:
+      tags:
+      - ontology
+      summary: Adjudicate Conflict
+      operationId: adjudicate_conflict_kbs__kb_id__ontology_conflicts__conflict_id__adjudications_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      - name: conflict_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Conflict Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OntologyConflictAdjudicate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OntologyConflictRead'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /ops/overview:
     get:
       tags:
@@ -5648,6 +6124,499 @@ components:
           default: true
       type: object
       title: OkResponse
+    OntologyConflictAdjudicate:
+      properties:
+        decision:
+          type: string
+          enum:
+          - claim_rejected
+          const: claim_rejected
+          title: Decision
+          default: claim_rejected
+        rationale:
+          type: string
+          minLength: 1
+          title: Rationale
+        evidence_id:
+          type: integer
+          exclusiveMinimum: 0.0
+          title: Evidence Id
+      type: object
+      required:
+      - rationale
+      - evidence_id
+      title: OntologyConflictAdjudicate
+    OntologyConflictRead:
+      properties:
+        id:
+          type: string
+          title: Id
+        kb_id:
+          type: integer
+          title: Kb Id
+        existing_object_id:
+          type: string
+          title: Existing Object Id
+        claimant_object_id:
+          type: string
+          title: Claimant Object Id
+        namespace:
+          type: string
+          title: Namespace
+        value:
+          type: string
+          title: Value
+        status:
+          type: string
+          enum:
+          - open
+          - claim_rejected
+          title: Status
+        reported_at:
+          type: string
+          format: date-time
+          title: Reported At
+        reports:
+          items:
+            $ref: '#/components/schemas/OntologyConflictReportRead'
+          type: array
+          title: Reports
+        resolution:
+          anyOf:
+          - $ref: '#/components/schemas/OntologyConflictResolutionRead'
+          - type: 'null'
+      type: object
+      required:
+      - id
+      - kb_id
+      - existing_object_id
+      - claimant_object_id
+      - namespace
+      - value
+      - status
+      - reported_at
+      title: OntologyConflictRead
+    OntologyConflictReportCreate:
+      properties:
+        namespace:
+          type: string
+          maxLength: 255
+          minLength: 1
+          title: Namespace
+        value:
+          type: string
+          maxLength: 1024
+          minLength: 1
+          title: Value
+        evidence_id:
+          type: integer
+          exclusiveMinimum: 0.0
+          title: Evidence Id
+      type: object
+      required:
+      - namespace
+      - value
+      - evidence_id
+      title: OntologyConflictReportCreate
+    OntologyConflictReportRead:
+      properties:
+        id:
+          type: integer
+          title: Id
+        evidence_id:
+          type: integer
+          title: Evidence Id
+        reported_by:
+          type: string
+          title: Reported By
+        reported_at:
+          type: string
+          format: date-time
+          title: Reported At
+      type: object
+      required:
+      - id
+      - evidence_id
+      - reported_by
+      - reported_at
+      title: OntologyConflictReportRead
+    OntologyConflictResolutionRead:
+      properties:
+        decision:
+          type: string
+          enum:
+          - claim_rejected
+          const: claim_rejected
+          title: Decision
+        rationale:
+          type: string
+          title: Rationale
+        evidence_id:
+          type: integer
+          title: Evidence Id
+        adjudicated_by:
+          type: string
+          title: Adjudicated By
+        adjudicated_at:
+          type: string
+          format: date-time
+          title: Adjudicated At
+      type: object
+      required:
+      - decision
+      - rationale
+      - evidence_id
+      - adjudicated_by
+      - adjudicated_at
+      title: OntologyConflictResolutionRead
+    OntologyCrosswalkCreate:
+      properties:
+        namespace:
+          type: string
+          maxLength: 255
+          minLength: 1
+          title: Namespace
+        source_value:
+          type: string
+          maxLength: 1024
+          minLength: 1
+          title: Source Value
+        authority:
+          type: string
+          maxLength: 255
+          minLength: 1
+          title: Authority
+        canonical_namespace:
+          type: string
+          maxLength: 255
+          minLength: 1
+          title: Canonical Namespace
+        canonical_value:
+          type: string
+          maxLength: 1024
+          minLength: 1
+          title: Canonical Value
+        evidence_id:
+          type: integer
+          exclusiveMinimum: 0.0
+          title: Evidence Id
+      type: object
+      required:
+      - namespace
+      - source_value
+      - authority
+      - canonical_namespace
+      - canonical_value
+      - evidence_id
+      title: OntologyCrosswalkCreate
+    OntologyCrosswalkRead:
+      properties:
+        id:
+          type: integer
+          title: Id
+        namespace:
+          type: string
+          title: Namespace
+        source_value:
+          type: string
+          title: Source Value
+        authority:
+          type: string
+          title: Authority
+        canonical_namespace:
+          type: string
+          title: Canonical Namespace
+        canonical_value:
+          type: string
+          title: Canonical Value
+        evidence_id:
+          type: integer
+          title: Evidence Id
+        created_by:
+          type: string
+          title: Created By
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+      type: object
+      required:
+      - id
+      - namespace
+      - source_value
+      - authority
+      - canonical_namespace
+      - canonical_value
+      - evidence_id
+      - created_by
+      - created_at
+      title: OntologyCrosswalkRead
+    OntologyEvidenceCreate:
+      properties:
+        uri:
+          type: string
+          maxLength: 2048
+          minLength: 1
+          title: Uri
+        source_version:
+          type: string
+          maxLength: 255
+          minLength: 1
+          title: Source Version
+        locator:
+          type: string
+          title: Locator
+          default: ''
+        checksum:
+          type: string
+          maxLength: 128
+          title: Checksum
+          default: ''
+      type: object
+      required:
+      - uri
+      - source_version
+      title: OntologyEvidenceCreate
+    OntologyEvidenceRead:
+      properties:
+        uri:
+          type: string
+          maxLength: 2048
+          minLength: 1
+          title: Uri
+        source_version:
+          type: string
+          maxLength: 255
+          minLength: 1
+          title: Source Version
+        locator:
+          type: string
+          title: Locator
+          default: ''
+        checksum:
+          type: string
+          maxLength: 128
+          title: Checksum
+          default: ''
+        id:
+          type: integer
+          title: Id
+        created_by:
+          type: string
+          title: Created By
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+      type: object
+      required:
+      - uri
+      - source_version
+      - id
+      - created_by
+      - created_at
+      title: OntologyEvidenceRead
+    OntologyIdentifierCreate:
+      properties:
+        namespace:
+          type: string
+          maxLength: 255
+          minLength: 1
+          title: Namespace
+        value:
+          type: string
+          maxLength: 1024
+          minLength: 1
+          title: Value
+        evidence_id:
+          type: integer
+          exclusiveMinimum: 0.0
+          title: Evidence Id
+      type: object
+      required:
+      - namespace
+      - value
+      - evidence_id
+      title: OntologyIdentifierCreate
+    OntologyIdentifierRead:
+      properties:
+        id:
+          type: integer
+          title: Id
+        object_id:
+          type: string
+          title: Object Id
+        namespace:
+          type: string
+          title: Namespace
+        value:
+          type: string
+          title: Value
+        evidence_id:
+          type: integer
+          title: Evidence Id
+        registered_by:
+          type: string
+          title: Registered By
+        registered_at:
+          type: string
+          format: date-time
+          title: Registered At
+      type: object
+      required:
+      - id
+      - object_id
+      - namespace
+      - value
+      - evidence_id
+      - registered_by
+      - registered_at
+      title: OntologyIdentifierRead
+    OntologyObjectCreate:
+      properties:
+        object_type:
+          type: string
+          enum:
+          - contract
+          - product
+          - organization
+          title: Object Type
+        label:
+          type: string
+          maxLength: 512
+          minLength: 1
+          title: Label
+        evidence_id:
+          type: integer
+          exclusiveMinimum: 0.0
+          title: Evidence Id
+      type: object
+      required:
+      - object_type
+      - label
+      - evidence_id
+      title: OntologyObjectCreate
+    OntologyObjectRead:
+      properties:
+        id:
+          type: string
+          title: Id
+        kb_id:
+          type: integer
+          title: Kb Id
+        object_type:
+          type: string
+          enum:
+          - contract
+          - product
+          - organization
+          title: Object Type
+        label:
+          type: string
+          title: Label
+        identity_status:
+          type: string
+          enum:
+          - candidate
+          - confirmed
+          - ambiguous
+          - insufficient_evidence
+          title: Identity Status
+        created_by:
+          type: string
+          title: Created By
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+        identifiers:
+          items:
+            $ref: '#/components/schemas/OntologyIdentifierRead'
+          type: array
+          title: Identifiers
+        reviews:
+          items:
+            $ref: '#/components/schemas/OntologyReviewRead'
+          type: array
+          title: Reviews
+        crosswalks:
+          items:
+            $ref: '#/components/schemas/OntologyCrosswalkRead'
+          type: array
+          title: Crosswalks
+      type: object
+      required:
+      - id
+      - kb_id
+      - object_type
+      - label
+      - identity_status
+      - created_by
+      - created_at
+      - updated_at
+      title: OntologyObjectRead
+    OntologyReviewCreate:
+      properties:
+        status:
+          type: string
+          enum:
+          - candidate
+          - ambiguous
+          - insufficient_evidence
+          title: Status
+        rationale:
+          type: string
+          minLength: 1
+          title: Rationale
+        evidence_id:
+          type: integer
+          exclusiveMinimum: 0.0
+          title: Evidence Id
+      type: object
+      required:
+      - status
+      - rationale
+      - evidence_id
+      title: OntologyReviewCreate
+    OntologyReviewRead:
+      properties:
+        id:
+          type: integer
+          title: Id
+        status:
+          type: string
+          enum:
+          - candidate
+          - confirmed
+          - ambiguous
+          - insufficient_evidence
+          title: Status
+        rationale:
+          type: string
+          title: Rationale
+        evidence_id:
+          type: integer
+          title: Evidence Id
+        reviewed_by:
+          type: string
+          title: Reviewed By
+        reviewed_at:
+          type: string
+          format: date-time
+          title: Reviewed At
+      type: object
+      required:
+      - id
+      - status
+      - rationale
+      - evidence_id
+      - reviewed_by
+      - reviewed_at
+      title: OntologyReviewRead
     OpsOverviewResponse:
       properties:
         knowledge_bases:

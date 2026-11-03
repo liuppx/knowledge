@@ -39,6 +39,7 @@
 - [运营本体 V1 公开数据代理验证](运营本体V1公开数据代理验证.md)：用公开合同金标和官方采购、法人数据运行可复现 pilot；C3 与 E 持平，TED XML 与 Registry Agency 可恢复来源内配对并确认 `RA000065`；GLEIF API 全量 BG 扫描及官方 Concatenated File 均未发现 7 个目标 UIC/名称，当前判定为 `Don't build yet`。
 - [运营本体 V1 合成演练包](validation/ontology-v1/README.md)：用合同、产品和组织演练对象身份、时态、冲突、Release 与 Evidence 失效评分流程。
 - [运营本体 V1 受控身份原型](运营本体V1受控原型.md)：非生产、内存态原型，演练稳定身份、权威 crosswalk、人工裁决和 Evidence provenance。
+- [运营本体 V1 生产身份与证据切片](运营本体V1生产身份切片.md)：Task #254 的持久化 API、owner-only 授权、冲突/裁决规则和部署边界；实现状态不能当作已生产部署或 Task 238 验证结论。
 - [知识库能力规划与快速上线路线](知识库能力规划与快速上线路线.md)：对标 Obsidian/PandaWiki/WeKnora 的能力借鉴与 v1 快速上线范围。
 - [混合检索与真实模型落地设计](混合检索与真实模型落地设计.md)：v1.0 检索管线（关键词+向量+RRF+rerank）、Router 接入、再嵌入迁移与评测门禁。
 - [向量索引运维手册](向量索引运维手册.md)：单元级向量索引上线、再索引、切模型维度与故障降级（Weaviate + Postgres）。

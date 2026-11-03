@@ -16,6 +16,14 @@ from knowledge.models import (
     KnowledgeBase,
     LongTermMemory,
     MemoryIngestionEvent,
+    OntologyConflictResolution,
+    OntologyCrosswalk,
+    OntologyEvidenceReference,
+    OntologyExternalIdentifier,
+    OntologyIdentifierConflict,
+    OntologyIdentifierConflictReport,
+    OntologyIdentityReview,
+    OntologyObject,
     Source,
     SourceBinding,
 )
@@ -115,6 +123,22 @@ def _delete_kb_resources(db: Session, wallet_address: str, kb_id: int) -> None:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=f"knowledge base has active task #{active_task.id} ({active_task.task_type}); cancel or wait for completion first",
+        )
+
+    for model in (
+        OntologyConflictResolution,
+        OntologyIdentifierConflictReport,
+        OntologyIdentifierConflict,
+        OntologyCrosswalk,
+        OntologyIdentityReview,
+        OntologyExternalIdentifier,
+        OntologyObject,
+        OntologyEvidenceReference,
+    ):
+        db.execute(
+            delete(model)
+            .where(model.kb_id == kb_id)
+            .where(model.owner_wallet_address == wallet_address)
         )
 
     vector_ids = list(
