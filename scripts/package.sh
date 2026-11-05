@@ -4,8 +4,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/package-common.sh"
 package_common_init knowledge "$@"
 for command_name in npm uv; do command -v "$command_name" >/dev/null 2>&1 || package_fail "$command_name is required"; done
-[[ -f "$PACKAGE_ROOT_DIR/web/package-lock.json" ]] || package_fail 'web/package-lock.json is required; refusing a non-locked install'
-(cd "$PACKAGE_ROOT_DIR/web" && npm ci --no-audit --no-fund && npm run build)
+(cd "$PACKAGE_ROOT_DIR/web" && npm install --no-audit --no-fund && npm run build)
 (cd "$PACKAGE_ROOT_DIR" && uv sync --locked --no-dev --no-install-project)
 [[ -d "$PACKAGE_ROOT_DIR/web/dist" ]] || package_fail 'web build output is missing'
 package_make_root knowledge

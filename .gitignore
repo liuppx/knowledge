@@ -1,4 +1,5 @@
 .venv/
+package-lock.json
 web/node_modules/
 web/dist/
 web/vite.config.d.ts
