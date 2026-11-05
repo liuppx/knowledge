@@ -1,32 +1,21 @@
 #!/usr/bin/env bash
 set -euo pipefail
-
-root_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-out_dir="${OUTPUT_DIR:-$root_dir/output}"
-project_name="${PROJECT_NAME:-knowledge}"
-version="${1:-$(git -C "$root_dir" describe --tags --always --dirty)}"
-stage_dir="$out_dir/${project_name}-${version}"
-archive="$out_dir/${project_name}-${version}.tar.gz"
-
-command -v tar >/dev/null || { echo "tar is required" >&2; exit 1; }
-command -v npm >/dev/null || { echo "npm is required to build the frontend" >&2; exit 1; }
-[[ -x "$root_dir/.venv/bin/python" ]] || { echo "Create .venv and install requirements first" >&2; exit 1; }
-
-mkdir -p "$out_dir"
-echo "Building frontend..."
-(cd "$root_dir/web" && npm run build)
-rm -rf "$stage_dir" "$archive"
-mkdir -p "$stage_dir"
-# Mirror the repo layout so the unpacked tree is runnable as-is:
-# - knowledge/ + scripts/ + docs/ + web/dist/ stay at the top level
-# - web/dist (not dist) so FastAPI's web_dist_dir lookup resolves
-# - alembic.ini + migrations/ are required by the lifespan's ensure_database_schema
-# - __pycache__ directories are excluded to keep the archive small
-cp -R "$root_dir/knowledge" "$root_dir/scripts" "$root_dir/docs" "$root_dir/migrations" "$root_dir/config" "$stage_dir/"
-mkdir -p "$stage_dir/web"
-cp -R "$root_dir/web/dist" "$stage_dir/web/"
-cp "$root_dir/alembic.ini" "$root_dir/pyproject.toml" "$root_dir/requirements.txt" "$root_dir/.env.template" "$stage_dir/"
-find "$stage_dir" -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
-tar -czf "$archive" -C "$out_dir" "$(basename "$stage_dir")"
-rm -rf "$stage_dir"
-echo "Package created: $archive"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/package-common.sh"
+package_common_init knowledge "$@"
+for command_name in npm uv; do command -v "$command_name" >/dev/null 2>&1 || package_fail "$command_name is required"; done
+[[ -f "$PACKAGE_ROOT_DIR/web/package-lock.json" ]] || package_fail 'web/package-lock.json is required; refusing a non-locked install'
+(cd "$PACKAGE_ROOT_DIR/web" && npm ci --no-audit --no-fund && npm run build)
+(cd "$PACKAGE_ROOT_DIR" && uv sync --locked --no-dev --no-install-project)
+[[ -d "$PACKAGE_ROOT_DIR/web/dist" ]] || package_fail 'web build output is missing'
+package_make_root knowledge
+cp -R "$PACKAGE_ROOT_DIR/.venv" "$PACKAGE_DIR/.venv"
+for directory in knowledge docs migrations config; do [[ ! -d "$PACKAGE_ROOT_DIR/$directory" ]] || cp -R "$PACKAGE_ROOT_DIR/$directory" "$PACKAGE_DIR/$directory"; done
+mkdir -p "$PACKAGE_DIR/web"
+cp -R "$PACKAGE_ROOT_DIR/web/dist" "$PACKAGE_DIR/web/dist"
+for file in alembic.ini pyproject.toml uv.lock requirements.txt .env.template; do [[ ! -f "$PACKAGE_ROOT_DIR/$file" ]] || cp "$PACKAGE_ROOT_DIR/$file" "$PACKAGE_DIR/"; done
+package_copy_scripts "$PACKAGE_DIR/scripts"
+package_strip_build_files "$PACKAGE_DIR"
+find "$PACKAGE_DIR" -type d -name __pycache__ -prune -exec rm -rf {} +
+package_finish_artifact service-with-assets
+package_finish
