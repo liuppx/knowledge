@@ -7,6 +7,7 @@ Knowledge 是知识运营与发布服务。后端在 `knowledge/`，前端工程
 需要本机已安装：
 
 - Python 3.10+，命令使用 `python3`
+- [uv](https://docs.astral.sh/uv/)
 - Node.js 与 npm
 - PostgreSQL（本机服务或远程实例）
 
@@ -33,10 +34,7 @@ DATABASE_URL=postgresql://knowledge:knowledge@127.0.0.1:5432/knowledge?gssencmod
 在项目根目录执行：
 
 ```bash
-python3 --version
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
+uv sync --locked
 (cd web && npm install)
 cp .env.template .env        # 按需修改 DATABASE_URL 等；生产配置见 docs/部署指南.md
 ```
@@ -50,16 +48,16 @@ Knowledge 的本地完整联调由一个后端进程和一个后台任务进程�
 先在第一个终端启动后端：
 
 ```bash
-source .venv/bin/activate
-python -m uvicorn knowledge.main:app --reload --host 127.0.0.1 --port 8002
+uv run knowledge
 ```
+
+默认监听 `127.0.0.1:8002` 并启用热重载。需要调整时可用 `uv run knowledge --host 0.0.0.0 --port 8002`；关闭热重载用 `uv run knowledge --no-reload`。
 
 再在第二个终端启动后台任务处理：
 
 ```bash
 cd /path/to/knowledge
-source .venv/bin/activate
-python -m knowledge.workers.runner
+uv run python -m knowledge.workers.runner
 ```
 
 后端只调试页面、接口或检索时，可以暂时不启动第二个进程；导入、重建索引、删除等异步任务需要它运行。
@@ -67,15 +65,13 @@ python -m knowledge.workers.runner
 数据库迁移使用：
 
 ```bash
-source .venv/bin/activate
-python -m alembic upgrade head
+uv run alembic upgrade head
 ```
 
 运行测试：
 
 ```bash
-source .venv/bin/activate
-python -m pytest -q
+uv run pytest -q
 ```
 
 后端启动后可以访问：
@@ -90,8 +86,7 @@ python -m pytest -q
 deactivate
 rm -rf .venv
 python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
+uv sync --locked
 ```
 
 ### 4. 启动前端开发服务器
