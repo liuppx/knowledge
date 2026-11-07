@@ -7,6 +7,8 @@ export type ReleaseDetail = Schema<"ReleaseDetailResponse">;
 export type ReleasePublishRequest = Schema<"ReleasePublishRequest">;
 export type ReleaseHotfixRequest = Schema<"ReleaseHotfixRequest">;
 export type ReleaseRollbackRequest = Schema<"ReleaseRollbackRequest">;
+export type ReleaseDiff = Schema<"ReleaseDiffResponse">;
+export type ReleaseDiffEntry = Schema<"ReleaseDiffEntry">;
 
 export const releasesApi = {
   list: (kbId: number) => request<Release[]>(`/kbs/${kbId}/releases`),
@@ -25,4 +27,6 @@ export const releasesApi = {
     request<ReleaseDetail>(`/kbs/${kbId}/releases/${releaseId}/hotfix`, { method: "POST", json: payload }),
   rollback: (kbId: number, releaseId: number, payload: ReleaseRollbackRequest) =>
     request<ReleaseDetail>(`/kbs/${kbId}/releases/${releaseId}/rollback`, { method: "POST", json: payload }),
+  /** Server-side snapshot diff of `releaseId` against `baseId`. */
+  diff: (kbId: number, releaseId: number, baseId: number) => request<ReleaseDiff>(`/kbs/${kbId}/releases/${releaseId}/diff?base=${baseId}`),
 };

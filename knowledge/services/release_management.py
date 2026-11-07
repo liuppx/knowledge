@@ -143,6 +143,86 @@ class ReleaseManagementService:
             ).all()
         )
 
+    def diff_releases(
+        self,
+        db: Session,
+        wallet_address: str,
+        kb_id: int,
+        *,
+        release_id: int,
+        base_release_id: int | None = None,
+        include_unchanged: bool = False,
+    ) -> dict:
+        """Compare two release snapshots by knowledge item.
+
+        `changed` means the snapshot points at a different revision or the
+        stored version hash differs; both sides are read from kb_release_items,
+        so later workspace edits never affect the result.
+        """
+        kb = self._get_kb_or_404(db, wallet_address, kb_id)
+        target = self.get_release_or_404(db, kb.id, release_id)
+        if base_release_id is None:
+            if target.supersedes_release_id is None:
+                raise ValueError("base release is required: this release does not supersede another release")
+            base_release_id = target.supersedes_release_id
+        if base_release_id == target.id:
+            raise ValueError("base release must differ from the compared release")
+        base = self.get_release_or_404(db, kb.id, base_release_id)
+
+        base_rows = self._release_snapshot(db, base.id)
+        target_rows = self._release_snapshot(db, target.id)
+        entries: list[dict] = []
+        counts = {"added": 0, "removed": 0, "changed": 0, "unchanged": 0}
+        for item_id in sorted(set(base_rows) | set(target_rows)):
+            before = base_rows.get(item_id)
+            after = target_rows.get(item_id)
+            if before is None:
+                change = "added"
+            elif after is None:
+                change = "removed"
+            elif (
+                before["revision_id"] != after["revision_id"]
+                or before["version_hash"] != after["version_hash"]
+            ):
+                change = "changed"
+            else:
+                change = "unchanged"
+            counts[change] += 1
+            if change == "unchanged" and not include_unchanged:
+                continue
+            shown = after or before
+            entries.append(
+                {
+                    "knowledge_item_id": item_id,
+                    "change": change,
+                    "item_type": shown["item_type"],
+                    "title": shown["title"],
+                    "base_title": before["title"] if before else None,
+                    "base_revision_id": before["revision_id"] if before else None,
+                    "target_revision_id": after["revision_id"] if after else None,
+                    "base_version_hash": before["version_hash"] if before else None,
+                    "target_version_hash": after["version_hash"] if after else None,
+                }
+            )
+        return {"base_release": base, "release": target, "counts": counts, "entries": entries}
+
+    def _release_snapshot(self, db: Session, release_id: int) -> dict[int, dict]:
+        rows = db.execute(
+            select(KBReleaseItem, KnowledgeItem.item_type, KnowledgeItemRevision.title)
+            .join(KnowledgeItem, KnowledgeItem.id == KBReleaseItem.knowledge_item_id)
+            .join(KnowledgeItemRevision, KnowledgeItemRevision.id == KBReleaseItem.knowledge_item_revision_id)
+            .where(KBReleaseItem.release_id == release_id)
+        ).all()
+        return {
+            release_item.knowledge_item_id: {
+                "revision_id": release_item.knowledge_item_revision_id,
+                "version_hash": release_item.item_version_hash,
+                "item_type": item_type,
+                "title": title,
+            }
+            for release_item, item_type, title in rows
+        }
+
     def _get_current_published_release(self, db: Session, kb_id: int) -> KBRelease | None:
         return db.scalar(
             select(KBRelease)

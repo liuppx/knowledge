@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from knowledge.api.deps import get_current_wallet
@@ -8,6 +8,7 @@ from knowledge.db.session import get_db
 from knowledge.schemas.future_domain import KBReleaseRead
 from knowledge.schemas.releases import (
     ReleaseDetailResponse,
+    ReleaseDiffResponse,
     ReleaseHotfixRequest,
     ReleasePublishRequest,
     ReleaseRollbackRequest,
@@ -136,3 +137,33 @@ def get_release(
     except LookupError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     return _release_detail(db, release)
+
+
+@router.get("/{kb_id}/releases/{release_id}/diff", response_model=ReleaseDiffResponse)
+def diff_release(
+    kb_id: int,
+    release_id: int,
+    base: int | None = Query(default=None, description="Base release id; defaults to the release this one superseded."),
+    include_unchanged: bool = False,
+    wallet_address: str = Depends(get_current_wallet),
+    db: Session = Depends(get_db),
+) -> ReleaseDiffResponse:
+    try:
+        diff = release_management_service.diff_releases(
+            db,
+            wallet_address,
+            kb_id,
+            release_id=release_id,
+            base_release_id=base,
+            include_unchanged=include_unchanged,
+        )
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return ReleaseDiffResponse(
+        base_release=KBReleaseRead.model_validate(diff["base_release"]),
+        release=KBReleaseRead.model_validate(diff["release"]),
+        counts=diff["counts"],
+        entries=diff["entries"],
+    )

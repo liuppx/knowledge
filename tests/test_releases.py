@@ -371,3 +371,90 @@ def test_rollback_restores_target_release_snapshot_as_new_current_release():
         history_by_id = {item["id"]: item for item in history}
         assert history_by_id[hotfix["release"]["id"]]["status"] == "rolled_back"
         assert history_by_id[release_1["release"]["id"]]["status"] in {"published", "superseded"}
+
+
+def _diff(client: TestClient, headers: dict[str, str], kb_id: int, release_id: int, **params) -> dict:
+    response = client.get(f"/kbs/{kb_id}/releases/{release_id}/diff", headers=headers, params=params)
+    response.raise_for_status()
+    return response.json()
+
+
+def _changes(diff: dict) -> dict[int, str]:
+    return {entry["knowledge_item_id"]: entry["change"] for entry in diff["entries"]}
+
+
+def test_release_diff_classifies_items_from_stored_snapshots():
+    account = Account.create()
+    with TestClient(app) as client:
+        token = _login(client, account)
+        headers = {"Authorization": f"Bearer {token}"}
+        kb_id = client.post("/kbs", headers=headers, json={"name": "Diff KB", "description": "diff"}).json()["id"]
+
+        item_a, rev_a = _create_manual_item(
+            client, headers, kb_id, title="Stable", statement="Unchanged fact.", item_type="fact", payload={"fact": "Unchanged fact."}
+        )
+        item_b, rev_b1 = _create_manual_item(
+            client, headers, kb_id, title="Edited", statement="Old rule.", item_type="rule", payload={"rule": "Old rule."}
+        )
+        release_1 = _publish_release(client, headers, kb_id, version="r1", release_note="first")
+
+        rev_b2 = _update_manual_item(client, headers, kb_id, item_b, statement="New rule.", payload={"rule": "New rule."})
+        item_c, rev_c = _create_manual_item(
+            client, headers, kb_id, title="Added", statement="New fact.", item_type="fact", payload={"fact": "New fact."}
+        )
+        release_2 = _publish_release(client, headers, kb_id, version="r2", release_note="second")
+        r1_id, r2_id = release_1["release"]["id"], release_2["release"]["id"]
+
+        # Base defaults to the release this one superseded.
+        diff = _diff(client, headers, kb_id, r2_id)
+        assert diff["base_release"]["id"] == r1_id
+        assert diff["counts"] == {"added": 1, "removed": 0, "changed": 1, "unchanged": 1}
+        assert _changes(diff) == {item_b: "changed", item_c: "added"}
+        changed = next(entry for entry in diff["entries"] if entry["knowledge_item_id"] == item_b)
+        assert (changed["base_revision_id"], changed["target_revision_id"]) == (rev_b1, rev_b2)
+        added = next(entry for entry in diff["entries"] if entry["knowledge_item_id"] == item_c)
+        assert added["base_revision_id"] is None and added["target_revision_id"] == rev_c
+
+        with_unchanged = _diff(client, headers, kb_id, r2_id, include_unchanged="true")
+        assert _changes(with_unchanged)[item_a] == "unchanged"
+
+        # Later workspace edits must not leak into a diff of published snapshots.
+        _update_manual_item(client, headers, kb_id, item_a, statement="Draft edit.", payload={"fact": "Draft edit."})
+        assert _diff(client, headers, kb_id, r2_id)["counts"]["unchanged"] == 1
+
+        # Rolling back to r1 removes C and reverts B relative to r2.
+        rollback = _rollback_release(client, headers, kb_id, r1_id, version="r3", release_note="rollback")
+        rollback_diff = _diff(client, headers, kb_id, rollback["release"]["id"])
+        assert rollback_diff["base_release"]["id"] == r2_id
+        assert _changes(rollback_diff) == {item_b: "changed", item_c: "removed"}
+        assert rev_a  # item A stays unchanged throughout
+
+        # Explicit base: comparing the rollback with r1 itself shows no change.
+        same = _diff(client, headers, kb_id, rollback["release"]["id"], base=r1_id)
+        assert same["counts"] == {"added": 0, "removed": 0, "changed": 0, "unchanged": 2}
+
+
+def test_release_diff_rejects_missing_base_and_foreign_access():
+    owner, outsider = Account.create(), Account.create()
+    with TestClient(app) as client:
+        headers = {"Authorization": f"Bearer {_login(client, owner)}"}
+        kb_id = client.post("/kbs", headers=headers, json={"name": "Diff KB 2", "description": ""}).json()["id"]
+        _create_manual_item(client, headers, kb_id, title="Only", statement="One.", item_type="fact", payload={"fact": "One."})
+        first_id = _publish_release(client, headers, kb_id, version="r1", release_note="")["release"]["id"]
+
+        no_base = client.get(f"/kbs/{kb_id}/releases/{first_id}/diff", headers=headers)
+        assert no_base.status_code == 400
+        self_base = client.get(f"/kbs/{kb_id}/releases/{first_id}/diff", headers=headers, params={"base": first_id})
+        assert self_base.status_code == 400
+        missing = client.get(f"/kbs/{kb_id}/releases/{first_id}/diff", headers=headers, params={"base": 999999})
+        assert missing.status_code == 404
+
+        other_kb = client.post("/kbs", headers=headers, json={"name": "Other", "description": ""}).json()["id"]
+        _create_manual_item(client, headers, other_kb, title="X", statement="X.", item_type="fact", payload={"fact": "X."})
+        other_release = _publish_release(client, headers, other_kb, version="o1", release_note="")["release"]["id"]
+        cross_kb = client.get(f"/kbs/{kb_id}/releases/{first_id}/diff", headers=headers, params={"base": other_release})
+        assert cross_kb.status_code == 404
+
+        outsider_headers = {"Authorization": f"Bearer {_login(client, outsider)}"}
+        foreign = client.get(f"/kbs/{kb_id}/releases/{first_id}/diff", headers=outsider_headers, params={"base": first_id})
+        assert foreign.status_code == 404

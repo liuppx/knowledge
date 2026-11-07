@@ -5,7 +5,6 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { json, mockFetch, type Handler } from "../../test/mockFetch";
 import { loginAs, renderRoutes } from "../../test/render";
 import { ReleasePage } from "./ReleasePage";
-import { diffReleases } from "./diff";
 
 const routes = [{ path: "/kbs/:kbId/release", element: <ReleasePage /> }];
 
@@ -46,23 +45,28 @@ describe("release & grants workbench", () => {
     expect(await screen.findByText(/已发布 2026.10.02/)).toBeInTheDocument();
   });
 
-  it("diffs two releases by knowledge item", async () => {
+  it("diffs two releases through the server-side snapshot comparison", async () => {
     loginAs();
-    mockFetch(base);
+    const entry = (knowledgeItemId: number, change: string, title: string, base: number | null, target: number | null) => ({ knowledge_item_id: knowledgeItemId, change, item_type: "fact", title, base_title: base === null ? null : title, base_revision_id: base, target_revision_id: target, base_version_hash: base === null ? null : "h", target_version_hash: target === null ? null : "h" });
+    const calls = mockFetch([
+      ...base,
+      ({ path }) =>
+        path === "/kbs/7/releases/2/diff"
+          ? { base_release: release(1, "2026.09.01"), release: release(2, "2026.10.01", "published"), counts: { added: 1, removed: 1, changed: 0, unchanged: 1 }, entries: [entry(6, "added", "凭证轮换规则", null, 11), entry(8, "removed", "旧版上传说明", 20, null)] }
+          : undefined,
+    ]);
     renderRoutes(routes, "/kbs/7/release");
     const user = userEvent.setup();
 
     await screen.findByText("2026.10.01");
     await user.selectOptions(screen.getByLabelText("对比 2026.10.01"), "1");
     const list = await screen.findByRole("list", { name: "版本差异" });
-    expect(within(list).getByText("新增")).toBeInTheDocument(); // item 6 only in 2026.10.01
-    expect(within(list).getByText("移除")).toBeInTheDocument(); // item 8 only in 2026.09.01
-
-    const diff = diffReleases([item(1, 5, 9), item(3, 8, 20)], [item(1, 5, 10), item(2, 6, 11)]);
-    expect(diff.added.map((entry) => entry.knowledge_item_id)).toEqual([6]);
-    expect(diff.removed.map((entry) => entry.knowledge_item_id)).toEqual([8]);
-    expect(diff.changed.map((entry) => entry.after.knowledge_item_id)).toEqual([5]);
-    expect(diff.unchanged).toBe(0);
+    expect(within(list).getByText("新增")).toBeInTheDocument();
+    expect(within(list).getByText("移除")).toBeInTheDocument();
+    expect(within(list).getByRole("link", { name: "凭证轮换规则" })).toHaveAttribute("href", "/kbs/7/production?item=6");
+    expect(within(list).getByRole("link", { name: "旧版上传说明" })).toBeInTheDocument();
+    expect(screen.getByText("未变 1")).toBeInTheDocument();
+    expect(calls.some((call) => call.method === "GET" && call.url === "/kbs/7/releases/2/diff?base=1")).toBe(true);
   });
 
   it("creates a service principal, shows the key once, and grants it a pinned release", async () => {

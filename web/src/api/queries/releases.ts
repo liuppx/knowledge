@@ -7,6 +7,7 @@ export const releaseKeys = {
   list: (kbId: number) => ["kbs", kbId, "releases", "list"] as const,
   current: (kbId: number) => ["kbs", kbId, "releases", "current"] as const,
   detail: (kbId: number, releaseId: number) => ["kbs", kbId, "releases", releaseId] as const,
+  diff: (kbId: number, releaseId: number, baseId: number) => ["kbs", kbId, "releases", releaseId, "diff", baseId] as const,
 };
 
 export function useReleasesQuery(kbId: number) {
@@ -22,6 +23,14 @@ export function useReleaseQuery(kbId: number, releaseId: number | null) {
     queryKey: releaseKeys.detail(kbId, releaseId ?? 0),
     queryFn: () => releasesApi.get(kbId, releaseId as number),
     enabled: releaseId !== null,
+  });
+}
+
+export function useReleaseDiffQuery(kbId: number, pair: { baseId: number; releaseId: number } | null) {
+  return useQuery({
+    queryKey: releaseKeys.diff(kbId, pair?.releaseId ?? 0, pair?.baseId ?? 0),
+    queryFn: () => releasesApi.diff(kbId, pair!.releaseId, pair!.baseId),
+    enabled: pair !== null,
   });
 }
 

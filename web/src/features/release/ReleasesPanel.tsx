@@ -4,9 +4,8 @@ import { Link } from "react-router-dom";
 import { messageFor } from "../../api/client";
 import type { Release } from "../../api/endpoints/releases";
 import { useItemsQuery } from "../../api/queries/production";
-import { useCurrentReleaseQuery, useHotfixReleaseMutation, usePublishReleaseMutation, useReleaseQuery, useReleasesQuery, useRollbackReleaseMutation } from "../../api/queries/releases";
+import { useCurrentReleaseQuery, useHotfixReleaseMutation, usePublishReleaseMutation, useReleaseDiffQuery, useReleaseQuery, useReleasesQuery, useRollbackReleaseMutation } from "../../api/queries/releases";
 import { Badge, DataTable, Drawer, EmptyState, ErrorState, LoadingState, formatDateTime, shortenMiddle, useToast } from "../../ui";
-import { diffReleases } from "./diff";
 
 type Dialog = { kind: "publish" } | { kind: "detail"; release: Release } | { kind: "hotfix"; release: Release } | { kind: "rollback"; release: Release } | { kind: "diff"; from: Release; to: Release } | null;
 
@@ -299,38 +298,48 @@ function ReleaseDetailDrawer({ kbId, release, onClose }: { kbId: number; release
   );
 }
 
+const CHANGE_BADGE = {
+  added: { tone: "success", label: "新增" },
+  changed: { tone: "warning", label: "变更" },
+  removed: { tone: "danger", label: "移除" },
+  unchanged: { tone: "neutral", label: "未变" },
+} as const;
+
 function DiffDrawer({ kbId, pair, onClose }: { kbId: number; pair: { from: Release; to: Release } | null; onClose: () => void }) {
-  const from = useReleaseQuery(kbId, pair?.from.id ?? null);
-  const to = useReleaseQuery(kbId, pair?.to.id ?? null);
-  const diff = from.data && to.data ? diffReleases(from.data.items ?? [], to.data.items ?? []) : null;
+  const diff = useReleaseDiffQuery(kbId, pair ? { baseId: pair.from.id, releaseId: pair.to.id } : null);
+  const data = diff.data;
+  const entries = data?.entries ?? [];
   return (
     <Drawer open={pair !== null} title={pair ? `${pair.from.version} → ${pair.to.version}` : ""} onClose={onClose} width={720}>
-      {from.isLoading || to.isLoading ? <LoadingState /> : null}
-      {diff ? (
+      {diff.isLoading ? <LoadingState /> : null}
+      {diff.error ? <ErrorState error={diff.error} fallback="版本对比失败" onRetry={() => void diff.refetch()} /> : null}
+      {data ? (
         <>
           <div className="chip-row">
-            <span>新增 {diff.added.length}</span>
-            <span>移除 {diff.removed.length}</span>
-            <span>变更 {diff.changed.length}</span>
-            <span>未变 {diff.unchanged}</span>
+            <span>新增 {data.counts.added}</span>
+            <span>移除 {data.counts.removed}</span>
+            <span>变更 {data.counts.changed}</span>
+            <span>未变 {data.counts.unchanged}</span>
           </div>
           <ul className="diff-list" aria-label="版本差异">
-            {diff.added.map((item) => (
-              <li key={`a-${item.knowledge_item_id}`} className="diff-added">
-                <Badge tone="success">新增</Badge> <Link to={`/kbs/${kbId}/production?item=${item.knowledge_item_id}`}>知识项 #{item.knowledge_item_id}</Link> <span className="muted">修订 #{item.knowledge_item_revision_id}</span>
-              </li>
-            ))}
-            {diff.changed.map(({ before, after }) => (
-              <li key={`c-${after.knowledge_item_id}`} className="diff-changed">
-                <Badge tone="warning">变更</Badge> <Link to={`/kbs/${kbId}/production?item=${after.knowledge_item_id}`}>知识项 #{after.knowledge_item_id}</Link> <span className="muted">修订 #{before.knowledge_item_revision_id} → #{after.knowledge_item_revision_id}</span>
-              </li>
-            ))}
-            {diff.removed.map((item) => (
-              <li key={`r-${item.knowledge_item_id}`} className="diff-removed">
-                <Badge tone="danger">移除</Badge> <Link to={`/kbs/${kbId}/production?item=${item.knowledge_item_id}`}>知识项 #{item.knowledge_item_id}</Link> <span className="muted">修订 #{item.knowledge_item_revision_id}</span>
-              </li>
-            ))}
-            {!diff.added.length && !diff.changed.length && !diff.removed.length ? <li className="muted">两个版本的知识项完全一致。</li> : null}
+            {entries.map((entry) => {
+              const badge = CHANGE_BADGE[entry.change];
+              const revisions =
+                entry.change === "changed"
+                  ? `修订 #${entry.base_revision_id} → #${entry.target_revision_id}`
+                  : `修订 #${entry.target_revision_id ?? entry.base_revision_id}`;
+              return (
+                <li key={`${entry.change}-${entry.knowledge_item_id}`} className={`diff-${entry.change}`}>
+                  <Badge tone={badge.tone}>{badge.label}</Badge>{" "}
+                  <Link to={`/kbs/${kbId}/production?item=${entry.knowledge_item_id}`}>{entry.title}</Link>{" "}
+                  <span className="muted">
+                    #{entry.knowledge_item_id} · {revisions}
+                    {entry.change === "changed" && entry.base_title && entry.base_title !== entry.title ? ` · 原标题「${entry.base_title}」` : ""}
+                  </span>
+                </li>
+              );
+            })}
+            {!entries.length ? <li className="muted">两个版本的知识项完全一致。</li> : null}
           </ul>
         </>
       ) : null}

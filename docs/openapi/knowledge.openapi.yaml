@@ -2997,6 +2997,57 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /kbs/{kb_id}/releases/{release_id}/diff:
+    get:
+      tags:
+      - releases
+      summary: Diff Release
+      operationId: diff_release_kbs__kb_id__releases__release_id__diff_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      - name: release_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Release Id
+      - name: base
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: Base release id; defaults to the release this one superseded.
+          title: Base
+        description: Base release id; defaults to the release this one superseded.
+      - name: include_unchanged
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: false
+          title: Include Unchanged
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReleaseDiffResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /service-principals:
     get:
       tags:
@@ -6742,6 +6793,96 @@ components:
       required:
       - release
       title: ReleaseDetailResponse
+    ReleaseDiffCounts:
+      properties:
+        added:
+          type: integer
+          title: Added
+          default: 0
+        removed:
+          type: integer
+          title: Removed
+          default: 0
+        changed:
+          type: integer
+          title: Changed
+          default: 0
+        unchanged:
+          type: integer
+          title: Unchanged
+          default: 0
+      type: object
+      title: ReleaseDiffCounts
+    ReleaseDiffEntry:
+      properties:
+        knowledge_item_id:
+          type: integer
+          title: Knowledge Item Id
+        change:
+          type: string
+          enum:
+          - added
+          - removed
+          - changed
+          - unchanged
+          title: Change
+        item_type:
+          type: string
+          title: Item Type
+        title:
+          type: string
+          title: Title
+        base_title:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Base Title
+        base_revision_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Base Revision Id
+        target_revision_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Target Revision Id
+        base_version_hash:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Base Version Hash
+        target_version_hash:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Target Version Hash
+      type: object
+      required:
+      - knowledge_item_id
+      - change
+      - item_type
+      - title
+      title: ReleaseDiffEntry
+    ReleaseDiffResponse:
+      properties:
+        base_release:
+          $ref: '#/components/schemas/KBReleaseRead'
+        release:
+          $ref: '#/components/schemas/KBReleaseRead'
+        counts:
+          $ref: '#/components/schemas/ReleaseDiffCounts'
+        entries:
+          items:
+            $ref: '#/components/schemas/ReleaseDiffEntry'
+          type: array
+          title: Entries
+      type: object
+      required:
+      - base_release
+      - release
+      - counts
+      title: ReleaseDiffResponse
     ReleaseHotfixRequest:
       properties:
         version:

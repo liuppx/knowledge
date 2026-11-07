@@ -1436,6 +1436,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/kbs/{kb_id}/releases/{release_id}/diff": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Diff Release */
+        get: operations["diff_release_kbs__kb_id__releases__release_id__diff_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/service-principals": {
         parameters: {
             query?: never;
@@ -1792,6 +1809,194 @@ export interface paths {
         put?: never;
         /** Ingest Memory */
         post: operations["ingest_memory_memory_ingest_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/kbs/{kb_id}/ontology/evidence": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Evidence */
+        post: operations["create_evidence_kbs__kb_id__ontology_evidence_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/kbs/{kb_id}/ontology/evidence/{evidence_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Evidence */
+        get: operations["get_evidence_kbs__kb_id__ontology_evidence__evidence_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/kbs/{kb_id}/ontology/objects": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Objects */
+        get: operations["list_objects_kbs__kb_id__ontology_objects_get"];
+        put?: never;
+        /** Create Object */
+        post: operations["create_object_kbs__kb_id__ontology_objects_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/kbs/{kb_id}/ontology/objects/{object_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Object */
+        get: operations["get_object_kbs__kb_id__ontology_objects__object_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/kbs/{kb_id}/ontology/objects/{object_id}/identifiers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Register Identifier */
+        post: operations["register_identifier_kbs__kb_id__ontology_objects__object_id__identifiers_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/kbs/{kb_id}/ontology/objects/{object_id}/reviews": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Review Identity */
+        post: operations["review_identity_kbs__kb_id__ontology_objects__object_id__reviews_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/kbs/{kb_id}/ontology/objects/{object_id}/crosswalks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Confirm Crosswalk */
+        post: operations["confirm_crosswalk_kbs__kb_id__ontology_objects__object_id__crosswalks_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/kbs/{kb_id}/ontology/objects/{claimant_object_id}/conflicts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Report Identifier Conflict */
+        post: operations["report_identifier_conflict_kbs__kb_id__ontology_objects__claimant_object_id__conflicts_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/kbs/{kb_id}/ontology/conflicts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Conflicts */
+        get: operations["list_conflicts_kbs__kb_id__ontology_conflicts_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/kbs/{kb_id}/ontology/conflicts/{conflict_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Conflict */
+        get: operations["get_conflict_kbs__kb_id__ontology_conflicts__conflict_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/kbs/{kb_id}/ontology/conflicts/{conflict_id}/adjudications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Adjudicate Conflict */
+        post: operations["adjudicate_conflict_kbs__kb_id__ontology_conflicts__conflict_id__adjudications_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2911,6 +3116,284 @@ export interface components {
              */
             ok: boolean;
         };
+        /** OntologyConflictAdjudicate */
+        OntologyConflictAdjudicate: {
+            /**
+             * Decision
+             * @default claim_rejected
+             * @constant
+             * @enum {string}
+             */
+            decision: "claim_rejected";
+            /** Rationale */
+            rationale: string;
+            /** Evidence Id */
+            evidence_id: number;
+        };
+        /** OntologyConflictRead */
+        OntologyConflictRead: {
+            /** Id */
+            id: string;
+            /** Kb Id */
+            kb_id: number;
+            /** Existing Object Id */
+            existing_object_id: string;
+            /** Claimant Object Id */
+            claimant_object_id: string;
+            /** Namespace */
+            namespace: string;
+            /** Value */
+            value: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "open" | "claim_rejected";
+            /**
+             * Reported At
+             * Format: date-time
+             */
+            reported_at: string;
+            /** Reports */
+            reports?: components["schemas"]["OntologyConflictReportRead"][];
+            resolution?: components["schemas"]["OntologyConflictResolutionRead"] | null;
+        };
+        /** OntologyConflictReportCreate */
+        OntologyConflictReportCreate: {
+            /** Namespace */
+            namespace: string;
+            /** Value */
+            value: string;
+            /** Evidence Id */
+            evidence_id: number;
+        };
+        /** OntologyConflictReportRead */
+        OntologyConflictReportRead: {
+            /** Id */
+            id: number;
+            /** Evidence Id */
+            evidence_id: number;
+            /** Reported By */
+            reported_by: string;
+            /**
+             * Reported At
+             * Format: date-time
+             */
+            reported_at: string;
+        };
+        /** OntologyConflictResolutionRead */
+        OntologyConflictResolutionRead: {
+            /**
+             * Decision
+             * @constant
+             * @enum {string}
+             */
+            decision: "claim_rejected";
+            /** Rationale */
+            rationale: string;
+            /** Evidence Id */
+            evidence_id: number;
+            /** Adjudicated By */
+            adjudicated_by: string;
+            /**
+             * Adjudicated At
+             * Format: date-time
+             */
+            adjudicated_at: string;
+        };
+        /** OntologyCrosswalkCreate */
+        OntologyCrosswalkCreate: {
+            /** Namespace */
+            namespace: string;
+            /** Source Value */
+            source_value: string;
+            /** Authority */
+            authority: string;
+            /** Canonical Namespace */
+            canonical_namespace: string;
+            /** Canonical Value */
+            canonical_value: string;
+            /** Evidence Id */
+            evidence_id: number;
+        };
+        /** OntologyCrosswalkRead */
+        OntologyCrosswalkRead: {
+            /** Id */
+            id: number;
+            /** Namespace */
+            namespace: string;
+            /** Source Value */
+            source_value: string;
+            /** Authority */
+            authority: string;
+            /** Canonical Namespace */
+            canonical_namespace: string;
+            /** Canonical Value */
+            canonical_value: string;
+            /** Evidence Id */
+            evidence_id: number;
+            /** Created By */
+            created_by: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** OntologyEvidenceCreate */
+        OntologyEvidenceCreate: {
+            /** Uri */
+            uri: string;
+            /** Source Version */
+            source_version: string;
+            /**
+             * Locator
+             * @default
+             */
+            locator: string;
+            /**
+             * Checksum
+             * @default
+             */
+            checksum: string;
+        };
+        /** OntologyEvidenceRead */
+        OntologyEvidenceRead: {
+            /** Uri */
+            uri: string;
+            /** Source Version */
+            source_version: string;
+            /**
+             * Locator
+             * @default
+             */
+            locator: string;
+            /**
+             * Checksum
+             * @default
+             */
+            checksum: string;
+            /** Id */
+            id: number;
+            /** Created By */
+            created_by: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** OntologyIdentifierCreate */
+        OntologyIdentifierCreate: {
+            /** Namespace */
+            namespace: string;
+            /** Value */
+            value: string;
+            /** Evidence Id */
+            evidence_id: number;
+        };
+        /** OntologyIdentifierRead */
+        OntologyIdentifierRead: {
+            /** Id */
+            id: number;
+            /** Object Id */
+            object_id: string;
+            /** Namespace */
+            namespace: string;
+            /** Value */
+            value: string;
+            /** Evidence Id */
+            evidence_id: number;
+            /** Registered By */
+            registered_by: string;
+            /**
+             * Registered At
+             * Format: date-time
+             */
+            registered_at: string;
+        };
+        /** OntologyObjectCreate */
+        OntologyObjectCreate: {
+            /**
+             * Object Type
+             * @enum {string}
+             */
+            object_type: "contract" | "product" | "organization";
+            /** Label */
+            label: string;
+            /** Evidence Id */
+            evidence_id: number;
+        };
+        /** OntologyObjectRead */
+        OntologyObjectRead: {
+            /** Id */
+            id: string;
+            /** Kb Id */
+            kb_id: number;
+            /**
+             * Object Type
+             * @enum {string}
+             */
+            object_type: "contract" | "product" | "organization";
+            /** Label */
+            label: string;
+            /**
+             * Identity Status
+             * @enum {string}
+             */
+            identity_status: "candidate" | "confirmed" | "ambiguous" | "insufficient_evidence";
+            /** Created By */
+            created_by: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Identifiers */
+            identifiers?: components["schemas"]["OntologyIdentifierRead"][];
+            /** Reviews */
+            reviews?: components["schemas"]["OntologyReviewRead"][];
+            /** Crosswalks */
+            crosswalks?: components["schemas"]["OntologyCrosswalkRead"][];
+        };
+        /** OntologyReviewCreate */
+        OntologyReviewCreate: {
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "candidate" | "ambiguous" | "insufficient_evidence";
+            /** Rationale */
+            rationale: string;
+            /** Evidence Id */
+            evidence_id: number;
+        };
+        /** OntologyReviewRead */
+        OntologyReviewRead: {
+            /** Id */
+            id: number;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "candidate" | "confirmed" | "ambiguous" | "insufficient_evidence";
+            /** Rationale */
+            rationale: string;
+            /** Evidence Id */
+            evidence_id: number;
+            /** Reviewed By */
+            reviewed_by: string;
+            /**
+             * Reviewed At
+             * Format: date-time
+             */
+            reviewed_at: string;
+        };
         /** OpsOverviewResponse */
         OpsOverviewResponse: {
             /**
@@ -3024,6 +3507,61 @@ export interface components {
             release: components["schemas"]["KBReleaseRead"];
             /** Items */
             items?: components["schemas"]["KBReleaseItemRead"][];
+        };
+        /** ReleaseDiffCounts */
+        ReleaseDiffCounts: {
+            /**
+             * Added
+             * @default 0
+             */
+            added: number;
+            /**
+             * Removed
+             * @default 0
+             */
+            removed: number;
+            /**
+             * Changed
+             * @default 0
+             */
+            changed: number;
+            /**
+             * Unchanged
+             * @default 0
+             */
+            unchanged: number;
+        };
+        /** ReleaseDiffEntry */
+        ReleaseDiffEntry: {
+            /** Knowledge Item Id */
+            knowledge_item_id: number;
+            /**
+             * Change
+             * @enum {string}
+             */
+            change: "added" | "removed" | "changed" | "unchanged";
+            /** Item Type */
+            item_type: string;
+            /** Title */
+            title: string;
+            /** Base Title */
+            base_title?: string | null;
+            /** Base Revision Id */
+            base_revision_id?: number | null;
+            /** Target Revision Id */
+            target_revision_id?: number | null;
+            /** Base Version Hash */
+            base_version_hash?: string | null;
+            /** Target Version Hash */
+            target_version_hash?: string | null;
+        };
+        /** ReleaseDiffResponse */
+        ReleaseDiffResponse: {
+            base_release: components["schemas"]["KBReleaseRead"];
+            release: components["schemas"]["KBReleaseRead"];
+            counts: components["schemas"]["ReleaseDiffCounts"];
+            /** Entries */
+            entries?: components["schemas"]["ReleaseDiffEntry"][];
         };
         /** ReleaseHotfixRequest */
         ReleaseHotfixRequest: {
@@ -7337,6 +7875,42 @@ export interface operations {
             };
         };
     };
+    diff_release_kbs__kb_id__releases__release_id__diff_get: {
+        parameters: {
+            query?: {
+                /** @description Base release id; defaults to the release this one superseded. */
+                base?: number | null;
+                include_unchanged?: boolean;
+            };
+            header?: never;
+            path: {
+                kb_id: number;
+                release_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReleaseDiffResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_service_principals_service_principals_get: {
         parameters: {
             query?: never;
@@ -8159,6 +8733,421 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MemoryIngestionResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_evidence_kbs__kb_id__ontology_evidence_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                kb_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OntologyEvidenceCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OntologyEvidenceRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_evidence_kbs__kb_id__ontology_evidence__evidence_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                kb_id: number;
+                evidence_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OntologyEvidenceRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_objects_kbs__kb_id__ontology_objects_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path: {
+                kb_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OntologyObjectRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_object_kbs__kb_id__ontology_objects_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                kb_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OntologyObjectCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OntologyObjectRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_object_kbs__kb_id__ontology_objects__object_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                kb_id: number;
+                object_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OntologyObjectRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    register_identifier_kbs__kb_id__ontology_objects__object_id__identifiers_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                kb_id: number;
+                object_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OntologyIdentifierCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OntologyIdentifierRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    review_identity_kbs__kb_id__ontology_objects__object_id__reviews_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                kb_id: number;
+                object_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OntologyReviewCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OntologyReviewRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    confirm_crosswalk_kbs__kb_id__ontology_objects__object_id__crosswalks_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                kb_id: number;
+                object_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OntologyCrosswalkCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OntologyCrosswalkRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    report_identifier_conflict_kbs__kb_id__ontology_objects__claimant_object_id__conflicts_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                kb_id: number;
+                claimant_object_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OntologyConflictReportCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OntologyConflictRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_conflicts_kbs__kb_id__ontology_conflicts_get: {
+        parameters: {
+            query?: {
+                status?: ("open" | "claim_rejected") | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path: {
+                kb_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OntologyConflictRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_conflict_kbs__kb_id__ontology_conflicts__conflict_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                kb_id: number;
+                conflict_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OntologyConflictRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    adjudicate_conflict_kbs__kb_id__ontology_conflicts__conflict_id__adjudications_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                kb_id: number;
+                conflict_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OntologyConflictAdjudicate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OntologyConflictRead"];
                 };
             };
             /** @description Validation Error */
