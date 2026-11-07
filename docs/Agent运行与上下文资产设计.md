@@ -59,8 +59,8 @@ warehouse  -> 文件/对象、路径权限、凭证、配额、checksum、WebDAV
 | `service_principal_id` | 创建 run 的服务身份 |
 | `session_id` | Chat 会话或上游会话标识 |
 | `external_id` | 上游幂等标识，如 `<sessionId>:<messageId>` |
-| `run_type` | 第一阶段固定使用 `research` |
-| `status` | `running/completed/failed/cancelled` |
+| `run_type` | `research`（默认）或 `spreadsheet_analysis`（表格分析，见[CSV 与 Excel 分析 Agent 开发说明](CSV与Excel分析Agent开发说明.md)） |
+| `status` | `queued/running/completed/failed/cancelled`；`queued` 用于由 Worker 执行的 `spreadsheet_analysis` |
 | `warehouse_run_path` | Warehouse 中 run 根路径 |
 | `input_manifest_json` | 输入引用摘要 |
 | `context_manifest_json` | 上下文引用摘要 |
