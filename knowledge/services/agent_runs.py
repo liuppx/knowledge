@@ -13,8 +13,13 @@ from knowledge.services.agent_run_progress import AgentRunProgressService
 from knowledge.utils.time import utc_now
 
 
+class AgentRunConflictError(ValueError):
+    """The run exists but its current state does not allow the requested action."""
+
+
 class AgentRunService:
     TERMINAL_STATUSES = {"completed", "failed", "cancelled"}
+    RETRYABLE_STATUSES = {"failed", "cancelled"}
 
     def __init__(self) -> None:
         self.progress = AgentRunProgressService()
@@ -144,6 +149,82 @@ class AgentRunService:
         db.commit()
         db.refresh(run)
         return run
+
+    def retry_run(self, db: Session, principal: ServicePrincipal, run_id: str) -> AgentRun:
+        """Queue a new attempt over the original run's frozen inputs.
+
+        The original run, its events and artifacts are left untouched. Each run
+        can be retried at most once (unique retry_of_run_id), so repeated calls
+        return the same child; to try again, retry the newest attempt.
+        """
+        original = self.get_run(db, principal, run_id)
+        if original.run_type != "spreadsheet_analysis":
+            raise ValueError("only spreadsheet_analysis runs can be retried")
+        existing = self._retry_child(db, original.id)
+        if existing is not None:
+            return existing
+        if original.status not in self.RETRYABLE_STATUSES:
+            raise AgentRunConflictError(f"agent run is {original.status}; only failed or cancelled runs can be retried")
+
+        frozen_inputs = [dict(item) for item in (original.input_manifest_json or [])]
+        new_id = self._new_run_id()
+        retry = AgentRun(
+            id=new_id,
+            owner_wallet_address=original.owner_wallet_address,
+            service_principal_id=original.service_principal_id,
+            session_id=original.session_id,
+            external_id=None,
+            run_type=original.run_type,
+            status="queued",
+            warehouse_run_path=warehouse_app_path(f"runs/{new_id}"),
+            input_manifest_json=frozen_inputs,
+            context_manifest_json=[],
+            metadata_json=dict(original.metadata_json or {}),
+            manifest_sync_status="pending",
+            retry_of_run_id=original.id,
+            attempt=(original.attempt or 1) + 1,
+        )
+        db.add(retry)
+        for item in frozen_inputs:
+            db.add(
+                AgentRunInput(
+                    run_id=new_id,
+                    input_key=item["inputKey"],
+                    kind=item["kind"],
+                    role=item["role"],
+                    warehouse_path=item["warehousePath"],
+                    version_id=item["versionId"],
+                    etag=item["etag"],
+                    sha256=item["sha256"],
+                    size=item["size"],
+                    content_type=item["contentType"],
+                    metadata_json=item["metadata"],
+                )
+            )
+        self.progress.event(
+            db,
+            new_id,
+            "run.queued",
+            stage="queued",
+            progress=0,
+            message=f"重试任务已进入队列（第 {retry.attempt} 次尝试）",
+            commit=False,
+        )
+        try:
+            db.commit()
+        except IntegrityError:
+            # A concurrent retry of the same run won the unique constraint.
+            db.rollback()
+            existing = self._retry_child(db, original.id)
+            if existing is not None:
+                return existing
+            raise
+        db.refresh(retry)
+        return retry
+
+    @staticmethod
+    def _retry_child(db: Session, run_id: str) -> AgentRun | None:
+        return db.scalar(select(AgentRun).where(AgentRun.retry_of_run_id == run_id))
 
     @staticmethod
     def _require_running(run: AgentRun) -> None:

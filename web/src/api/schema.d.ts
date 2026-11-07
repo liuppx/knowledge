@@ -520,6 +520,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/service/runs/{run_id}/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Retry Agent Run */
+        post: operations["retry_agent_run_service_runs__run_id__retry_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/runs/{run_id}/manifest/retry": {
         parameters: {
             query?: never;
@@ -2236,6 +2253,13 @@ export interface components {
             manifest_synced_at?: string | null;
             /** Manifest Sync Error */
             manifest_sync_error: string;
+            /** Retry Of Run Id */
+            retry_of_run_id?: string | null;
+            /**
+             * Attempt
+             * @default 1
+             */
+            attempt: number;
             /**
              * Started At
              * Format: date-time
@@ -5942,6 +5966,39 @@ export interface operations {
                 "application/json": components["schemas"]["AgentRunFinishRequest"];
             };
         };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgentRunRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    retry_agent_run_service_runs__run_id__retry_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Service-Api-Key": string;
+            };
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description Successful Response */
             200: {

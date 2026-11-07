@@ -75,6 +75,8 @@ class AgentRunRead(BaseModel):
     manifest_sync_status: str
     manifest_synced_at: datetime | None = None
     manifest_sync_error: str
+    retry_of_run_id: str | None = None
+    attempt: int = 1
     started_at: datetime
     finished_at: datetime | None = None
     created_at: datetime

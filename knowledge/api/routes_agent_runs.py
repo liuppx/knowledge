@@ -21,7 +21,7 @@ from knowledge.schemas.agent_runs import (
     AgentRunRead,
     AgentRunStepRead,
 )
-from knowledge.services.agent_runs import AgentRunService
+from knowledge.services.agent_runs import AgentRunConflictError, AgentRunService
 from knowledge.services.agent_run_artifacts import AgentRunArtifactService
 from knowledge.services.agent_run_manifests import AgentRunManifestService
 from knowledge.services.service_principals import ServicePrincipalService
@@ -290,6 +290,23 @@ def cancel_agent_run(
     db: Session = Depends(get_db),
 ) -> AgentRunRead:
     return _finish(run_id, "cancelled", payload, principal, db)
+
+
+@router.post("/service/runs/{run_id}/retry", response_model=AgentRunRead)
+def retry_agent_run(
+    run_id: str,
+    principal=Depends(get_service_principal),
+    db: Session = Depends(get_db),
+) -> AgentRunRead:
+    try:
+        run = agent_run_service.retry_run(db, principal, run_id)
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except AgentRunConflictError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return sync_manifest(db, run)
 
 
 @router.post("/runs/{run_id}/manifest/retry", response_model=AgentRunRead)

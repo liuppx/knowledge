@@ -1089,6 +1089,38 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /service/runs/{run_id}/retry:
+    post:
+      tags:
+      - agent_runs
+      summary: Retry Agent Run
+      operationId: retry_agent_run_service_runs__run_id__retry_post
+      parameters:
+      - name: run_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Run Id
+      - name: X-Service-Api-Key
+        in: header
+        required: true
+        schema:
+          type: string
+          title: X-Service-Api-Key
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentRunRead'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /runs/{run_id}/manifest/retry:
     post:
       tags:
@@ -4671,6 +4703,15 @@ components:
         manifest_sync_error:
           type: string
           title: Manifest Sync Error
+        retry_of_run_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Retry Of Run Id
+        attempt:
+          type: integer
+          title: Attempt
+          default: 1
         started_at:
           type: string
           format: date-time
