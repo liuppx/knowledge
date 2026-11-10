@@ -136,4 +136,7 @@ scripts/package.sh
 
 ## 更多文档
 
-详细设计与接口文档在 `docs/` 目录。
+- [核心概念](docs/architecture/核心概念.md)：项目中的领域对象、角色和术语，第一次接触本项目建议先读。
+- [系统架构](docs/architecture/系统架构.md)：组件、与社区产品的分工和主要数据流。
+- [数据模型](docs/architecture/数据模型.md)：数据库表、关系、约束和状态取值。
+- [文档目录](docs/README.md)：全部设计、接口、运维文档的入口。
