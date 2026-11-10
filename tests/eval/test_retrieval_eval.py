@@ -15,7 +15,7 @@ from tests.eval.harness import TIERS, run_eval
 
 pytestmark = pytest.mark.eval
 
-# Mirrors docs/产品验证知识库.md §6: Q01–Q11 must hit on at least 9 questions.
+# Mirrors docs/validation/产品验证知识库.md §6: Q01–Q11 must hit on at least 9 questions.
 MIN_HITS = int(os.environ.get("KNOWLEDGE_EVAL_MIN_HITS", "9"))
 
 

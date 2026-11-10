@@ -8,7 +8,7 @@
 
 - `service search` 面向外部服务的读面接口
 
-那部分继续参考 `docs/API接入文档.md`。
+那部分继续参考 `docs/integrations/API接入文档.md`。
 
 ## 1. 登录
 
@@ -324,7 +324,7 @@ GET /warehouse/browse?path=/apps/knowledge.yeying.pub/uploads&use_write_credenti
 
 ## 9. 相关文档
 
-- `docs/API接入文档.md`
-- `docs/Warehouse鉴权与绑定重构说明.md`
-- `docs/Warehouse凭证使用说明.md`
-- `docs/控制台操作手册.md`
+- `docs/integrations/API接入文档.md`
+- `docs/integrations/Warehouse鉴权与绑定重构说明.md`
+- `docs/integrations/Warehouse凭证使用说明.md`
+- `docs/guides/控制台操作手册.md`

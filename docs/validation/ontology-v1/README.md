@@ -4,9 +4,9 @@
 >
 > 演练日期基准：2026-10-24
 >
-> 上游门检：[运营本体 V1 构建风险评审](../../运营本体V1构建风险评审.md)
+> 上游门检：[运营本体 V1 构建风险评审](../../ontology/运营本体V1构建风险评审.md)
 
-真实数据研究不得直接复用本目录的预期答案；正式方法和空模板见[运营本体 V1 实证研究方案](../../运营本体V1实证研究方案.md)和 [real-study](real-study/README.md)。没有内部数据时，可先执行[公开数据代理验证](../../运营本体V1公开数据代理验证.md)及其[运行说明](public-study/README.md)，但不得把代理结果解释为真实业务需求证据。
+真实数据研究不得直接复用本目录的预期答案；正式方法和空模板见[运营本体 V1 实证研究方案](../../ontology/运营本体V1实证研究方案.md)和 [real-study](real-study/README.md)。没有内部数据时，可先执行[公开数据代理验证](../../ontology/运营本体V1公开数据代理验证.md)及其[运行说明](public-study/README.md)，但不得把代理结果解释为真实业务需求证据。
 
 ## 1. 目的
 
@@ -29,7 +29,7 @@
 | [assertions.csv](assertions.csv) | 带有效期、状态、Evidence 和 Release 边界的关系事实 |
 | [questions.csv](questions.csv) | 10 个决策问题和 5 个文本检索控制问题 |
 | [scorecard.csv](scorecard.csv) | 记录现有检索基线与人工事实表结果 |
-| [evidence](evidence/) | 合成合同原文和来源状态说明 |
+| [evidence](evidence) | 合成合同原文和来源状态说明 |
 
 ## 3. 场景摘要
 

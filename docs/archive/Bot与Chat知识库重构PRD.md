@@ -1,5 +1,7 @@
 # Bot / Chat 知识库重构 PRD
 
+> **已归档（2026-11-10）**：本文写于 2026-08，把已删除的 `POST /kbs/{kb_id}/search`、`POST /retrieval-context` 描述为当前入口（见 `tests/test_legacy_interfaces_removed.py`）。当前对外检索接口见 [API 接入文档](../integrations/API接入文档.md)，架构见[系统架构](../architecture/系统架构.md)。
+
 ## 1. 背景与问题
 
 当前 `knowledge` 已具备基础的资产导入、索引、检索、记忆沉淀与控制台能力，但对 bot/chat 的对接形态仍偏“控制台驱动 + 单体接口”：

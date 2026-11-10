@@ -1,5 +1,7 @@
 # Warehouse 鉴权收口 TODO
 
+> **已归档（2026-11-10）**：本文是 2026-08 的收口待办清单，其中旧 `/warehouse/auth/*` 路由移除等项已完成，后续方向由 [Warehouse 集成收敛方案](../integrations/Warehouse集成收敛方案.md) 取代。
+
 本文档只列当前方案必需的收口项，不列未来增强项。
 
 ## 后端模型
@@ -10,7 +12,7 @@
 
 ## API
 
-- 持续维护 `docs/控制面API文档.md`，避免控制台接口散落在各文档里
+- 持续维护 `docs/integrations/控制面API文档.md`，避免控制台接口散落在各文档里
 - 保持 `/warehouse/status` 作为当前唯一状态查询接口
 
 ## 网关访问层

@@ -7,7 +7,7 @@
 # The restore REPLACES existing objects (--clean --if-exists). Stop the API and
 # workers first. Afterwards run `alembic upgrade head` (or just start the API,
 # which migrates on boot) and rebuild the Weaviate accelerator per KB with
-# POST /kbs/{kb_id}/reindex-units. See docs/备份与恢复手册.md.
+# POST /kbs/{kb_id}/reindex-units. See docs/operations/备份与恢复手册.md.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

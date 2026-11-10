@@ -1,6 +1,6 @@
 # Agent Run 与 Context Asset 设计方案
 
-状态：历史设计说明；资产存取按[Warehouse 集成收敛方案](Warehouse集成收敛方案.md)迁移中
+状态：历史设计说明；资产存取按[Warehouse 集成收敛方案](../integrations/Warehouse集成收敛方案.md)迁移中
 版本：v1  
 日期：2026-08-01
 
@@ -59,7 +59,7 @@ warehouse  -> 文件/对象、路径权限、凭证、配额、checksum、WebDAV
 | `service_principal_id` | 创建 run 的服务身份 |
 | `session_id` | Chat 会话或上游会话标识 |
 | `external_id` | 上游幂等标识，如 `<sessionId>:<messageId>` |
-| `run_type` | `research`（默认）或 `spreadsheet_analysis`（表格分析，见[CSV 与 Excel 分析 Agent 开发说明](CSV与Excel分析Agent开发说明.md)） |
+| `run_type` | `research`（默认）或 `spreadsheet_analysis`（表格分析，见[CSV 与 Excel 分析 Agent 开发说明](../guides/CSV与Excel分析Agent开发说明.md)） |
 | `status` | `queued/running/completed/failed/cancelled`；`queued` 用于由 Worker 执行的 `spreadsheet_analysis` |
 | `warehouse_run_path` | Warehouse 中 run 根路径 |
 | `input_manifest_json` | 输入引用摘要 |

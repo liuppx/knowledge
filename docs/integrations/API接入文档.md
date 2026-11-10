@@ -148,8 +148,8 @@
 - 上传、浏览、绑定、导入都只允许发生在该 app 目录内
 - 保存写凭证时，后端会尝试在凭证作用域内完成当前 app 目录或目标根路径的最小 bootstrap
 - 旧 `/warehouse/auth/*` JWT / UCAN 绑定接口已经从当前仓库删除
-- 控制面接口参考 `docs/控制面API文档.md`
-- 读写凭证使用方式参考 `docs/Warehouse凭证使用说明.md`
+- 控制面接口参考 `docs/integrations/控制面API文档.md`
+- 读写凭证使用方式参考 `docs/integrations/Warehouse凭证使用说明.md`
 
 ## 稳定性建议
 

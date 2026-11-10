@@ -1,4 +1,4 @@
-"""Product acceptance run for docs/产品验证知识库.md §5/§6 using the 11 real documents.
+"""Product acceptance run for docs/validation/产品验证知识库.md §5/§6 using the 11 real documents.
 
 Drives the real HTTP surface (in-process ASGI by default, or --base-url for a
 running server) through the whole product loop with the mock Warehouse gateway
@@ -30,19 +30,20 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 CORPUS_DIR_NAME = "handbook"
-CORPUS_FILES = [
+CORPUS_FILES = [  # paths under docs/; uploaded under their bare file name
     "README.md",
-    "知识库架构V1.md",
-    "社区产品关系与开发边界.md",
-    "Agent运行与上下文资产设计.md",
-    "API接入文档.md",
-    "控制台操作手册.md",
-    "控制面API文档.md",
-    "Bot与Chat知识库重构PRD.md",
-    "Warehouse鉴权与绑定重构说明.md",
-    "Warehouse凭证使用说明.md",
-    "Worker部署与扩缩容建议.md",
+    "roadmap/知识库架构V1.md",
+    "architecture/社区产品关系与开发边界.md",
+    "architecture/Agent运行与上下文资产设计.md",
+    "integrations/API接入文档.md",
+    "guides/控制台操作手册.md",
+    "integrations/控制面API文档.md",
+    "archive/Bot与Chat知识库重构PRD.md",
+    "integrations/Warehouse鉴权与绑定重构说明.md",
+    "integrations/Warehouse凭证使用说明.md",
+    "operations/Worker部署与扩缩容建议.md",
 ]
+CORPUS_NAMES = [Path(name).name for name in CORPUS_FILES]
 ACTIVE = {"pending", "running", "cancel_requested"}
 
 
@@ -162,7 +163,7 @@ def run(args: argparse.Namespace) -> int:
     uploaded = 0
     for name in CORPUS_FILES:
         content = (REPO_ROOT / "docs" / name).read_bytes()
-        client.post("/warehouse/upload", data={"target_dir": target_dir}, files={"file": (name, content, "text/markdown")})
+        client.post("/warehouse/upload", data={"target_dir": target_dir}, files={"file": (Path(name).name, content, "text/markdown")})
         uploaded += 1
     report.check("11 篇文档上传成功", uploaded == len(CORPUS_FILES), f"{uploaded}/{len(CORPUS_FILES)} → {target_dir}")
 
@@ -173,7 +174,7 @@ def run(args: argparse.Namespace) -> int:
     report.line(f"- 导入任务 #{task['id']} 状态 `{task['status']}`，文件明细 {len(items)} 条：" + ", ".join(sorted({str(item['status']) for item in items})))
     documents = client.get(f"/kbs/{kb_id}/documents")
     names = {doc["source_file_name"] for doc in documents}
-    missing = [name for name in CORPUS_FILES if name not in names]
+    missing = [name for name in CORPUS_NAMES if name not in names]
     report.check("11 篇文档全部导入，无静默跳过", task["status"] == "succeeded" and not missing, f"documents={len(documents)} missing={missing}")
     report.check("文档列表显示文件级状态与 chunk 数", all(doc["parse_status"] and doc["chunk_count"] > 0 for doc in documents) and bool(documents), f"chunks={sum(doc['chunk_count'] for doc in documents)}")
     bindings = client.get(f"/kbs/{kb_id}/bindings")
@@ -217,7 +218,7 @@ def run(args: argparse.Namespace) -> int:
     hits_on_expected = 0
     scored = 0
     for question in QUESTIONS:
-        expected_files = {DOCS[key]["file"] for key in question["expected"] if DOCS[key]["file"] in CORPUS_FILES}
+        expected_files = {DOCS[key]["file"] for key in question["expected"] if DOCS[key]["file"] in CORPUS_NAMES}
         compare = client.post(f"/kbs/{kb_id}/search-lab/compare", json={"query": question["query"], "top_k": 6, "result_view": "audit", "availability_mode": "allow_all"})
         hits = compare["formal_first"]["hits"]
         files_hit: list[str] = []

@@ -1,6 +1,6 @@
 """Fixed Q01–Q12 corpus and questions for the retrieval eval.
 
-Questions are verbatim from docs/产品验证知识库.md §3; ``expected`` holds the
+Questions are verbatim from docs/validation/产品验证知识库.md §3; ``expected`` holds the
 "预期主要来源" documents as stable keys. Passages are condensed excerpts of the
 11 documents listed in §2 (facts kept faithful to the source docs — worker
 scripts, endpoint paths, credential rules, manifest fields), so this fixture

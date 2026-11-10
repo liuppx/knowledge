@@ -36,7 +36,7 @@ DATABASE_URL=postgresql://knowledge:knowledge@127.0.0.1:5432/knowledge?gssencmod
 ```bash
 uv sync --locked
 (cd web && npm install)
-cp .env.template .env        # 按需修改 DATABASE_URL 等；生产配置见 docs/部署指南.md
+cp .env.template .env        # 按需修改 DATABASE_URL 等；生产配置见 docs/operations/部署指南.md
 ```
 
 服务配置的优先级为：进程环境变量 > `.env` > `config/local.toml` > `config/defaults.toml`。本地开发通常只需要 `.env`；部署主机在 `config/local.toml` 中取消注释并填入真实值。
@@ -118,7 +118,7 @@ scripts/starter.sh status
 scripts/starter.sh stop
 ```
 
-长期运行和扩展后台处理能力建议使用 systemd，参见 `docs/Worker部署与扩缩容建议.md`。
+长期运行和扩展后台处理能力建议使用 systemd，参见 `docs/operations/Worker部署与扩缩容建议.md`。
 
 ### 6. 创建离线部署包
 
