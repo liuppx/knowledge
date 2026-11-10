@@ -312,6 +312,21 @@ class WarehouseAccessCredential(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, onupdate=utcnow, nullable=False)
 
 
+class WarehouseToolCredential(Base):
+    __tablename__ = "warehouse_tool_credentials"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    owner_wallet_address: Mapped[str] = mapped_column(String(64), unique=True, index=True, nullable=False)
+    warehouse_credential_id: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
+    encrypted_secret: Mapped[str] = mapped_column(Text, nullable=False)
+    scopes: Mapped[list[str]] = mapped_column(JSON, nullable=False)
+    path_prefixes: Mapped[list[str]] = mapped_column(JSON, nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    status: Mapped[str] = mapped_column(String(24), default="active", nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, onupdate=utcnow, nullable=False)
+
+
 class LongTermMemory(Base):
     __tablename__ = "memories_long_term"
 

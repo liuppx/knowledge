@@ -10,7 +10,9 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from knowledge.core.settings import get_settings
-from knowledge.models import SourceBinding, WarehouseAccessCredential
+from knowledge.models import SourceBinding, WarehouseAccessCredential, WarehouseToolCredential
+from knowledge.ports.storage import AssetAccessContext
+from knowledge.adapters.warehouse_tool import WarehouseToolAuthorization
 from knowledge.services.warehouse import WarehouseGateway, WarehouseRequestAuth, build_warehouse_gateway
 from knowledge.services.warehouse_scope import ensure_current_app_path, normalize_warehouse_path, warehouse_app_root
 from knowledge.utils.time import utc_now
@@ -28,6 +30,7 @@ class ResolvedWarehouseAccess:
     auth: WarehouseRequestAuth
     credential: WarehouseAccessCredential
     binding: SourceBinding | None = None
+    tool_credential: WarehouseToolCredential | None = None
 
 
 class WarehouseAccessService:
@@ -35,6 +38,28 @@ class WarehouseAccessService:
         self.settings = get_settings()
         self.fernet = Fernet(self.settings.token_encryption_secret.encode("utf-8"))
         self.warehouse_gateway = warehouse_gateway or build_warehouse_gateway()
+
+    def asset_context(self, wallet_address: str, resolved: ResolvedWarehouseAccess) -> AssetAccessContext:
+        """Convert a Knowledge-resolved credential into an adapter context."""
+        tool_credential = resolved.tool_credential
+        if tool_credential is not None:
+            if not any(
+                normalize_warehouse_path(resolved.credential.root_path) == normalize_warehouse_path(prefix)
+                or normalize_warehouse_path(resolved.credential.root_path).startswith(f"{normalize_warehouse_path(prefix)}/")
+                for prefix in tool_credential.path_prefixes or []
+            ):
+                raise ValueError("Warehouse Tool credential does not cover the resolved asset root")
+            return AssetAccessContext(
+                owner_id=wallet_address.lower(),
+                authorization=WarehouseToolAuthorization(self._decrypt(tool_credential.encrypted_secret)),
+                credential_root=tool_credential.path_prefixes[0],
+                fallback_authorization=resolved.auth,
+            )
+        return AssetAccessContext(
+            owner_id=wallet_address.lower(),
+            authorization=resolved.auth,
+            credential_root=resolved.credential.root_path,
+        )
 
     def create_read_credential(self, db: Session, wallet_address: str, key_id: str, key_secret: str, root_path: str) -> WarehouseAccessCredential:
         normalized_root = ensure_current_app_path(root_path, "root_path", self.settings)
@@ -192,7 +217,7 @@ class WarehouseAccessService:
         credential = self.get_read_credential(db, wallet_address, int(binding.credential_id))
         if not self.credential_covers_path(credential, binding.source_path):
             raise ValueError(f"binding path exceeds credential scope: {binding.source_path}")
-        return self._resolved_access(credential, binding=binding)
+        return self._resolved_access(db, credential, binding=binding)
 
     def resolve_explicit_access(
         self,
@@ -207,7 +232,7 @@ class WarehouseAccessService:
         normalized_path = ensure_current_app_path(path, "path", self.settings)
         if not self.credential_covers_path(credential, normalized_path):
             raise ValueError(f"path exceeds credential scope: {normalized_path}")
-        return self._resolved_access(credential)
+        return self._resolved_access(db, credential)
 
     def resolve_write_access(self, db: Session, wallet_address: str, path: str) -> ResolvedWarehouseAccess:
         credential = self.get_write_credential(db, wallet_address)
@@ -216,7 +241,7 @@ class WarehouseAccessService:
         normalized_path = ensure_current_app_path(path, "path", self.settings)
         if not self.credential_covers_path(credential, normalized_path):
             raise ValueError(f"path exceeds write credential scope: {normalized_path}")
-        return self._resolved_access(credential)
+        return self._resolved_access(db, credential)
 
     def resolve_browse_access(
         self,
@@ -235,7 +260,7 @@ class WarehouseAccessService:
             return self.resolve_write_access(db, wallet_address, normalized_path)
         write_credential = self.get_write_credential(db, wallet_address)
         if write_credential is not None and self.credential_covers_path(write_credential, normalized_path):
-            return self._resolved_access(write_credential)
+            return self._resolved_access(db, write_credential)
         raise ValueError("warehouse browse requires credential_id or write credential")
 
     def resolve_path_read_access(
@@ -361,7 +386,14 @@ class WarehouseAccessService:
             return "*" * len(text)
         return f"{text[:4]}{'*' * max(4, len(text) - 8)}{text[-4:]}"
 
-    def _resolved_access(self, credential: WarehouseAccessCredential, binding: SourceBinding | None = None) -> ResolvedWarehouseAccess:
+    def _resolved_access(self, db: Session, credential: WarehouseAccessCredential, binding: SourceBinding | None = None) -> ResolvedWarehouseAccess:
+        tool_credential = db.scalar(
+            select(WarehouseToolCredential)
+            .where(WarehouseToolCredential.owner_wallet_address == credential.owner_wallet_address)
+            .where(WarehouseToolCredential.status == "active")
+        )
+        if tool_credential is not None and tool_credential.expires_at <= utc_now():
+            tool_credential = None
         return ResolvedWarehouseAccess(
             auth=WarehouseRequestAuth.basic(
                 credential.key_id,
@@ -369,6 +401,7 @@ class WarehouseAccessService:
             ),
             credential=credential,
             binding=binding,
+            tool_credential=tool_credential,
         )
 
     def _upsert_credential(

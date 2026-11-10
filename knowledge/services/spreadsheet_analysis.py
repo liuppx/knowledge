@@ -12,6 +12,7 @@ from zipfile import BadZipFile, ZipFile
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
+from knowledge.adapters.warehouse_assets import build_warehouse_asset_store
 from knowledge.models import AgentRun, AgentRunInput, ServicePrincipal
 from knowledge.services.agent_run_artifacts import AgentRunArtifactService
 from knowledge.services.agent_run_manifests import AgentRunManifestService
@@ -59,6 +60,7 @@ class SpreadsheetAnalysisService:
         self.run_service = AgentRunService()
         self.progress = AgentRunProgressService()
         self.access = WarehouseAccessService()
+        self.asset_store = build_warehouse_asset_store(self.access.warehouse_gateway)
         self.artifacts = AgentRunArtifactService(run_service=self.run_service, warehouse_access_service=self.access)
         self.manifests = AgentRunManifestService(warehouse_access_service=self.access)
         self.plans = SpreadsheetPlanService()
@@ -271,7 +273,10 @@ class SpreadsheetAnalysisService:
 
     def _read_input(self, db: Session, run: AgentRun, item: AgentRunInput) -> bytes:
         resolved = self.access.resolve_write_access(db, run.owner_wallet_address, item.warehouse_path)
-        content = self.access.warehouse_gateway.read_file(run.owner_wallet_address, item.warehouse_path, auth=resolved.auth)
+        content = self.asset_store.read(
+            self.access.asset_context(run.owner_wallet_address, resolved),
+            item.warehouse_path,
+        )
         if len(content) > self.MAX_INPUT_BYTES:
             raise ValueError(f"spreadsheet exceeds M1 limit of {self.MAX_INPUT_BYTES} bytes")
         actual = hashlib.sha256(content).hexdigest()

@@ -28,6 +28,8 @@ from knowledge.schemas.warehouse import (
     WarehouseCredentialSummary,
     WarehouseEntry,
     WarehouseStatusResponse,
+    WarehouseToolCredentialConnectRequest,
+    WarehouseToolCredentialSummary,
     WarehouseWriteCredentialResponse,
 )
 from knowledge.services.bindings import BindingService
@@ -37,16 +39,53 @@ from knowledge.services.warehouse import build_warehouse_gateway
 from knowledge.services.warehouse_access import WarehouseAccessService
 from knowledge.services.warehouse_bootstrap import WarehouseBootstrapError, WarehouseBootstrapService
 from knowledge.services.warehouse_scope import ensure_current_app_path, warehouse_app_id, warehouse_app_root, warehouse_default_upload_dir
+from knowledge.services.warehouse_tool_credentials import WarehouseToolCredentialError, WarehouseToolCredentialService
 
 
 router = APIRouter(tags=["warehouse_sources"])
 logger = logging.getLogger(__name__)
 gateway = build_warehouse_gateway()
 warehouse_access_service = WarehouseAccessService(warehouse_gateway=gateway)
+warehouse_tool_credential_service = WarehouseToolCredentialService()
 warehouse_bootstrap_service = WarehouseBootstrapService(warehouse_gateway=gateway)
 parser = build_document_parser()
 binding_service = BindingService()
 settings = get_settings()
+
+
+@router.get("/warehouse/tool-credential", response_model=WarehouseToolCredentialSummary | None)
+def get_tool_credential(
+    wallet_address: str = Depends(get_current_wallet),
+    db: Session = Depends(get_db),
+) -> WarehouseToolCredentialSummary | None:
+    summary = warehouse_tool_credential_service.get(db, wallet_address)
+    return WarehouseToolCredentialSummary.model_validate(summary) if summary is not None else None
+
+
+@router.post("/warehouse/tool-credential/connect", response_model=WarehouseToolCredentialSummary)
+def connect_tool_credential(
+    payload: WarehouseToolCredentialConnectRequest,
+    wallet_address: str = Depends(get_current_wallet),
+    db: Session = Depends(get_db),
+) -> WarehouseToolCredentialSummary:
+    try:
+        summary = warehouse_tool_credential_service.connect(db, wallet_address, payload.warehouse_jwt)
+    except WarehouseToolCredentialError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return WarehouseToolCredentialSummary.model_validate(summary)
+
+
+@router.delete("/warehouse/tool-credential")
+def disconnect_tool_credential(
+    payload: WarehouseToolCredentialConnectRequest,
+    wallet_address: str = Depends(get_current_wallet),
+    db: Session = Depends(get_db),
+) -> dict:
+    try:
+        warehouse_tool_credential_service.disconnect(db, wallet_address, payload.warehouse_jwt)
+    except WarehouseToolCredentialError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return {"ok": True}
 
 
 def _ensure_current_app_path_or_400(path: str | None, label: str = "path") -> str:
@@ -104,7 +143,8 @@ def _current_app_binding_status(db: Session, wallet_address: str) -> WarehouseSt
         current_app_id=warehouse_app_id(),
         current_app_root=warehouse_app_root(),
         current_app_upload_dir=warehouse_default_upload_dir(),
-        warehouse_base_url=settings.warehouse_base_url if credentials_ready else None,
+        warehouse_base_url=settings.warehouse_base_url,
+        warehouse_api_base_url=settings.warehouse_api_base_url or settings.warehouse_base_url,
     )
 
 

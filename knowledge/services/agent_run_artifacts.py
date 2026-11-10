@@ -7,6 +7,7 @@ from pathlib import PurePath
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from knowledge.adapters.warehouse_assets import build_warehouse_asset_store
 from knowledge.models import AgentRunArtifact, ServicePrincipal
 from knowledge.models.entities import AGENT_ARTIFACT_STATUSES
 from knowledge.services.agent_runs import AgentRunService
@@ -24,6 +25,7 @@ class AgentRunArtifactService:
     ) -> None:
         self.run_service = run_service or AgentRunService()
         self.warehouse_access_service = warehouse_access_service or WarehouseAccessService()
+        self.asset_store = build_warehouse_asset_store(self.warehouse_access_service.warehouse_gateway)
 
     def upload(
         self,
@@ -65,19 +67,12 @@ class AgentRunArtifactService:
         stored_name = key + suffix
         target_dir = f"{run.warehouse_run_path}/artifacts"
         resolved = self.warehouse_access_service.resolve_write_access(db, run.owner_wallet_address, target_dir)
-        gateway = self.warehouse_access_service.warehouse_gateway
-        gateway.ensure_app_space(
-            run.owner_wallet_address,
-            auth=resolved.auth,
-            base_path=resolved.credential.root_path,
-            target_path=target_dir,
-        )
-        warehouse_path = gateway.upload_file(
-            run.owner_wallet_address,
+        asset = self.asset_store.write(
+            self.warehouse_access_service.asset_context(run.owner_wallet_address, resolved),
             target_dir,
             stored_name,
             content,
-            auth=resolved.auth,
+            content_type=content_type,
         )
         item = AgentRunArtifact(
             run_id=run.id,
@@ -85,7 +80,7 @@ class AgentRunArtifactService:
             artifact_type=normalized_type,
             role=str(role or "output").strip()[:128] or "output",
             status=normalized_status,
-            warehouse_path=warehouse_path,
+            warehouse_path=asset.object_id,
             file_name=PurePath(str(file_name or stored_name)).name[:255] or stored_name,
             content_type=str(content_type or "application/octet-stream").strip()[:255],
             size=len(content),

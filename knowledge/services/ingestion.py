@@ -5,6 +5,7 @@ from time import perf_counter
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
+from knowledge.adapters.warehouse_assets import build_warehouse_asset_store
 from knowledge.core.settings import get_settings
 from knowledge.models import EmbeddingRecord, ImportedChunk, ImportedDocument, ImportTask, ImportTaskItem, KnowledgeBase, SourceBinding
 from knowledge.services.document_chunking import build_document_chunker
@@ -38,6 +39,7 @@ class IngestionService:
         self.chunker = build_document_chunker()
         self.vector_store = build_vector_store()
         self.warehouse_access_service = WarehouseAccessService(warehouse_gateway=self.warehouse_gateway)
+        self.asset_store = build_warehouse_asset_store(self.warehouse_access_service.warehouse_gateway)
 
     def create_task(self, db: Session, wallet_address: str, kb_id: int, task_type: str, source_paths: list[str]) -> ImportTask:
         task = ImportTask(
@@ -306,7 +308,10 @@ class IngestionService:
 
         resolved = self._resolve_read_access_for_task_path(db, task, file_entry.path)
         try:
-            content = self.warehouse_gateway.read_file(task.owner_wallet_address, file_entry.path, auth=resolved.auth)
+            content = self.asset_store.read(
+                self.warehouse_access_service.asset_context(task.owner_wallet_address, resolved),
+                file_entry.path,
+            )
             self.warehouse_access_service.mark_access_success(resolved)
         except Exception as exc:  # noqa: BLE001
             if self.warehouse_access_service.is_auth_error(exc):

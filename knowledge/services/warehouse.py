@@ -55,7 +55,7 @@ class WarehouseGateway:
     ) -> None:
         raise NotImplementedError
 
-    def upload_file(self, wallet_address: str, target_dir: str, file_name: str, content: bytes, auth: WarehouseRequestAuth | None = None) -> str:
+    def upload_file(self, wallet_address: str, target_dir: str, file_name: str, content: bytes, auth: WarehouseRequestAuth | None = None, content_type: str | None = None) -> str:
         raise NotImplementedError
 
     def read_file(self, wallet_address: str, path: str, auth: WarehouseRequestAuth | None = None) -> bytes:
@@ -134,7 +134,7 @@ class MockWarehouseGateway(WarehouseGateway):
             )
         return entries
 
-    def upload_file(self, wallet_address: str, target_dir: str, file_name: str, content: bytes, auth: WarehouseRequestAuth | None = None) -> str:
+    def upload_file(self, wallet_address: str, target_dir: str, file_name: str, content: bytes, auth: WarehouseRequestAuth | None = None, content_type: str | None = None) -> str:
         normalized_target_dir = ensure_current_app_path(target_dir or warehouse_default_upload_dir(self.settings), "target_dir", self.settings)
         destination = self._resolve_path(wallet_address, normalized_target_dir) / file_name
         destination.parent.mkdir(parents=True, exist_ok=True)
@@ -219,12 +219,12 @@ class BoundTokenWarehouseGateway(WarehouseGateway):
         for directory in directories:
             self._ensure_directory(directory, auth)
 
-    def upload_file(self, wallet_address: str, target_dir: str, file_name: str, content: bytes, auth: WarehouseRequestAuth | None = None) -> str:
+    def upload_file(self, wallet_address: str, target_dir: str, file_name: str, content: bytes, auth: WarehouseRequestAuth | None = None, content_type: str | None = None) -> str:
         normalized_target_dir = ensure_current_app_path(target_dir or warehouse_default_upload_dir(self.settings), "target_dir", self.settings)
         target_path = f"{normalized_target_dir.rstrip('/')}/{file_name}"
         response = httpx.put(
             self._dav_url(target_path),
-            headers=self._headers(auth),
+            headers={**self._headers(auth), **({"Content-Type": content_type} if content_type else {})},
             content=content,
             timeout=120.0,
         )
@@ -350,12 +350,15 @@ class S3WarehouseGateway(WarehouseGateway):
         self._location(target_path or warehouse_app_root(self.settings))
         self._client(auth)
 
-    def upload_file(self, wallet_address: str, target_dir: str, file_name: str, content: bytes, auth: WarehouseRequestAuth | None = None) -> str:
+    def upload_file(self, wallet_address: str, target_dir: str, file_name: str, content: bytes, auth: WarehouseRequestAuth | None = None, content_type: str | None = None) -> str:
         normalized_target_dir = ensure_current_app_path(target_dir or warehouse_default_upload_dir(self.settings), "target_dir", self.settings)
         target_path = f"{normalized_target_dir.rstrip('/')}/{file_name}"
         bucket, key = self._location(target_path)
         try:
-            self._client(auth).put_object(Bucket=bucket, Key=key, Body=content)
+            params = {"Bucket": bucket, "Key": key, "Body": content}
+            if content_type:
+                params["ContentType"] = content_type
+            self._client(auth).put_object(**params)
         except ClientError as exc:
             raise self._http_error(exc) from exc
         return target_path

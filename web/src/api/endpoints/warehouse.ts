@@ -2,6 +2,13 @@ import { request } from "../client";
 import type { Schema } from "../types";
 
 export type WarehouseStatus = Schema<"WarehouseStatusResponse">;
+export type WarehouseToolCredential = {
+  credential_id: string;
+  scopes: string[];
+  path_prefixes: string[];
+  expires_at: string;
+  status: string;
+};
 export type Credential = Schema<"WarehouseCredentialSummary">;
 export type CredentialCreateRequest = Schema<"WarehouseCredentialCreateRequest">;
 export type CredentialReveal = Schema<"WarehouseCredentialRevealResponse">;
@@ -27,6 +34,11 @@ function accessQuery(path: string, access: BrowseAccess) {
 
 export const warehouseApi = {
   status: () => request<WarehouseStatus>("/warehouse/status"),
+  toolCredential: {
+    get: () => request<WarehouseToolCredential | null>("/warehouse/tool-credential"),
+    connect: (warehouse_jwt: string) => request<WarehouseToolCredential>("/warehouse/tool-credential/connect", { method: "POST", json: { warehouse_jwt } }),
+    disconnect: (warehouse_jwt: string) => request<unknown>("/warehouse/tool-credential", { method: "DELETE", json: { warehouse_jwt } }),
+  },
   readCredentials: {
     list: () => request<Credential[]>("/warehouse/credentials/read"),
     create: (payload: CredentialCreateRequest) => request<Credential>("/warehouse/credentials/read", { method: "POST", json: payload }),

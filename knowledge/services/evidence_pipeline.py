@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from knowledge.adapters.warehouse_assets import build_warehouse_asset_store
 from knowledge.core.settings import get_settings
 from knowledge.models import EvidenceUnit, KnowledgeBase, Source, SourceAsset
 from knowledge.ports import DocumentChunkerPort, DocumentParserPort, SourceAssetRef
@@ -45,6 +46,7 @@ class EvidencePipelineService:
         self.settings = get_settings()
         self.warehouse_gateway = warehouse_gateway or build_warehouse_gateway()
         self.warehouse_access_service = warehouse_access_service or WarehouseAccessService(warehouse_gateway=self.warehouse_gateway)
+        self.asset_store = build_warehouse_asset_store(self.warehouse_access_service.warehouse_gateway)
         self.parser = parser or build_document_parser()
         self.chunker = chunker or build_document_chunker()
         self.vector_store = build_vector_store()
@@ -190,7 +192,10 @@ class EvidencePipelineService:
             allow_write_fallback=True,
         )
         try:
-            raw_content = self.warehouse_gateway.read_file(wallet_address, asset.asset_path, auth=resolved.auth)
+            raw_content = self.asset_store.read(
+                self.warehouse_access_service.asset_context(wallet_address, resolved),
+                asset.asset_path,
+            )
             self.warehouse_access_service.mark_access_success(resolved)
         except Exception as exc:
             if self.warehouse_access_service.is_auth_error(exc):

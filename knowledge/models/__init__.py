@@ -33,6 +33,7 @@ from knowledge.models.entities import (
     UploadRecord,
     WalletUser,
     WarehouseAccessCredential,
+    WarehouseToolCredential,
     WorkerStatus,
 )
 from knowledge.models.ontology import (
@@ -81,6 +82,7 @@ __all__ = [
     "UploadRecord",
     "WalletUser",
     "WarehouseAccessCredential",
+    "WarehouseToolCredential",
     "WorkerStatus",
     "OntologyConflictResolution",
     "OntologyCrosswalk",

@@ -674,6 +674,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/warehouse/tool-credential": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Warehouse Tool Credential */
+        get: operations["get_tool_credential_warehouse_tool_credential_get"];
+        put?: never;
+        post?: never;
+        /** Disconnect Warehouse Tool Credential */
+        delete: operations["disconnect_tool_credential_warehouse_tool_credential_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/warehouse/tool-credential/connect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Connect Warehouse Tool Credential */
+        post: operations["connect_tool_credential_warehouse_tool_credential_connect_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/warehouse/bootstrap/challenge": {
         parameters: {
             query?: never;
@@ -4816,6 +4851,29 @@ export interface components {
             current_app_upload_dir?: string | null;
             /** Warehouse Base Url */
             warehouse_base_url?: string | null;
+            /** Warehouse Api Base Url */
+            warehouse_api_base_url?: string | null;
+        };
+        /** WarehouseToolCredentialConnectRequest */
+        WarehouseToolCredentialConnectRequest: {
+            /** Warehouse Jwt */
+            warehouse_jwt: string;
+        };
+        /** WarehouseToolCredentialSummary */
+        WarehouseToolCredentialSummary: {
+            /** Credential Id */
+            credential_id: string;
+            /** Scopes */
+            scopes: string[];
+            /** Path Prefixes */
+            path_prefixes: string[];
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /** Status */
+            status: string;
         };
         /** WarehouseWriteCredentialResponse */
         WarehouseWriteCredentialResponse: {
@@ -6280,6 +6338,76 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["WarehouseStatusResponse"];
+                };
+            };
+        };
+    };
+    get_tool_credential_warehouse_tool_credential_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WarehouseToolCredentialSummary"] | null;
+                };
+            };
+        };
+    };
+    disconnect_tool_credential_warehouse_tool_credential_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WarehouseToolCredentialConnectRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    connect_tool_credential_warehouse_tool_credential_connect_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WarehouseToolCredentialConnectRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WarehouseToolCredentialSummary"];
                 };
             };
         };

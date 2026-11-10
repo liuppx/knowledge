@@ -1357,6 +1357,78 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /warehouse/tool-credential:
+    get:
+      tags:
+      - warehouse_sources
+      summary: Get Tool Credential
+      operationId: get_tool_credential_warehouse_tool_credential_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                anyOf:
+                - $ref: '#/components/schemas/WarehouseToolCredentialSummary'
+                - type: 'null'
+                title: Response Get Tool Credential Warehouse Tool Credential Get
+      security:
+      - HTTPBearer: []
+    delete:
+      tags:
+      - warehouse_sources
+      summary: Disconnect Tool Credential
+      operationId: disconnect_tool_credential_warehouse_tool_credential_delete
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WarehouseToolCredentialConnectRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                title: Response Disconnect Tool Credential Warehouse Tool Credential Delete
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - HTTPBearer: []
+  /warehouse/tool-credential/connect:
+    post:
+      tags:
+      - warehouse_sources
+      summary: Connect Tool Credential
+      operationId: connect_tool_credential_warehouse_tool_credential_connect_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WarehouseToolCredentialConnectRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarehouseToolCredentialSummary'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - HTTPBearer: []
   /warehouse/status:
     get:
       tags:
@@ -9065,10 +9137,56 @@ components:
           - type: string
           - type: 'null'
           title: Warehouse Base Url
+        warehouse_api_base_url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Warehouse Api Base Url
       type: object
       required:
       - wallet_address
       title: WarehouseStatusResponse
+    WarehouseToolCredentialConnectRequest:
+      properties:
+        warehouse_jwt:
+          type: string
+          maxLength: 8192
+          minLength: 1
+          title: Warehouse Jwt
+      type: object
+      required:
+      - warehouse_jwt
+      title: WarehouseToolCredentialConnectRequest
+    WarehouseToolCredentialSummary:
+      properties:
+        credential_id:
+          type: string
+          title: Credential Id
+        scopes:
+          items:
+            type: string
+          type: array
+          title: Scopes
+        path_prefixes:
+          items:
+            type: string
+          type: array
+          title: Path Prefixes
+        expires_at:
+          type: string
+          format: date-time
+          title: Expires At
+        status:
+          type: string
+          title: Status
+      type: object
+      required:
+      - credential_id
+      - scopes
+      - path_prefixes
+      - expires_at
+      - status
+      title: WarehouseToolCredentialSummary
     WarehouseWriteCredentialResponse:
       properties:
         configured:

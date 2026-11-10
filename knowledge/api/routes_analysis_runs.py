@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from knowledge.adapters.warehouse_assets import build_warehouse_asset_store
 from knowledge.api.deps import get_current_wallet
 from knowledge.db.session import SessionLocal, get_db
 from knowledge.models import AgentRun, AgentRunArtifact, AgentRunEvent, ServicePrincipal
@@ -25,6 +26,7 @@ agent_run_service = AgentRunService()
 manifest_service = AgentRunManifestService()
 principal_service = ServicePrincipalService()
 warehouse_access_service = WarehouseAccessService()
+asset_store = build_warehouse_asset_store(warehouse_access_service.warehouse_gateway)
 
 
 class AnalysisRunCreateRequest(BaseModel):
@@ -153,7 +155,10 @@ def download_my_analysis_artifact(
         raise HTTPException(status_code=404, detail="analysis artifact not found")
     try:
         resolved = warehouse_access_service.resolve_write_access(db, wallet_address, artifact.warehouse_path)
-        content = warehouse_access_service.warehouse_gateway.read_file(wallet_address, artifact.warehouse_path, auth=resolved.auth)
+        content = asset_store.read(
+            warehouse_access_service.asset_context(wallet_address, resolved),
+            artifact.warehouse_path,
+        )
         warehouse_access_service.mark_access_success(resolved)
         db.commit()
     except Exception as exc:  # noqa: BLE001

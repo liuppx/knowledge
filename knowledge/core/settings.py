@@ -113,6 +113,7 @@ class Settings(BaseSettings):
     # storage gateway below; keep this only for legacy tests/transitional setups.
     warehouse_gateway_mode: str = ""
     warehouse_base_url: str = "https://webdav.yeying.pub"
+    warehouse_api_base_url: str = ""
     warehouse_webdav_prefix: str = "/dav"
     object_storage_endpoint: str = "http://127.0.0.1:6066"
     object_storage_region: str = "us-east-1"

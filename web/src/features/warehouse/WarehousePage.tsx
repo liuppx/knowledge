@@ -2,6 +2,7 @@ import { useWarehouseStatusQuery, useWriteCredentialQuery } from "../../api/quer
 import { Badge, ErrorState, LoadingState } from "../../ui";
 import { BootstrapWizard } from "./BootstrapWizard";
 import { ReadCredentialsPanel, WriteCredentialPanel } from "./CredentialsPanels";
+import { ToolCredentialPanel } from "./ToolCredentialPanel";
 import { UploadsPanel } from "./UploadsPanel";
 import { WarehouseBrowser } from "./WarehouseBrowser";
 
@@ -48,6 +49,7 @@ export function WarehousePage() {
       ) : null}
 
       <BootstrapWizard hasWriteCredential={Boolean(write.data?.credential)} />
+      {status.data ? <ToolCredentialPanel baseUrl={status.data.warehouse_api_base_url ?? status.data.warehouse_base_url ?? ""} /> : null}
       {/* Keyed on the resolved root so default paths in the forms follow the real app root. */}
       <div className="two-column" key={appRoot}>
         <WriteCredentialPanel defaultRootPath={appRoot} />

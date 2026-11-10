@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class WarehouseCredentialCreateRequest(BaseModel):
@@ -74,6 +74,19 @@ class WarehouseStatusResponse(BaseModel):
     current_app_root: str | None = None
     current_app_upload_dir: str | None = None
     warehouse_base_url: str | None = None
+    warehouse_api_base_url: str | None = None
+
+
+class WarehouseToolCredentialConnectRequest(BaseModel):
+    warehouse_jwt: str = Field(min_length=1, max_length=8192)
+
+
+class WarehouseToolCredentialSummary(BaseModel):
+    credential_id: str
+    scopes: list[str]
+    path_prefixes: list[str]
+    expires_at: datetime
+    status: str
 
 
 class WarehouseEntry(BaseModel):

@@ -1,6 +1,6 @@
 # Agent Run 与 Context Asset 设计方案
 
-状态：验证阶段  
+状态：历史设计说明；资产存取按[Warehouse 集成收敛方案](Warehouse集成收敛方案.md)迁移中
 版本：v1  
 日期：2026-08-01
 
