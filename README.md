@@ -76,7 +76,7 @@ uv run pytest -q
 
 后端启动后可以访问：
 
-- API: `http://127.0.0.1:8002/`（已构建 `web/dist` 时直接是控制台）
+- API base URL: `http://127.0.0.1:8002`（生产控制台由独立静态制品和 Nginx 提供）
 - Health: `http://127.0.0.1:8002/health`
 - Swagger UI: `http://127.0.0.1:8002/docs`
 
@@ -100,7 +100,7 @@ npm run dev
 
 前端默认访问：`http://127.0.0.1:5183/`
 
-前端开发服务器会把所有服务请求代理到后端（默认 `http://127.0.0.1:8002`，可用 `KNOWLEDGE_API_URL` 改写），所以先启动后端。生产环境不运行开发服务器：`cd web && npm run build` 生成 `web/dist` 后由后端提供控制台。
+前端开发服务器会把所有服务请求代理到后端（默认 `http://127.0.0.1:8002`，可用 `KNOWLEDGE_API_URL` 改写），所以先启动后端。生产环境不运行开发服务器：构建的 `web/dist` 作为 `knowledge-web` 静态制品单独部署，由 Nginx 提供页面并把 API 请求代理到后端。
 
 如果 5183 端口被占用：
 
@@ -122,7 +122,7 @@ scripts/starter.sh stop
 
 ### 6. 创建离线部署包
 
-构建前端并生成不依赖 Docker 的归档包（含 `knowledge/`、`migrations/`、`config/`、`web/dist/`）：
+生成不依赖 Docker 的发布制品：`knowledge` service 和 `knowledge-web` static 分别记录在同一 manifest，可独立升级和回滚。
 
 ```bash
 scripts/package.sh

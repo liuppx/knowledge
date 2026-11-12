@@ -1,16 +1,12 @@
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
-from pathlib import Path
-
 from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
 
 from knowledge.api.routes_auth import router as auth_router
 from knowledge.api.routes_assets import router as assets_router
 from knowledge.api.routes_agent_runs import router as agent_runs_router
 from knowledge.api.routes_analysis_runs import router as analysis_runs_router
-from knowledge.api.routes_console import router as console_router, spa_router
 from knowledge.api.routes_documents import router as documents_router
 from knowledge.api.routes_evidence import router as evidence_router
 from knowledge.api.routes_grants import router as grants_router
@@ -44,17 +40,11 @@ async def lifespan(_: FastAPI):
 
 app = FastAPI(title=settings.app_name, debug=settings.debug, lifespan=lifespan)
 
-web_dist_dir = Path(__file__).resolve().parents[1] / "web" / "dist"
-if web_dist_dir.is_dir():
-    app.mount("/assets", StaticFiles(directory=str(web_dist_dir / "assets")), name="web-assets")
-
-
 @app.get("/health")
 def health() -> dict:
     return {"status": "ok"}
 
 
-app.include_router(console_router)
 app.include_router(auth_router)
 app.include_router(kbs_router)
 app.include_router(sources_router)
@@ -73,5 +63,3 @@ app.include_router(search_lab_router)
 app.include_router(memory_router)
 app.include_router(ontology_router)
 app.include_router(ops_router)
-# SPA catch-all must come after every API router (see routes_console.spa_fallback).
-app.include_router(spa_router)

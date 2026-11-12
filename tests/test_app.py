@@ -38,17 +38,11 @@ def _login(client: TestClient, account) -> str:
     return data["access_token"]
 
 
-def test_web_console_is_the_only_console():
+def test_backend_no_longer_serves_the_web_console():
     with TestClient(app) as client:
-        response = client.get("/")
-        assert response.status_code == 200
-        assert 'id="root"' in response.text
-        assert "/assets/" in response.text
-        # The Jinja console and its /static bundle are gone; old links fall through
-        # to the SPA (HTML clients) or a plain 404 (everything else).
-        assert "/static/js/" not in response.text
-        assert client.get("/legacy-console", headers={"Accept": "application/json"}).status_code == 404
-        assert client.get("/static/js/app.js", headers={"Accept": "application/json"}).status_code == 404
+        assert client.get("/health").json() == {"status": "ok"}
+        assert client.get("/", headers={"Accept": "text/html"}).status_code == 404
+        assert client.get("/assets/index.js").status_code == 404
 
 
 def test_read_credential_accepts_directory_scoped_key_without_parent_access():
