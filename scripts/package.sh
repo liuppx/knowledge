@@ -7,7 +7,7 @@ for command_name in npm uv; do command -v "$command_name" >/dev/null 2>&1 || pac
 (cd "$PACKAGE_ROOT_DIR/web" && npm install --no-audit --no-fund && npm run build)
 (cd "$PACKAGE_ROOT_DIR" && uv sync --locked --no-dev --no-install-project)
 [[ -f "$PACKAGE_ROOT_DIR/web/dist/index.html" ]] || package_fail 'web build output is missing'
-package_make_root knowledge
+package_make_root knowledge-service
 cp -R "$PACKAGE_ROOT_DIR/.venv" "$PACKAGE_DIR/.venv"
 venv_python="$PACKAGE_DIR/.venv/bin/python"
 if [[ -L "$venv_python" ]]; then
@@ -25,7 +25,7 @@ for file in alembic.ini pyproject.toml uv.lock requirements.txt .env.template; d
 package_copy_scripts "$PACKAGE_DIR/scripts"
 package_strip_build_files "$PACKAGE_DIR"
 find "$PACKAGE_DIR" -type d -name __pycache__ -prune -exec rm -rf {} +
-package_finish_artifact service
+package_finish_artifact service knowledge
 
 package_make_root knowledge-web
 PACKAGE_HEALTH_PATH=/index.html
