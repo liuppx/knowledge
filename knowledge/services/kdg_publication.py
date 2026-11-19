@@ -42,10 +42,12 @@ class PreparedPublication:
     intent: dict
 
 
-def cites_changed(previous_intent: dict, relations: list) -> bool:
-    """引用是否与上次上链时不同(引用变了,即使正文相同也值得发新版本)。"""
-    before = {(c.get("kind"), int(c.get("unit", 0))) for c in (previous_intent or {}).get("action", {}).get("cites") or []}
-    return len(before) != len(relations)
+def same_content(version: dict, sha: str, cites: list[dict]) -> bool:
+    """链上某个版本与这次要发布的内容是否相同:正文哈希集合与引用(单元、版本、类型)都一致。"""
+    bodies = {str(b.get("hash")) for b in version.get("bodies") or []}
+    def norm(items: list[dict]) -> set[tuple[int, int, str]]:
+        return {(int(c.get("unit", 0)), int(c.get("version", 0)), str(c.get("kind"))) for c in items or []}
+    return bodies == {sha} and norm(version.get("cites") or []) == norm(cites)
 
 
 def _is_pubkey(value: str) -> bool:
@@ -256,11 +258,6 @@ class KdgPublicationService:
 
         body = self.render_markdown(item, revision).encode("utf-8")
         sha = hashlib.sha256(body).hexdigest()
-        last_confirmed = next((p for p in reversed(publications) if p.status == "confirmed"), None)
-        if last_confirmed is not None and last_confirmed.body_sha256 == sha and not cites_changed(
-                last_confirmed.intent_json, self.relations(db, item)):
-            # 正文与链上最新版本完全相同:再发一版只会多一个一模一样的版本
-            raise ValueError("这次修订渲染出的正文与链上最新版本相同,不需要再上链")
         common = {"bodies": [{"lang": revision.language or "zh", "hash": sha}], "source": self.source_of(revision), "cites": cites}
         unit, _ = self.chain_unit(db, item)
         if unit:
@@ -273,12 +270,24 @@ class KdgPublicationService:
             raise ValueError(f"内容不符合知行图的格式要求:{exc}") from exc
 
         try:
+            existing = chain.lookup_body(sha)
+        except KdgChainError as exc:
+            raise ValueError(str(exc)) from exc
+        if existing and (not unit or int(existing["unit"]) != int(unit)):
+            raise ValueError(f"这份正文已经在知行图单元 #{existing['unit']} 里了(同一份正文只能属于一个单元);请修改内容后再上链")
+        expected_version = 1
+        if unit:
+            try:
+                versions = (chain.get_unit(unit) or {}).get("versions") or []
+            except KdgChainError as exc:
+                raise ValueError(str(exc)) from exc
+            # 以链上最新版本为准(不只看本库的记录):正文与引用都没变,再发一版只会多一个一模一样的版本
+            if versions and same_content(versions[-1], sha, cites):
+                raise ValueError("这次修订渲染出的正文与引用都和链上最新版本相同,不需要再上链")
+            expected_version = len(versions) + 1
+        try:
             body_url = chain.put_body(sha, body)
             nonce = chain.get_nonce(member["account"])
-            expected_version = 1
-            if unit:
-                detail = chain.get_unit(unit) or {}
-                expected_version = len(detail.get("versions") or []) + 1
         except KdgChainError as exc:
             raise ValueError(str(exc)) from exc
 
@@ -345,19 +354,30 @@ class KdgPublicationService:
         publish:看这个单元的版本数是否已经够(版本数是链上的事实,不受正文是否与上一版相同的影响——
         修订只改了一句话、正文没变时,正文哈希与上一版相同,只能靠版本数区分)。
         """
+        def is_ours(version: dict | None) -> bool:
+            # 只认这位成员、用这份正文发布的版本:避免把别人(或更早)发布的同样正文误认为是这一次
+            if not version:
+                return False
+            same_body = any(b.get("hash") == publication.body_sha256 for b in version.get("bodies") or [])
+            return same_body and str(version.get("publisher")) == str(publication.actor)
+
         try:
             if publication.op_type == "publish":
                 unit = chain.get_unit(publication.chain_unit) if publication.chain_unit else None
-                if not unit:
-                    return publication
-                if len(unit.get("versions") or []) < (publication.chain_version or 0):
+                versions = (unit or {}).get("versions") or []
+                n = publication.chain_version or 0
+                if len(versions) < n or not is_ours(versions[n - 1]):
                     return publication
             else:
                 hit = chain.lookup_body(publication.body_sha256)
                 if not hit:
                     return publication
-                publication.chain_unit = hit["unit"]
-                publication.chain_version = min(hit["versions"])
+                unit = chain.get_unit(hit["unit"]) or {}
+                versions = unit.get("versions") or []
+                if str(unit.get("author")) != str(publication.actor) or not versions or not is_ours(versions[0]):
+                    return publication
+                publication.chain_unit = int(hit["unit"])
+                publication.chain_version = 1
         except KdgChainError:
             return publication
         publication.status = "confirmed"

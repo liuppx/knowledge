@@ -302,5 +302,60 @@ def test_unchanged_body_is_not_republished_and_publish_confirms_by_version(clien
     client.patch(f"/kbs/{kb_id}/items/{item_id}", headers=headers, json={"title": "渐进超负荷"}).raise_for_status()
     same = client.post(f"/kbs/{kb_id}/items/{item_id}/kdg/prepare", headers=headers, json={"pubkey": wallet.pubkey})
     assert same.status_code == 400
-    assert "正文与链上最新版本相同" in same.json()["detail"]
+    assert "和链上最新版本相同" in same.json()["detail"]
     assert len(kdg_chain.get_unit(1)["versions"]) == 1
+
+    # 以链上为准:新修订的正文已经由别处(例如更早的一次运行)发成了最新版本,本库没有记录 → 同样拒绝
+    client.patch(f"/kbs/{kb_id}/items/{item_id}", headers=headers,
+                 json={"statement": "身体只会对超过它已经适应的负荷产生适应;加量幅度决定进步快慢。"}).raise_for_status()
+    probe = client.post(f"/kbs/{kb_id}/items/{item_id}/kdg/prepare", headers=headers, json={"pubkey": wallet.pubkey}).json()
+    kdg_chain.submit_op(b"x", intent=probe["intent"])  # 同一份正文已成为 v2(没经过本库的 submit)
+    again = client.post(f"/kbs/{kb_id}/items/{item_id}/kdg/prepare", headers=headers, json={"pubkey": wallet.pubkey})
+    assert again.status_code == 400
+    assert "和链上最新版本相同" in again.json()["detail"]
+    assert len(kdg_chain.get_unit(1)["versions"]) == 2
+
+
+def test_body_already_on_chain_is_refused_and_never_confirmed_against_someone_elses_unit(client: TestClient, kdg_chain: MockKdgChain) -> None:
+    """链上已有同样的正文(别人发布的):准备时拒绝;即使提交了,也不会把别人的单元误认成自己的。"""
+    account = Account.create()
+    headers = {"Authorization": f"Bearer {_login(client, account)}"}
+    kb_id, item_id = _kb_and_item(client, headers)
+    client.put(f"/kbs/{kb_id}/items/{item_id}/kdg/settings", headers=headers, json={"domain": 2, "layer": "foundation"})
+    me, someone = Wallet(), Wallet()
+    kdg_chain.add_member(me.pubkey)
+    other_account = kdg_chain.add_member(someone.pubkey)
+
+    # 别人先用同样的正文建了单元
+    from knowledge.models import KnowledgeItem  # noqa: F401  (确保模型已加载)
+    body = KdgPublicationService.render_markdown(
+        type("I", (), {"item_type": "fact"})(),
+        type("R", (), {"title": "渐进超负荷", "statement": "身体只会对超过它已经适应的负荷产生适应。",
+                       "structured_payload_json": {"fact": "身体只会对超过它已经适应的负荷产生适应。"},
+                       "applicability_scope_json": {}, "source_note": ""})(),
+    ).encode("utf-8")
+    sha = hashlib.sha256(body).hexdigest()
+    kdg_chain.put_body(sha, body)
+    kdg_chain.submit_op(b"x", intent={"actor": other_account, "nonce": 0, "action": {
+        "type": "create", "layer": "foundation", "domain": 2, "bodies": [{"lang": "zh", "hash": sha}],
+        "source": {"type": "human"}, "cites": []}})
+
+    refused = client.post(f"/kbs/{kb_id}/items/{item_id}/kdg/prepare", headers=headers, json={"pubkey": me.pubkey})
+    assert refused.status_code == 400
+    assert "已经在知行图单元 #1" in refused.json()["detail"]
+
+    # 直接检查确认逻辑:就算有一条"已提交"的记录指向这份正文,也不会被确认成别人的单元
+    from knowledge.models import KdgPublication
+
+    publication = KdgPublication(revision_id=1, kb_id=kb_id, status="submitted", op_type="create",
+                                 body_sha256=sha, actor=kdg_chain.lookup_member(me.pubkey)["account"],
+                                 actor_pubkey=me.pubkey, intent_json={}, created_by="x")
+    from knowledge.db.session import SessionLocal
+
+    with SessionLocal() as db:
+        db.add(publication)
+        db.commit()
+        result = KdgPublicationService._try_confirm(db, kdg_chain, publication)
+        assert result.status == "submitted", "别人的单元不能算作这次上链"
+        db.delete(publication)
+        db.commit()
