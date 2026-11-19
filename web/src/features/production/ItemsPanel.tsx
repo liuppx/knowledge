@@ -6,6 +6,7 @@ import { useCreateManualItemMutation, useItemQuery, useItemsQuery, useUpdateItem
 import { Badge, DataTable, Drawer, EmptyState, ErrorState, LoadingState, formatDateTime, useToast } from "../../ui";
 import { excerpt } from "./EvidencePanel";
 import { ItemForm } from "./ItemForm";
+import { KdgPanel } from "./kdg/KdgPanel";
 
 type Props = { kbId: number; selectedItemId: number | null; onSelectItem: (id: number | null) => void; onOpenEvidence: (evidenceId: number) => void };
 
@@ -124,6 +125,7 @@ export function ItemsPanel({ kbId, selectedItemId, onSelectItem, onOpenEvidence 
 function ItemDetailDrawer({ kbId, itemId, onClose, onOpenEvidence }: { kbId: number; itemId: number | null; onClose: () => void; onOpenEvidence: (evidenceId: number) => void }) {
   const toast = useToast();
   const detail = useItemQuery(kbId, itemId);
+  const allItems = useItemsQuery(kbId);
   const update = useUpdateItemMutation(kbId);
   const [editing, setEditing] = useState(false);
   const revision = detail.data?.current_revision ?? null;
@@ -168,6 +170,7 @@ function ItemDetailDrawer({ kbId, itemId, onClose, onOpenEvidence }: { kbId: num
           ) : (
             <p className="muted">该知识项还没有修订。</p>
           )}
+          {revision && !editing ? <KdgPanel kbId={kbId} itemId={detail.data.item.id} items={allItems.data ?? []} /> : null}
           <h3 style={{ margin: "18px 0 8px" }}>修订历史（{detail.data.revisions?.length ?? 0}）</h3>
           <DataTable
             dense

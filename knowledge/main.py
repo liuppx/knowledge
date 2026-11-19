@@ -11,6 +11,7 @@ from knowledge.api.routes_documents import router as documents_router
 from knowledge.api.routes_evidence import router as evidence_router
 from knowledge.api.routes_grants import router as grants_router
 from knowledge.api.routes_items import router as items_router
+from knowledge.api.routes_kdg import router as kdg_router
 from knowledge.api.routes_kbs import router as kbs_router
 from knowledge.api.routes_memory import router as memory_router
 from knowledge.api.routes_ontology import router as ontology_router
@@ -56,6 +57,7 @@ app.include_router(tasks_router)
 app.include_router(documents_router)
 app.include_router(evidence_router)
 app.include_router(items_router)
+app.include_router(kdg_router)
 app.include_router(releases_router)
 app.include_router(grants_router)
 app.include_router(service_search_router)

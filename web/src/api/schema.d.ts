@@ -657,23 +657,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/warehouse/status": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Warehouse Status */
-        get: operations["warehouse_status_warehouse_status_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/warehouse/tool-credential": {
         parameters: {
             query?: never;
@@ -681,11 +664,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get Warehouse Tool Credential */
+        /** Get Tool Credential */
         get: operations["get_tool_credential_warehouse_tool_credential_get"];
         put?: never;
         post?: never;
-        /** Disconnect Warehouse Tool Credential */
+        /** Disconnect Tool Credential */
         delete: operations["disconnect_tool_credential_warehouse_tool_credential_delete"];
         options?: never;
         head?: never;
@@ -701,8 +684,25 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Connect Warehouse Tool Credential */
+        /** Connect Tool Credential */
         post: operations["connect_tool_credential_warehouse_tool_credential_connect_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/warehouse/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Warehouse Status */
+        get: operations["warehouse_status_warehouse_status_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1400,6 +1400,125 @@ export interface paths {
         head?: never;
         /** Update Item */
         patch: operations["update_item_kbs__kb_id__items__item_id__patch"];
+        trace?: never;
+    };
+    "/kbs/{kb_id}/items/{item_id}/kdg": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Kdg Status */
+        get: operations["get_kdg_status_kbs__kb_id__items__item_id__kdg_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/kbs/{kb_id}/items/{item_id}/kdg/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Update Kdg Settings */
+        put: operations["update_kdg_settings_kbs__kb_id__items__item_id__kdg_settings_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/kbs/{kb_id}/items/{item_id}/kdg/relations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add Kdg Relation */
+        post: operations["add_kdg_relation_kbs__kb_id__items__item_id__kdg_relations_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/kbs/{kb_id}/items/{item_id}/kdg/relations/{relation_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Remove Kdg Relation */
+        delete: operations["remove_kdg_relation_kbs__kb_id__items__item_id__kdg_relations__relation_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/kbs/{kb_id}/items/{item_id}/kdg/prepare": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Prepare Kdg Publication */
+        post: operations["prepare_kdg_publication_kbs__kb_id__items__item_id__kdg_prepare_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/kbs/{kb_id}/items/{item_id}/kdg/publications/{publication_id}/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Submit Kdg Publication */
+        post: operations["submit_kdg_publication_kbs__kb_id__items__item_id__kdg_publications__publication_id__submit_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/kbs/{kb_id}/items/{item_id}/kdg/publications/{publication_id}/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Refresh Kdg Publication */
+        post: operations["refresh_kdg_publication_kbs__kb_id__items__item_id__kdg_publications__publication_id__refresh_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/kbs/{kb_id}/releases": {
@@ -2785,6 +2904,174 @@ export interface components {
             bindings: components["schemas"]["SourceBindingResponse"][];
             /** Recent Tasks */
             recent_tasks: components["schemas"]["KBRecentTaskResponse"][];
+        };
+        /** KdgDomain */
+        KdgDomain: {
+            /** Id */
+            id: number;
+            /** Name Zh */
+            name_zh: string;
+            /** Name En */
+            name_en: string;
+        };
+        /**
+         * KdgGeneratedBy
+         * @description 修订的模型来源:model 为空表示人工撰写;human_edited 表示模型生成后经人工修改核对。
+         */
+        KdgGeneratedBy: {
+            /**
+             * Model
+             * @default
+             */
+            model: string;
+            /**
+             * Human Edited
+             * @default false
+             */
+            human_edited: boolean;
+        };
+        /**
+         * KdgIntent
+         * @description 交给钱包签名的意图(zhixing_signKnowledgeOp 的参数):谁、第几条、做什么。
+         */
+        KdgIntent: {
+            /** Actor */
+            actor: string;
+            /** Nonce */
+            nonce: string;
+            /** Action */
+            action: Record<string, never>;
+        };
+        /** KdgPrepareRequest */
+        KdgPrepareRequest: {
+            /**
+             * Pubkey
+             * @description 钱包里知行图账户的公钥(zhixing_requestAccounts 返回),64 位十六进制
+             */
+            pubkey: string;
+        };
+        /** KdgPrepareResponse */
+        KdgPrepareResponse: {
+            publication: components["schemas"]["KdgPublicationRead"];
+            intent: components["schemas"]["KdgIntent"];
+            /** Body Markdown */
+            body_markdown: string;
+        };
+        /** KdgPublicationRead */
+        KdgPublicationRead: {
+            /** Id */
+            id: number;
+            /** Revision Id */
+            revision_id: number;
+            /** Network */
+            network: string;
+            /** Status */
+            status: string;
+            /** Op Type */
+            op_type: string;
+            /** Chain Unit */
+            chain_unit?: number | null;
+            /** Chain Version */
+            chain_version?: number | null;
+            /** Body Sha256 */
+            body_sha256: string;
+            /** Body Url */
+            body_url: string;
+            /** Op Hash */
+            op_hash: string;
+            /** Actor */
+            actor?: number | null;
+            /** Actor Pubkey */
+            actor_pubkey: string;
+            /** Error */
+            error: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** KdgRelationCreateRequest */
+        KdgRelationCreateRequest: {
+            /** To Item Id */
+            to_item_id: number;
+            /**
+             * Kind
+             * @default basis
+             * @enum {string}
+             */
+            kind: "basis" | "see-also" | "supersedes";
+        };
+        /** KdgRelationRead */
+        KdgRelationRead: {
+            /** Id */
+            id: number;
+            /** To Item Id */
+            to_item_id: number;
+            /** Kind */
+            kind: string;
+            /** To Chain Unit */
+            to_chain_unit?: number | null;
+        };
+        /** KdgSettingsUpdateRequest */
+        KdgSettingsUpdateRequest: {
+            /**
+             * Domain
+             * @description 知行图领域编号(链的创世参数,见 /id/domain)
+             */
+            domain?: number | null;
+            /** Layer */
+            layer?: ("foundation" | "explanation" | "scenario" | "application") | null;
+            /**
+             * Language
+             * @description 当前修订正文的语言,如 zh、en
+             */
+            language?: string | null;
+            generated_by?: components["schemas"]["KdgGeneratedBy"] | null;
+        };
+        /** KdgStatusResponse */
+        KdgStatusResponse: {
+            /** Enabled */
+            enabled: boolean;
+            /** Domains */
+            domains?: components["schemas"]["KdgDomain"][];
+            /** Network */
+            network: string;
+            /** Domain */
+            domain?: number | null;
+            /** Layer */
+            layer?: string | null;
+            /** Chain Unit */
+            chain_unit?: number | null;
+            /** Chain Version */
+            chain_version?: number | null;
+            /** Unit Url */
+            unit_url?: string | null;
+            /** Current Revision Published */
+            current_revision_published: boolean;
+            pending?: components["schemas"]["KdgPublicationRead"] | null;
+            /** Relations */
+            relations: components["schemas"]["KdgRelationRead"][];
+            /** Publications */
+            publications: components["schemas"]["KdgPublicationRead"][];
+        };
+        /** KdgSubmitRequest */
+        KdgSubmitRequest: {
+            /**
+             * Signed
+             * @description 钱包返回的 signed:op ‖ 签名 的十六进制
+             */
+            signed: string;
+            /**
+             * Address
+             * @description 钱包返回的 address:签名所用的知行图公钥
+             */
+            address: string;
         };
         /** KnowledgeItemCandidateRead */
         KnowledgeItemCandidateRead: {
@@ -6322,26 +6609,6 @@ export interface operations {
             };
         };
     };
-    warehouse_status_warehouse_status_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["WarehouseStatusResponse"];
-                };
-            };
-        };
-    };
     get_tool_credential_warehouse_tool_credential_get: {
         parameters: {
             query?: never;
@@ -6381,9 +6648,16 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": Record<string, never>;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -6408,6 +6682,35 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["WarehouseToolCredentialSummary"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    warehouse_status_warehouse_status_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WarehouseStatusResponse"];
                 };
             };
         };
@@ -7846,6 +8149,249 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["KnowledgeItemDetailResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_kdg_status_kbs__kb_id__items__item_id__kdg_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                kb_id: number;
+                item_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KdgStatusResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_kdg_settings_kbs__kb_id__items__item_id__kdg_settings_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                kb_id: number;
+                item_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["KdgSettingsUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KdgStatusResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    add_kdg_relation_kbs__kb_id__items__item_id__kdg_relations_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                kb_id: number;
+                item_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["KdgRelationCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KdgStatusResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    remove_kdg_relation_kbs__kb_id__items__item_id__kdg_relations__relation_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                kb_id: number;
+                item_id: number;
+                relation_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KdgStatusResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    prepare_kdg_publication_kbs__kb_id__items__item_id__kdg_prepare_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                kb_id: number;
+                item_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["KdgPrepareRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KdgPrepareResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    submit_kdg_publication_kbs__kb_id__items__item_id__kdg_publications__publication_id__submit_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                kb_id: number;
+                item_id: number;
+                publication_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["KdgSubmitRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KdgPublicationRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    refresh_kdg_publication_kbs__kb_id__items__item_id__kdg_publications__publication_id__refresh_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                kb_id: number;
+                item_id: number;
+                publication_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KdgPublicationRead"];
                 };
             };
             /** @description Validation Error */

@@ -54,6 +54,7 @@
 ### guides：使用与功能说明
 
 - [控制台操作手册](guides/控制台操作手册.md)：控制台各工作台的操作说明。
+- [上链到知行图](guides/上链到知行图.md)：把知识项发布到知行图(公开、可验证的知识图),签名在夜莺钱包里完成。
 - [CSV 与 Excel 分析 Agent 开发说明](guides/CSV与Excel分析Agent开发说明.md)：表格分析运行的接口、Worker 行为和限制。
 - [Web 前端开发说明](../web/README.md)：React SPA 的开发、类型生成、测试与部署。
 

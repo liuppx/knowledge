@@ -2895,6 +2895,286 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /kbs/{kb_id}/items/{item_id}/kdg:
+    get:
+      tags:
+      - kdg
+      summary: Get Kdg Status
+      operationId: get_kdg_status_kbs__kb_id__items__item_id__kdg_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      - name: item_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Item Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KdgStatusResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /kbs/{kb_id}/items/{item_id}/kdg/settings:
+    put:
+      tags:
+      - kdg
+      summary: Update Kdg Settings
+      operationId: update_kdg_settings_kbs__kb_id__items__item_id__kdg_settings_put
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      - name: item_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Item Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/KdgSettingsUpdateRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KdgStatusResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /kbs/{kb_id}/items/{item_id}/kdg/relations:
+    post:
+      tags:
+      - kdg
+      summary: Add Kdg Relation
+      operationId: add_kdg_relation_kbs__kb_id__items__item_id__kdg_relations_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      - name: item_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Item Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/KdgRelationCreateRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KdgStatusResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /kbs/{kb_id}/items/{item_id}/kdg/relations/{relation_id}:
+    delete:
+      tags:
+      - kdg
+      summary: Remove Kdg Relation
+      operationId: remove_kdg_relation_kbs__kb_id__items__item_id__kdg_relations__relation_id__delete
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      - name: item_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Item Id
+      - name: relation_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Relation Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KdgStatusResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /kbs/{kb_id}/items/{item_id}/kdg/prepare:
+    post:
+      tags:
+      - kdg
+      summary: Prepare Kdg Publication
+      operationId: prepare_kdg_publication_kbs__kb_id__items__item_id__kdg_prepare_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      - name: item_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Item Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/KdgPrepareRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KdgPrepareResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /kbs/{kb_id}/items/{item_id}/kdg/publications/{publication_id}/submit:
+    post:
+      tags:
+      - kdg
+      summary: Submit Kdg Publication
+      operationId: submit_kdg_publication_kbs__kb_id__items__item_id__kdg_publications__publication_id__submit_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      - name: item_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Item Id
+      - name: publication_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Publication Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/KdgSubmitRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KdgPublicationRead'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /kbs/{kb_id}/items/{item_id}/kdg/publications/{publication_id}/refresh:
+    post:
+      tags:
+      - kdg
+      summary: Refresh Kdg Publication
+      operationId: refresh_kdg_publication_kbs__kb_id__items__item_id__kdg_publications__publication_id__refresh_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kb_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Kb Id
+      - name: item_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Item Id
+      - name: publication_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Publication Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KdgPublicationRead'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /kbs/{kb_id}/releases:
     post:
       tags:
@@ -5596,6 +5876,297 @@ components:
       - bindings
       - recent_tasks
       title: KBWorkbenchResponse
+    KdgDomain:
+      properties:
+        id:
+          type: integer
+          title: Id
+        name_zh:
+          type: string
+          title: Name Zh
+        name_en:
+          type: string
+          title: Name En
+      type: object
+      required:
+      - id
+      - name_zh
+      - name_en
+      title: KdgDomain
+    KdgGeneratedBy:
+      properties:
+        model:
+          type: string
+          maxLength: 64
+          title: Model
+          default: ''
+        human_edited:
+          type: boolean
+          title: Human Edited
+          default: false
+      type: object
+      title: KdgGeneratedBy
+      description: 修订的模型来源:model 为空表示人工撰写;human_edited 表示模型生成后经人工修改核对。
+    KdgIntent:
+      properties:
+        actor:
+          type: string
+          title: Actor
+        nonce:
+          type: string
+          title: Nonce
+        action:
+          type: object
+          title: Action
+      type: object
+      required:
+      - actor
+      - nonce
+      - action
+      title: KdgIntent
+      description: 交给钱包签名的意图(zhixing_signKnowledgeOp 的参数):谁、第几条、做什么。
+    KdgPrepareRequest:
+      properties:
+        pubkey:
+          type: string
+          title: Pubkey
+          description: 钱包里知行图账户的公钥(zhixing_requestAccounts 返回),64 位十六进制
+      type: object
+      required:
+      - pubkey
+      title: KdgPrepareRequest
+    KdgPrepareResponse:
+      properties:
+        publication:
+          $ref: '#/components/schemas/KdgPublicationRead'
+        intent:
+          $ref: '#/components/schemas/KdgIntent'
+        body_markdown:
+          type: string
+          title: Body Markdown
+      type: object
+      required:
+      - publication
+      - intent
+      - body_markdown
+      title: KdgPrepareResponse
+    KdgPublicationRead:
+      properties:
+        id:
+          type: integer
+          title: Id
+        revision_id:
+          type: integer
+          title: Revision Id
+        network:
+          type: string
+          title: Network
+        status:
+          type: string
+          title: Status
+        op_type:
+          type: string
+          title: Op Type
+        chain_unit:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Chain Unit
+        chain_version:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Chain Version
+        body_sha256:
+          type: string
+          title: Body Sha256
+        body_url:
+          type: string
+          title: Body Url
+        op_hash:
+          type: string
+          title: Op Hash
+        actor:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Actor
+        actor_pubkey:
+          type: string
+          title: Actor Pubkey
+        error:
+          type: string
+          title: Error
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+      type: object
+      required:
+      - id
+      - revision_id
+      - network
+      - status
+      - op_type
+      - body_sha256
+      - body_url
+      - op_hash
+      - actor_pubkey
+      - error
+      - created_at
+      - updated_at
+      title: KdgPublicationRead
+    KdgRelationCreateRequest:
+      properties:
+        to_item_id:
+          type: integer
+          title: To Item Id
+        kind:
+          type: string
+          enum:
+          - basis
+          - see-also
+          - supersedes
+          title: Kind
+          default: basis
+      type: object
+      required:
+      - to_item_id
+      title: KdgRelationCreateRequest
+    KdgRelationRead:
+      properties:
+        id:
+          type: integer
+          title: Id
+        to_item_id:
+          type: integer
+          title: To Item Id
+        kind:
+          type: string
+          title: Kind
+        to_chain_unit:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: To Chain Unit
+      type: object
+      required:
+      - id
+      - to_item_id
+      - kind
+      title: KdgRelationRead
+    KdgSettingsUpdateRequest:
+      properties:
+        domain:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Domain
+          description: 知行图领域编号(链的创世参数,见 /id/domain)
+        layer:
+          anyOf:
+          - type: string
+            enum:
+            - foundation
+            - explanation
+            - scenario
+            - application
+          - type: 'null'
+          title: Layer
+        language:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Language
+          description: 当前修订正文的语言,如 zh、en
+        generated_by:
+          anyOf:
+          - $ref: '#/components/schemas/KdgGeneratedBy'
+          - type: 'null'
+      type: object
+      title: KdgSettingsUpdateRequest
+    KdgStatusResponse:
+      properties:
+        enabled:
+          type: boolean
+          title: Enabled
+        domains:
+          items:
+            $ref: '#/components/schemas/KdgDomain'
+          type: array
+          title: Domains
+        network:
+          type: string
+          title: Network
+        domain:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Domain
+        layer:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Layer
+        chain_unit:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Chain Unit
+        chain_version:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Chain Version
+        unit_url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Unit Url
+        current_revision_published:
+          type: boolean
+          title: Current Revision Published
+        pending:
+          anyOf:
+          - $ref: '#/components/schemas/KdgPublicationRead'
+          - type: 'null'
+        relations:
+          items:
+            $ref: '#/components/schemas/KdgRelationRead'
+          type: array
+          title: Relations
+        publications:
+          items:
+            $ref: '#/components/schemas/KdgPublicationRead'
+          type: array
+          title: Publications
+      type: object
+      required:
+      - enabled
+      - network
+      - current_revision_published
+      - relations
+      - publications
+      title: KdgStatusResponse
+    KdgSubmitRequest:
+      properties:
+        signed:
+          type: string
+          title: Signed
+          description: 钱包返回的 signed:op ‖ 签名 的十六进制
+        address:
+          type: string
+          title: Address
+          description: 钱包返回的 address:签名所用的知行图公钥
+      type: object
+      required:
+      - signed
+      - address
+      title: KdgSubmitRequest
     KnowledgeItemCandidateRead:
       properties:
         id:

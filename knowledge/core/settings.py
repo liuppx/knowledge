@@ -150,6 +150,14 @@ class Settings(BaseSettings):
     embedding_timeout_seconds: int = 30
     embedding_max_retries: int = 2
 
+    # 知行图(KnowDoGraph)上链:disabled(默认,不开放此功能)| mock(测试)| live(连接链)。
+    # 签名在浏览器里由夜莺钱包完成,服务端只上传正文、提交已签名的操作;写入令牌只防刷写入。
+    kdg_mode: str = "disabled"
+    kdg_base_url: str = "https://blockchain.yeying.pub"
+    kdg_write_token: str = ""
+    kdg_network: str = "testnet"
+    kdg_timeout_seconds: int = 30
+
     document_parser_mode: str = "local"
     ragflow_parser_chunk_token_num: int = 512
     ragflow_parser_delimiter: str = "\n!?;。；！？"
@@ -269,6 +277,12 @@ def validate_runtime_settings(settings: Settings, *, token_secret_explicit: bool
         problems.append("MODEL_PROVIDER_MODE must not be 'mock'; connect a real model gateway")
     if settings.warehouse_gateway_mode == "mock":
         problems.append("WAREHOUSE_GATEWAY_MODE must not be 'mock'; use real object storage")
+    if settings.kdg_mode not in ("disabled", "mock", "live"):
+        problems.append("KDG_MODE must be one of disabled / mock / live")
+    if settings.kdg_mode == "mock":
+        problems.append("KDG_MODE must not be 'mock'; use 'live' or 'disabled'")
+    if settings.kdg_mode == "live" and not settings.kdg_write_token:
+        problems.append("KDG_WRITE_TOKEN must be set when KDG_MODE=live")
     if not token_secret_explicit:
         problems.append(
             "TOKEN_ENCRYPTION_SECRET must be set explicitly; "

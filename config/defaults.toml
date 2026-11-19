@@ -65,6 +65,14 @@ embedding_dimensions = 32            # must match the real embedding model (e.g.
 embedding_timeout_seconds = 30
 embedding_max_retries = 2
 
+[kdg]
+# 知行图(KnowDoGraph)上链:disabled(默认)| mock(测试)| live(连接链,需要写入令牌)
+kdg_mode = "disabled"
+kdg_base_url = "https://blockchain.yeying.pub"
+kdg_write_token = ""
+kdg_network = "testnet"
+kdg_timeout_seconds = 30
+
 [ingestion]
 document_parser_mode = "local"
 ragflow_parser_chunk_token_num = 512
